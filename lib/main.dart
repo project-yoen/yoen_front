@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/view/register_email.dart';
+import 'package:yoen_front/view/register_pwd.dart';
 import 'package:yoen_front/view/settings_page.dart';
 
 void main() {
@@ -18,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: SettingsPage(title: "Hello"),
+      home: RegisterEmailPage(title: "Hello"),
     );
   }
 }
