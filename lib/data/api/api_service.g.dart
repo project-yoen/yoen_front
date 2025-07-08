@@ -20,12 +20,12 @@ class _ApiService implements ApiService {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<UserRequest> getUser(String id) async {
+  Future<RegisterRequest> getUser(String id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<UserRequest>(
+    final _options = _setStreamType<RegisterRequest>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -36,9 +36,9 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late UserRequest _value;
+    late RegisterRequest _value;
     try {
-      _value = UserRequest.fromJson(_result.data!);
+      _value = RegisterRequest.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
@@ -47,12 +47,12 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<List<UserRequest>> getAllUser(String id) async {
+  Future<List<RegisterRequest>> getAllUser(String id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<UserRequest>>(
+    final _options = _setStreamType<List<RegisterRequest>>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -63,10 +63,12 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<UserRequest> _value;
+    late List<RegisterRequest> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) => UserRequest.fromJson(i as Map<String, dynamic>))
+          .map(
+            (dynamic i) => RegisterRequest.fromJson(i as Map<String, dynamic>),
+          )
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
@@ -76,7 +78,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<String>> createUser(UserRequest user) async {
+  Future<ApiResponse<String>> createUser(RegisterRequest user) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};

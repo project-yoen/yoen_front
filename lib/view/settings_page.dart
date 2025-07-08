@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/api/api_provider.dart';
-import '../data/model/user_request.dart';
+import '../data/model/register_request.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key, required this.title});
@@ -92,7 +92,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
               OutlinedButton(
                 onPressed: () async {
-                  final user = UserRequest(
+                  final user = RegisterRequest(
                     userId: null, // 가입 시에는 없을 수 있음
                     email: email.text,
                     password: password.text,
