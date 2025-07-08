@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yoen_front/view/register_email.dart';
 
-class BasePage extends StatelessWidget {
-  const BasePage({super.key});
+class BaseScreen extends StatelessWidget {
+  const BaseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
