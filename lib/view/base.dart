@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yoen_front/data/dialog/show_travel_code_dialog.dart';
 
 class BaseScreen extends StatelessWidget {
   const BaseScreen({super.key});
@@ -88,6 +89,7 @@ class BaseScreen extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 // 여행 참여하기 버튼 클릭 시 동작
+                showTravelCodeDialog(context);
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
