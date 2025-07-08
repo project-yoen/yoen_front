@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/view/register_pwd.dart';
 
-class RegisterEmailPage extends ConsumerStatefulWidget {
-  const RegisterEmailPage({super.key, required this.title});
+class RegisterEmailPageScreen extends ConsumerStatefulWidget {
+  const RegisterEmailPageScreen({super.key, required this.title});
 
   final String title;
 
   @override
-  ConsumerState<RegisterEmailPage> createState() => _RegisterEmailPageState();
+  ConsumerState<RegisterEmailPageScreen> createState() =>
+      _RegisterEmailPageState();
 }
 
-class _RegisterEmailPageState extends ConsumerState<RegisterEmailPage> {
+class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController email;
   bool? isValidInput;
@@ -83,7 +84,7 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              const RegisterPwdPage(title: 'asd'),
+                              const RegisterPwdScreen(title: 'asd'),
                         ),
                       );
                     }

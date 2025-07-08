@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/view/register_nickname.dart';
 
-class RegisterPwdPage extends ConsumerStatefulWidget {
-  const RegisterPwdPage({super.key, required this.title});
+class RegisterPwdScreen extends ConsumerStatefulWidget {
+  const RegisterPwdScreen({super.key, required this.title});
 
   final String title;
 
   @override
-  ConsumerState<RegisterPwdPage> createState() => _RegisterPwdPageState();
+  ConsumerState<RegisterPwdScreen> createState() => _RegisterPwdPageState();
 }
 
-class _RegisterPwdPageState extends ConsumerState<RegisterPwdPage> {
+class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController password;
   late final TextEditingController validPassword;
