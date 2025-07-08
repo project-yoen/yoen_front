@@ -31,6 +31,8 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0.0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
