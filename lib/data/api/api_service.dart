@@ -2,7 +2,6 @@ import 'package:retrofit/retrofit.dart';
 import 'package:dio/dio.dart';
 import 'package:yoen_front/data/model/api_response.dart';
 import '../model/user_request.dart';
-import '../model/user_response.dart';
 
 part 'api_service.g.dart';
 
