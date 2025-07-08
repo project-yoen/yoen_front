@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../data/dialog/show_travel_code_dialog.dart';
+import '../data/dialog/travel_code_dialog.dart';
 
 class SimpleDialogExample extends StatelessWidget {
   const SimpleDialogExample({super.key});
@@ -13,7 +13,11 @@ class SimpleDialogExample extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () {
             // 👉 다이얼로그 띄우기
-            showTravelCodeDialog(context);
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => const TravelCodeDialog(),
+            );
           },
           child: const Text('다이얼로그 열기'),
         ),
