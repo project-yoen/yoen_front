@@ -63,7 +63,28 @@ class BaseScreen extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: ElevatedButton(
+              onPressed: () {
+                // 여행 생성하기 버튼 클릭 시 동작
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('여행 생성하기', style: TextStyle(fontSize: 18)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: ElevatedButton(
               onPressed: () {
                 // 여행 참여하기 버튼 클릭 시 동작
