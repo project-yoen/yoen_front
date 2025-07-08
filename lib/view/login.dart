@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yoen_front/view/register_email.dart';
+import 'package:yoen_front/view/base.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -71,7 +72,12 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                // TODO: 로그인 로직 구현
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BasePage(),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
