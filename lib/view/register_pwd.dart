@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/view/register_nickname.dart';
 
 class RegisterPwdPage extends ConsumerStatefulWidget {
   const RegisterPwdPage({super.key, required this.title});
@@ -11,6 +12,7 @@ class RegisterPwdPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterPwdPageState extends ConsumerState<RegisterPwdPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController password;
   late final TextEditingController validPassword;
 
@@ -52,108 +54,118 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: password,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: isObscuredPwd ? '*******' : "Example1!",
-                border: OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    isObscuredPwd ? Icons.visibility_off : Icons.visibility,
-                    color: Theme.of(context).primaryColorDark,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                '비밀번호 입력',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 40),
+              TextFormField(
+                controller: password,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  hintText: isObscuredPwd ? '*******' : "Example1!",
+                  border: OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      isObscuredPwd ? Icons.visibility_off : Icons.visibility,
+                      color: Theme.of(context).primaryColorDark,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isObscuredPwd = !isObscuredPwd;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      isObscuredPwd = !isObscuredPwd;
-                    });
+                ),
+                keyboardType: TextInputType.visiblePassword,
+                textInputAction: TextInputAction.done,
+                obscureText: isObscuredPwd,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '비밀번호를 입력해주세요.';
+                  }
+                  if (!isValidPassword(value)) {
+                    return '대소문자, 문자 및 숫자를 포함한 형식이어야 합니다.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+
+              /// 비밀번호가 형식이 올바를시 확인 비밀번호 입력란 생성
+              if (isValidInput == true)
+                TextFormField(
+                  controller: validPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Validate Password',
+                    hintText: isObscuredValidPwd ? '*******' : "Example!",
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isObscuredValidPwd
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Theme.of(context).primaryColorDark,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isObscuredValidPwd = !isObscuredValidPwd;
+                        });
+                      },
+                    ),
+                  ),
+                  obscureText: isObscuredValidPwd,
+                  keyboardType: TextInputType.visiblePassword,
+                  textInputAction: TextInputAction.done,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '비밀번호를 입력해주세요.';
+                    }
+                    if (value != password.text) {
+                      return '비밀번호가 일치하지 않습니다.';
+                    }
+                    return null;
                   },
                 ),
+
+              const Spacer(),
+              Align(
+                alignment: Alignment.center,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    final form = _formKey.currentState!;
+                    if (isValidInput == null || isValidInput == false) {
+                      // 아직 비밀번호 형식 검증 단계일 때
+                      if (form.validate()) {
+                        setState(() {
+                          isValidInput = true;
+                        });
+                      }
+                    } else {
+                      // 확인 입력까지 다 했을 때
+                      if (form.validate()) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const RegisterNicknameScreen(),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: const Icon(Icons.arrow_forward),
+                ),
               ),
-              keyboardType: TextInputType.visiblePassword,
-              textInputAction: TextInputAction.done,
-              obscureText: isObscuredPwd,
-            ),
-            const SizedBox(height: 10),
-
-            /// 비밀번호 형식이 옳바르지 않을시
-            if (isValidInput != null && !isValidInput!)
-              const Text(
-                '대소문자, 문자 및 숫자를 포함한 형식이어야 합니다.',
-                style: TextStyle(color: Colors.red),
-              ),
-
-            /// 비밀번호가 형식이 올바를시 확인 비밀번호 입력란 생성
-            if (isValidInput != null && isValidInput!)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 10),
-
-                  TextField(
-                    controller: validPassword,
-                    decoration: InputDecoration(
-                      labelText: 'Validate Password',
-                      hintText: isObscuredValidPwd ? '*******' : "Example!",
-                      border: OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          isObscuredValidPwd
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Theme.of(context).primaryColorDark,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isObscuredValidPwd = !isObscuredValidPwd;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: isObscuredValidPwd,
-                    keyboardType: TextInputType.visiblePassword,
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-
-            /// 비밀번호가 일치하지 않을시
-            if (isPasswordMatched != null && !isPasswordMatched!)
-              const Text(
-                '비밀번호가 일치하지 않습니다.',
-                style: TextStyle(color: Colors.red),
-              ),
-
-            const SizedBox(height: 40),
-
-            ElevatedButton(
-              onPressed: () {
-                /// 비밀번호 형식이 올바르고 비밀번호가 일치할시
-                if (isValidInput == true && isMatchedPassword()) {
-                  // 다음으로 이동
-                }
-
-                /// 비밀번호 형식 검증 (즉 Elevated Button이 두개의 기능을 함)
-                /// 1. 비밀번호 형식 검증, 2. 비밀번호 일치 검증
-                final String input = password.text;
-                if (isValidPassword(input)) {
-                  setState(() {
-                    isValidInput = true;
-                  });
-                } else {
-                  setState(() {
-                    isValidInput = false;
-                  });
-                }
-              },
-              child: const Text('다음'),
-            ),
-          ],
+              const Spacer(),
+            ],
+          ),
         ),
       ),
     );
@@ -165,19 +177,5 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdPage> {
       r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
     );
     return passwordRegex.hasMatch(password);
-  }
-
-  bool isMatchedPassword() {
-    if (password.text == validPassword.text) {
-      setState(() {
-        isPasswordMatched = true;
-      });
-      return true;
-    } else {
-      setState(() {
-        isPasswordMatched = false;
-      });
-      return false;
-    }
   }
 }

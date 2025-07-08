@@ -12,6 +12,7 @@ class RegisterEmailPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterEmailPageState extends ConsumerState<RegisterEmailPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController email;
   bool? isValidInput;
 
@@ -41,54 +42,58 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: email,
-              decoration: InputDecoration(
-                labelText: '이메일 주소',
-                hintText: 'example@email.com',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.done,
-              onEditingComplete: () => setState(() {}),
-            ),
-            const SizedBox(height: 10),
-            if (isValidInput != null && !isValidInput!)
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
               const Text(
-                '올바른 이메일 형식이 아닙니다.',
-                style: TextStyle(color: Colors.red),
+                '이메일 입력',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            const SizedBox(height: 60),
-            ElevatedButton(
-              onPressed: () {
-                final String input = email.text;
-                if (isValidEmail(input)) {
-                  // 이메일 중복 검증 (이메일 api 확안)
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return RegisterPwdPage(title: "Hello");
-                      },
-                    ),
-                  );
-                  setState(() {
-                    isValidInput = true;
-                  });
-                } else {
-                  setState(() {
-                    isValidInput = false;
-                  });
-                }
-              },
-              child: const Text('다음'),
-            ),
-          ],
+              const SizedBox(height: 40),
+              TextFormField(
+                controller: email,
+                decoration: InputDecoration(
+                  labelText: '이메일 주소',
+                  hintText: 'example@email.com',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onEditingComplete: () => setState(() {}),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '이메일 주소를 입력해주세요.';
+                  }
+                  if (!isValidEmail(email.text)) {
+                    return '유효한 이메일 주소를 입력해주세요.';
+                  }
+                  return null;
+                },
+              ),
+              const Spacer(),
+              Align(
+                alignment: Alignment.center,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const RegisterPwdPage(title: 'asd'),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Icon(Icons.arrow_forward),
+                ),
+              ),
+              const Spacer(),
+            ],
+          ),
         ),
       ),
     );

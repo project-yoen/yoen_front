@@ -75,7 +75,7 @@ class _RegisterNicknameScreenState extends State<RegisterNicknameScreen> {
                   child: const Icon(Icons.arrow_forward),
                 ),
               ),
-              const SizedBox(height: 20),
+              const Spacer(),
             ],
           ),
         ),
