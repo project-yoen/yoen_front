@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:yoen_front/view/register_email.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool isObscuredPwd = true;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +37,9 @@ class LoginScreen extends StatelessWidget {
             ),
             const Spacer(flex: 1),
             TextField(
+              controller: emailController,
               decoration: InputDecoration(
-                hintText: '아이디',
+                hintText: 'email',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -30,11 +47,24 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             TextField(
-              obscureText: true,
+              controller: passwordController,
+              obscureText: isObscuredPwd,
               decoration: InputDecoration(
-                hintText: '비밀번호',
+                labelText: 'Password',
+                hintText: isObscuredPwd ? '*******' : "Example1!",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    isObscuredPwd ? Icons.visibility_off : Icons.visibility,
+                    color: Theme.of(context).primaryColorDark,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isObscuredPwd = !isObscuredPwd;
+                    });
+                  },
                 ),
               ),
             ),
@@ -58,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        const RegisterEmailPage(title: "Login"),
+                        const RegisterEmailPageScreen(title: "Login"),
                   ),
                 );
               },
