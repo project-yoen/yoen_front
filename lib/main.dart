@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yoen_front/view/register_email.dart';
-import 'package:yoen_front/view/register_pwd.dart';
-import 'package:yoen_front/view/settings_page.dart';
+import 'package:yoen_front/view/login.dart';
 
 void main() {
-  runApp(ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -20,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: RegisterEmailPage(title: "Hello"),
+      home: const LoginScreen(),
     );
   }
 }
