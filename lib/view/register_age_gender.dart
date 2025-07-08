@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // Cupertino import 추가
+import 'package:flutter/services.dart';
 
 class RegisterAgeGenderScreen extends StatefulWidget {
   const RegisterAgeGenderScreen({super.key});
@@ -10,22 +10,41 @@ class RegisterAgeGenderScreen extends StatefulWidget {
 }
 
 class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _monthController = TextEditingController();
   final TextEditingController _dayController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController();
+  String? _selectedGender;
 
-  DateTime? _selectedDate;
-  String? _selectedGenderValue;
+  // FocusNodes for each text field
+  late FocusNode _yearFocusNode;
+  late FocusNode _monthFocusNode;
+  late FocusNode _dayFocusNode;
 
   @override
   void initState() {
     super.initState();
-    // 초기값 설정 (선택 사항, 여기서는 2000년 1월 1일로 설정)
-    _selectedDate = DateTime(2000, 1, 1);
-    _yearController.text = _selectedDate!.year.toString();
-    _monthController.text = _selectedDate!.month.toString().padLeft(2, '0');
-    _dayController.text = _selectedDate!.day.toString().padLeft(2, '0');
+    _yearFocusNode = FocusNode();
+    _monthFocusNode = FocusNode();
+    _dayFocusNode = FocusNode();
+
+    // Add listeners to trigger validation when each field loses focus
+    _yearFocusNode.addListener(() {
+      if (!_yearFocusNode.hasFocus) {
+        _formKey.currentState?.validate();
+      }
+    });
+    _monthFocusNode.addListener(() {
+      if (!_monthFocusNode.hasFocus) {
+        _formKey.currentState?.validate();
+      }
+    });
+    _dayFocusNode.addListener(() {
+      if (!_dayFocusNode.hasFocus) {
+        _formKey.currentState?.validate();
+      }
+    });
   }
 
   @override
@@ -33,126 +52,12 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
     _yearController.dispose();
     _monthController.dispose();
     _dayController.dispose();
-    _genderController.dispose();
+
+    _yearFocusNode.dispose();
+    _monthFocusNode.dispose();
+    _dayFocusNode.dispose();
+
     super.dispose();
-  }
-
-  void _showDatePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext builder) {
-        return Container(
-          height: MediaQuery.of(context).copyWith().size.height / 3,
-          color: Colors.white,
-          child: Column(
-            children: [
-              Container(
-                color: Colors.grey[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('취소'),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    CupertinoButton(
-                      child: const Text('선택'),
-                      onPressed: () {
-                        if (_selectedDate != null) {
-                          _yearController.text = _selectedDate!.year.toString();
-                          _monthController.text = _selectedDate!.month
-                              .toString()
-                              .padLeft(2, '0');
-                          _dayController.text = _selectedDate!.day
-                              .toString()
-                              .padLeft(2, '0');
-                        }
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.date,
-                  initialDateTime: _selectedDate ?? DateTime(2000, 1, 1),
-                  minimumDate: DateTime(1950, 1, 1),
-                  maximumDate: DateTime(2030, 12, 31),
-                  onDateTimeChanged: (DateTime newDate) {
-                    setState(() {
-                      _selectedDate = newDate;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showGenderPicker(BuildContext context) {
-    final List<String> genders = ['남성', '여성', '기타'];
-    int initialIndex = _selectedGenderValue != null
-        ? genders.indexOf(_selectedGenderValue!)
-        : 0;
-    if (initialIndex == -1) initialIndex = 0; // Fallback if not found
-
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext builder) {
-        return Container(
-          height: MediaQuery.of(context).copyWith().size.height / 3,
-          color: Colors.white,
-          child: Column(
-            children: [
-              Container(
-                color: Colors.grey[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('취소'),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    CupertinoButton(
-                      child: const Text('선택'),
-                      onPressed: () {
-                        _genderController.text =
-                            _selectedGenderValue ?? genders[0];
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(
-                    initialItem: initialIndex,
-                  ),
-                  itemExtent: 32.0, // Height of each item
-                  onSelectedItemChanged: (int index) {
-                    setState(() {
-                      _selectedGenderValue = genders[index];
-                    });
-                  },
-                  children: List<Widget>.generate(genders.length, (int index) {
-                    return Center(child: Text(genders[index]));
-                  }),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -179,70 +84,143 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
-            GestureDetector(
-              onTap: () => _showDatePicker(context),
-              child: AbsorbPointer(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: TextFormField(
-                        controller: _yearController,
-                        decoration: const InputDecoration(
-                          labelText: '년',
-                          border: OutlineInputBorder(),
-                        ),
-                        readOnly: true,
+            Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.disabled, // Change to disabled
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _yearController,
+                      focusNode: _yearFocusNode, // Assign FocusNode
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: '년',
+                        border: OutlineInputBorder(),
+                        helperText: ' ', // 공간 확보
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return null; // 비어있을 때는 유효성 검사하지 않음
+                        }
+                        if (value.length != 4) {
+                          return 'YYYY-MM-DD 형식을 지켜주세요.';
+                        }
+                        if (int.tryParse(value) == null) {
+                          return '숫자만 입력 가능합니다.';
+                        }
+                        return null;
+                      },
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: TextFormField(
-                        controller: _monthController,
-                        decoration: const InputDecoration(
-                          labelText: '월',
-                          border: OutlineInputBorder(),
-                        ),
-                        readOnly: true,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _monthController,
+                      focusNode: _monthFocusNode, // Assign FocusNode
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: '월',
+                        border: OutlineInputBorder(),
+                        helperText: ' ', // 공간 확보
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return null; // 비어있을 때는 유효성 검사하지 않음
+                        }
+                        if (value.length != 2) {
+                          return 'YYYY-MM-DD 형식을 지켜주세요.';
+                        }
+                        final month = int.tryParse(value);
+                        if (month == null || month < 1 || month > 12) {
+                          return 'YYYY-MM-DD 형식을 지켜주세요.';
+                        }
+                        return null;
+                      },
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: TextFormField(
-                        controller: _dayController,
-                        decoration: const InputDecoration(
-                          labelText: '일',
-                          border: OutlineInputBorder(),
-                        ),
-                        readOnly: true,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _dayController,
+                      focusNode: _dayFocusNode, // Assign FocusNode
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: '일',
+                        border: OutlineInputBorder(),
+                        helperText: ' ', // 공간 확보
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return null; // 비어있을 때는 유효성 검사하지 않음
+                        }
+                        if (value.length != 2) {
+                          return 'YYYY-MM-DD 형식을 지켜주세요.';
+                        }
+                        final day = int.tryParse(value);
+                        if (day == null || day < 1 || day > 31) {
+                          return 'YYYY-MM-DD 형식을 지켜주세요.';
+                        }
+                        return null;
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
-            GestureDetector(
-              onTap: () => _showGenderPicker(context),
-              child: AbsorbPointer(
-                child: TextFormField(
-                  controller: _genderController,
-                  decoration: const InputDecoration(
-                    labelText: '성별',
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return DropdownMenu<String>(
+                  width: constraints.maxWidth,
+                  initialSelection: _selectedGender,
+                  label: const Text('성별'),
+                  requestFocusOnTap: false,
+                  expandedInsets: EdgeInsets.zero,
+                  inputDecorationTheme: const InputDecorationTheme(
                     border: OutlineInputBorder(),
                   ),
-                  readOnly: true,
-                ),
-              ),
+                  dropdownMenuEntries: ['남성', '여성', '기타']
+                      .map<DropdownMenuEntry<String>>((String value) {
+                        return DropdownMenuEntry<String>(
+                          value: value,
+                          label: value,
+                        );
+                      })
+                      .toList(),
+                  onSelected: (String? value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  },
+                );
+              },
             ),
             const Spacer(),
             Align(
               alignment: Alignment.center,
               child: FloatingActionButton(
                 onPressed: () {
-                  // TODO: 다음 화면으로 이동 또는 완료
+                  if (_formKey.currentState!.validate()) {
+                    // Form is valid, proceed with data
+                    // You can access values via _yearController.text, _monthController.text, _dayController.text
+                    // TODO: 다음 화면으로 이동 또는 완료
+                  }
                 },
                 child: const Icon(Icons.arrow_forward),
               ),
