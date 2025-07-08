@@ -54,6 +54,7 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
             Row(
               children: [
                 Expanded(
+                  flex: 3,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return DropdownMenu<String>(
@@ -85,6 +86,7 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
+                  flex: 2,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return DropdownMenu<String>(
@@ -116,6 +118,7 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
+                  flex: 2,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return DropdownMenu<String>(
