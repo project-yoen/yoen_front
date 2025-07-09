@@ -3,22 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/register_notifier.dart';
 import 'package:yoen_front/view/register_age_gender.dart';
 
-class RegisterNicknameScreen extends ConsumerStatefulWidget {
-  const RegisterNicknameScreen({super.key});
+class RegisterNameScreen extends ConsumerStatefulWidget {
+  const RegisterNameScreen({super.key});
 
   @override
-  ConsumerState<RegisterNicknameScreen> createState() =>
-      _RegisterNicknameScreenState();
+  ConsumerState<RegisterNameScreen> createState() => _RegisterNameScreenState();
 }
 
-class _RegisterNicknameScreenState
-    extends ConsumerState<RegisterNicknameScreen> {
+class _RegisterNameScreenState extends ConsumerState<RegisterNameScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
   @override
   void dispose() {
-    _nicknameController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -44,21 +42,21 @@ class _RegisterNicknameScreenState
               children: [
                 const SizedBox(height: 40),
                 const Text(
-                  '닉네임 입력',
+                  '이름 입력',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 40),
                 TextFormField(
-                  controller: _nicknameController,
+                  controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: '닉네임',
+                    labelText: '이름',
                     border: OutlineInputBorder(),
                   ),
                   onFieldSubmitted: (_) {
                     if (_formKey.currentState!.validate()) {
                       ref
                           .read(registerNotifierProvider.notifier)
-                          .setNickname(_nicknameController.text);
+                          .setNickname(_nameController.text);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -69,10 +67,7 @@ class _RegisterNicknameScreenState
                   },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '닉네임을 입력해주세요.';
-                    }
-                    if (value.length > 12) {
-                      return '닉네임은 12자 이하로 입력해주세요.';
+                      return '이름을 입력해주세요.';
                     }
                     return null;
                   },
@@ -81,13 +76,13 @@ class _RegisterNicknameScreenState
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: (_nicknameController.text.isNotEmpty)
+                    onPressed: (_nameController.text.isNotEmpty)
                         ? () {
                             // 유효성 검사 등 처리
                             if (_formKey.currentState!.validate()) {
                               ref
                                   .read(registerNotifierProvider.notifier)
-                                  .setNickname(_nicknameController.text);
+                                  .setNickname(_nameController.text);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

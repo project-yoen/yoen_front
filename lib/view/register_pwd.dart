@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/register_notifier.dart';
-import 'package:yoen_front/view/register_nickname.dart';
+import 'package:yoen_front/view/register_name.dart';
 
 class RegisterPwdScreen extends ConsumerStatefulWidget {
   const RegisterPwdScreen({super.key});
@@ -105,8 +105,7 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const RegisterNicknameScreen(),
+                            builder: (context) => const RegisterNameScreen(),
                           ),
                         );
                       }
@@ -168,8 +167,7 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const RegisterNicknameScreen(),
+                              builder: (context) => const RegisterNameScreen(),
                             ),
                           );
                         }
@@ -190,21 +188,33 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // 유효성 검사 등 처리
-                      if (_formKey.currentState!.validate()) {
-                        ref
-                            .read(registerNotifierProvider.notifier)
-                            .setPassword(password.text);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const RegisterNicknameScreen(),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: (password.text.isNotEmpty)
+                        ? () {
+                            final form = _formKey.currentState!;
+                            if (isValidInput == null || isValidInput == false) {
+                              // 아직 비밀번호 형식 검증 단계일 때
+                              if (form.validate()) {
+                                setState(() {
+                                  isValidInput = true;
+                                });
+                              }
+                            } else {
+                              // 확인 입력까지 다 했을 때
+                              if (form.validate()) {
+                                ref
+                                    .read(registerNotifierProvider.notifier)
+                                    .setPassword(validPassword.text);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RegisterNameScreen(),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(), // 원형 버튼
                       padding: const EdgeInsets.all(20), // 버튼 크기 조절

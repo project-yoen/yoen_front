@@ -91,20 +91,23 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // 유효성 검사 등 처리
-                      if (_formKey.currentState!.validate()) {
-                        ref
-                            .read(registerNotifierProvider.notifier)
-                            .setEmail(email.text);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterPwdScreen(),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: (email.text.isNotEmpty)
+                        ? () {
+                            // 유효성 검사 등 처리
+                            if (_formKey.currentState!.validate()) {
+                              ref
+                                  .read(registerNotifierProvider.notifier)
+                                  .setEmail(email.text);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RegisterPwdScreen(),
+                                ),
+                              );
+                            }
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(), // 원형 버튼
                       padding: const EdgeInsets.all(20), // 버튼 크기 조절
