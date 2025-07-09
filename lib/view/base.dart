@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
+import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
 class BaseScreen extends StatelessWidget {
   const BaseScreen({super.key});
@@ -72,7 +73,13 @@ class BaseScreen extends StatelessWidget {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  // 여행 생성하기 버튼 클릭 시 동작
+                  //여행 생성하기 버튼 누를 시 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TravelDestinationScreen(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
