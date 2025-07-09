@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/register_notifier.dart';
+import 'package:yoen_front/view/register_profile_url.dart';
 
 const Map<String?, String> mapToEng = {
   '남성': 'MALE',
@@ -239,7 +240,13 @@ class _RegisterAgeGenderScreenState
                       provider.setBirthday(birthday);
 
                       provider.setGender(mapToEng[_selectedGender]!);
-                      await provider.submit();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const RegisterProfileUrlScreen(),
+                        ),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
