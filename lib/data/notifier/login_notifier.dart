@@ -62,6 +62,7 @@ class LoginNotifier extends Notifier<LoginState> {
         state = state.copyWith(
           status: LoginStatus.error,
           errorMessage: "로그인 실패",
+          //Todo 로그아웃 실패 시 조건 분기하여 여러 에러 메세지 작성
         );
       }
     } catch (e) {
