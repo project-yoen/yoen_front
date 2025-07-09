@@ -104,7 +104,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     final api = ref.read(
                       apiServiceProvider,
                     ); // Retrofit 연결된 provider
-                    final result = await api.createUser(user); // 회원가입 요청
+                    final result = await api.register(user); // 회원가입 요청
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("가입 성공: ${result.data}")),

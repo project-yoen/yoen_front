@@ -18,7 +18,7 @@ abstract class ApiService {
   Future<List<RegisterRequest>> getAllUser(@Path("id") String id);
 
   @POST("/user/register")
-  Future<ApiResponse<String>> createUser(@Body() RegisterRequest user);
+  Future<ApiResponse<String>> register(@Body() RegisterRequest user);
 
   @POST("/user/login")
   Future<ApiResponse<LoginResponse>> login(@Body() LoginRequest user);

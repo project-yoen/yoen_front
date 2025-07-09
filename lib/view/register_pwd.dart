@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/register_notifier.dart';
 import 'package:yoen_front/view/register_nickname.dart';
 
 class RegisterPwdScreen extends ConsumerStatefulWidget {
@@ -98,6 +99,9 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                     } else {
                       // 확인 입력까지 다 했을 때
                       if (form.validate()) {
+                        ref
+                            .read(registerNotifierProvider.notifier)
+                            .setPassword(password.text);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -158,6 +162,9 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                       } else {
                         // 확인 입력까지 다 했을 때
                         if (form.validate()) {
+                          ref
+                              .read(registerNotifierProvider.notifier)
+                              .setPassword(validPassword.text);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -186,6 +193,9 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                     onPressed: () {
                       // 유효성 검사 등 처리
                       if (_formKey.currentState!.validate()) {
+                        ref
+                            .read(registerNotifierProvider.notifier)
+                            .setPassword(password.text);
                         Navigator.push(
                           context,
                           MaterialPageRoute(

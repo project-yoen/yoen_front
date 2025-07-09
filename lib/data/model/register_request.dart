@@ -7,6 +7,7 @@ class RegisterRequest {
   final int? userId;
   final String? email;
   final String? password;
+  final String? nickname;
   final String? gender;
   final String? birthday;
 
@@ -14,6 +15,7 @@ class RegisterRequest {
     this.userId,
     required this.email,
     required this.password,
+    this.nickname,
     this.gender,
     this.birthday,
   });
@@ -22,4 +24,20 @@ class RegisterRequest {
       _$RegisterRequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$RegisterRequestToJson(this);
+
+  RegisterRequest copyWith({
+    String? email,
+    String? password,
+    String? nickname,
+    String? birthday,
+    String? gender,
+  }) {
+    return RegisterRequest(
+      email: email ?? this.email,
+      password: password ?? this.password,
+      nickname: nickname ?? this.nickname,
+      birthday: birthday ?? this.birthday,
+      gender: gender ?? this.gender,
+    );
+  }
 }

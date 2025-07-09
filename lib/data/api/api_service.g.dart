@@ -78,7 +78,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<String>> createUser(RegisterRequest user) async {
+  Future<ApiResponse<String>> register(RegisterRequest user) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};

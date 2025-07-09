@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/register_notifier.dart';
 import 'package:yoen_front/view/register_pwd.dart';
 
 class RegisterEmailPageScreen extends ConsumerStatefulWidget {
@@ -65,6 +66,9 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) {
                     if (_formKey.currentState!.validate()) {
+                      ref
+                          .read(registerNotifierProvider.notifier)
+                          .setEmail(email.text);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -90,6 +94,9 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                     onPressed: () {
                       // 유효성 검사 등 처리
                       if (_formKey.currentState!.validate()) {
+                        ref
+                            .read(registerNotifierProvider.notifier)
+                            .setEmail(email.text);
                         Navigator.push(
                           context,
                           MaterialPageRoute(

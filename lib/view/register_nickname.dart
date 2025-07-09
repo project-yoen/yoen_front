@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/register_notifier.dart';
 import 'package:yoen_front/view/register_age_gender.dart';
 
-class RegisterNicknameScreen extends StatefulWidget {
+class RegisterNicknameScreen extends ConsumerStatefulWidget {
   const RegisterNicknameScreen({super.key});
 
   @override
-  State<RegisterNicknameScreen> createState() => _RegisterNicknameScreenState();
+  ConsumerState<RegisterNicknameScreen> createState() =>
+      _RegisterNicknameScreenState();
 }
 
-class _RegisterNicknameScreenState extends State<RegisterNicknameScreen> {
+class _RegisterNicknameScreenState
+    extends ConsumerState<RegisterNicknameScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nicknameController = TextEditingController();
 
@@ -52,6 +56,9 @@ class _RegisterNicknameScreenState extends State<RegisterNicknameScreen> {
                   ),
                   onFieldSubmitted: (_) {
                     if (_formKey.currentState!.validate()) {
+                      ref
+                          .read(registerNotifierProvider.notifier)
+                          .setNickname(_nicknameController.text);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -77,6 +84,9 @@ class _RegisterNicknameScreenState extends State<RegisterNicknameScreen> {
                     onPressed: () {
                       // 유효성 검사 등 처리
                       if (_formKey.currentState!.validate()) {
+                        ref
+                            .read(registerNotifierProvider.notifier)
+                            .setNickname(_nicknameController.text);
                         Navigator.push(
                           context,
                           MaterialPageRoute(

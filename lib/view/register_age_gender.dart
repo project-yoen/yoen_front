@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/register_notifier.dart';
 
-class RegisterAgeGenderScreen extends StatefulWidget {
+const Map<String?, String> mapToEng = {
+  '남성': 'MALE',
+  '여성': 'FEMALE',
+  '기타': 'OTHERS',
+};
+
+class RegisterAgeGenderScreen extends ConsumerStatefulWidget {
   const RegisterAgeGenderScreen({super.key});
 
   @override
-  State<RegisterAgeGenderScreen> createState() =>
+  ConsumerState<RegisterAgeGenderScreen> createState() =>
       _RegisterAgeGenderScreenState();
 }
 
-class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
+class _RegisterAgeGenderScreenState
+    extends ConsumerState<RegisterAgeGenderScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _yearController = TextEditingController();
@@ -218,10 +227,19 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     // 유효성 검사 등 처리
                     if (_formKey.currentState!.validate()) {
+                      final provider = ref.read(
+                        registerNotifierProvider.notifier,
+                      );
                       // 다음 로직
+                      final birthday =
+                          '${_yearController.text}-${_monthController.text}-${_dayController.text}';
+                      provider.setBirthday(birthday);
+
+                      provider.setGender(mapToEng[_selectedGender]!);
+                      await provider.submit();
                     }
                   },
                   style: ElevatedButton.styleFrom(
