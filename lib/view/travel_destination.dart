@@ -25,6 +25,7 @@ class _TravelDestinationScreenState extends State<TravelDestinationScreen> {
           },
         ),
         title: const Text('목적지 입력'), // 제목 변경
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
