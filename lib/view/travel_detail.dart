@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math'; // Random 클래스를 위해 import 추가
+import '../data/dialog/travel_date_picker_dialog.dart'; // TravelDatePickerDialog 임포트 추가
 
 class TravelDetailScreen extends StatefulWidget {
   const TravelDetailScreen({super.key});
@@ -16,6 +17,8 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
       TextEditingController();
 
   String? _currentHintTravelName;
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
 
   final List<String> _adjectives = [
     "우당탕탕",
@@ -312,6 +315,36 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _travelDurationController,
+              readOnly: true, // 읽기 전용으로 설정
+              onTap: () async {
+                final result = await showDialog<Map<String, DateTime?>>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return TravelDatePickerDialog(
+                      initialStartDate: _selectedStartDate,
+                      initialEndDate: _selectedEndDate,
+                    );
+                  },
+                );
+
+                if (result != null) {
+                  setState(() {
+                    _selectedStartDate = result['start'];
+                    _selectedEndDate = result['end'];
+                    if (_selectedStartDate != null &&
+                        _selectedEndDate != null) {
+                      _travelDurationController.text =
+                          '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')} - ' +
+                          '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
+                    } else if (_selectedStartDate != null) {
+                      _travelDurationController.text =
+                          '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')}';
+                    } else {
+                      _travelDurationController.text = '';
+                    }
+                  });
+                }
+              },
               decoration: const InputDecoration(
                 labelText: '여행 기간',
                 border: OutlineInputBorder(),
