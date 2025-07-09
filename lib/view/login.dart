@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/view/register_email.dart';
 import 'package:yoen_front/view/base.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool isObscuredPwd = true;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -71,11 +73,26 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const BaseScreen()),
+              onPressed: () async {
+                final loginNotifier = ref.read(loginNotifierProvider.notifier);
+                final navigator = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
+                await loginNotifier.login(
+                  emailController.text.trim(),
+                  passwordController.text.trim(),
                 );
+                final state = ref.read(loginNotifierProvider);
+                if (state.status == LoginStatus.success) {
+                  // 성공 시 페이지 이동
+                  navigator.push(
+                    MaterialPageRoute(builder: (context) => const BaseScreen()),
+                  );
+                } else if (state.status == LoginStatus.error) {
+                  // 실패 시 에러 메시지 표시
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(state.errorMessage ?? "로그인 실패")),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
