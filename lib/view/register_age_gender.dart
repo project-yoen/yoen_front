@@ -112,7 +112,7 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
                             return null; // 비어있을 때는 유효성 검사하지 않음
                           }
                           if (value.length != 4) {
-                            return 'YYYY-MM-DD 형식을 지켜주세요.';
+                            return '형식을 확인해주세요.';
                           }
                           if (int.tryParse(value) == null) {
                             return '숫자만 입력 가능합니다.';
@@ -142,11 +142,11 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
                             return null; // 비어있을 때는 유효성 검사하지 않음
                           }
                           if (value.length != 2) {
-                            return 'YYYY-MM-DD 형식을 지켜주세요.';
+                            return '형식을 확인해주세요.';
                           }
                           final month = int.tryParse(value);
                           if (month == null || month < 1 || month > 12) {
-                            return 'YYYY-MM-DD 형식을 지켜주세요.';
+                            return '형식을 확인해주세요.';
                           }
                           return null;
                         },
@@ -173,11 +173,11 @@ class _RegisterAgeGenderScreenState extends State<RegisterAgeGenderScreen> {
                             return null; // 비어있을 때는 유효성 검사하지 않음
                           }
                           if (value.length != 2) {
-                            return 'YYYY-MM-DD 형식을 지켜주세요.';
+                            return '형식을 확인해주세요.';
                           }
                           final day = int.tryParse(value);
                           if (day == null || day < 1 || day > 31) {
-                            return 'YYYY-MM-DD 형식을 지켜주세요.';
+                            return '형식을 확인해주세요.';
                           }
                           return null;
                         },
