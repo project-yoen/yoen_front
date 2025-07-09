@@ -31,29 +31,35 @@ class _RegisterAgeGenderScreenState
   late FocusNode _yearFocusNode;
   late FocusNode _monthFocusNode;
   late FocusNode _dayFocusNode;
+  int _prevYearLength = 0;
+  int _prevMonthLength = 0;
 
   @override
   void initState() {
     super.initState();
+
     _yearFocusNode = FocusNode();
     _monthFocusNode = FocusNode();
     _dayFocusNode = FocusNode();
 
-    // Add listeners to trigger validation when each field loses focus
-    _yearFocusNode.addListener(() {
-      if (!_yearFocusNode.hasFocus) {
-        _formKey.currentState?.validate();
+    _yearController.addListener(() {
+      final current = _yearController.text.length;
+
+      if (_prevYearLength < current && current == 4) {
+        FocusScope.of(context).requestFocus(_monthFocusNode);
       }
+
+      _prevYearLength = current;
     });
-    _monthFocusNode.addListener(() {
-      if (!_monthFocusNode.hasFocus) {
-        _formKey.currentState?.validate();
+
+    _monthController.addListener(() {
+      final current = _monthController.text.length;
+
+      if (_prevMonthLength < current && current == 2) {
+        FocusScope.of(context).requestFocus(_dayFocusNode);
       }
-    });
-    _dayFocusNode.addListener(() {
-      if (!_dayFocusNode.hasFocus) {
-        _formKey.currentState?.validate();
-      }
+
+      _prevMonthLength = current;
     });
   }
 
@@ -70,10 +76,20 @@ class _RegisterAgeGenderScreenState
     super.dispose();
   }
 
+  bool isEmptyField() {
+    return _yearController.text.isEmpty ||
+        _dayController.text.isEmpty ||
+        _monthController.text.isEmpty ||
+        _selectedGender == null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        _formKey.currentState?.validate();
+      },
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -119,7 +135,7 @@ class _RegisterAgeGenderScreenState
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return null; // 비어있을 때는 유효성 검사하지 않음
+                            return '연도를 입력해주세요.';
                           }
                           if (value.length != 4) {
                             return '형식을 확인해주세요.';
@@ -149,7 +165,7 @@ class _RegisterAgeGenderScreenState
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return null; // 비어있을 때는 유효성 검사하지 않음
+                            return '날짜(월)를 입력해주세요.';
                           }
                           if (value.length != 2) {
                             return '형식을 확인해주세요.';
@@ -180,7 +196,7 @@ class _RegisterAgeGenderScreenState
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return null; // 비어있을 때는 유효성 검사하지 않음
+                            return '날짜(일)를 입력해주세요.';
                           }
                           if (value.length != 2) {
                             return '형식을 확인해주세요.';
@@ -228,27 +244,29 @@ class _RegisterAgeGenderScreenState
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    // 유효성 검사 등 처리
-                    if (_formKey.currentState!.validate()) {
-                      final provider = ref.read(
-                        registerNotifierProvider.notifier,
-                      );
-                      // 다음 로직
-                      final birthday =
-                          '${_yearController.text}-${_monthController.text}-${_dayController.text}';
-                      provider.setBirthday(birthday);
+                  onPressed: (!isEmptyField())
+                      ? () {
+                          // 유효성 검사 등 처리
+                          if (_formKey.currentState!.validate()) {
+                            final provider = ref.read(
+                              registerNotifierProvider.notifier,
+                            );
+                            // 다음 로직
+                            final birthday =
+                                '${_yearController.text}-${_monthController.text}-${_dayController.text}';
+                            provider.setBirthday(birthday);
 
-                      provider.setGender(mapToEng[_selectedGender]!);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const RegisterProfileUrlScreen(),
-                        ),
-                      );
-                    }
-                  },
+                            provider.setGender(mapToEng[_selectedGender]!);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const RegisterProfileUrlScreen(),
+                              ),
+                            );
+                          }
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(), // 원형 버튼
                     padding: const EdgeInsets.all(20), // 버튼 크기 조절
