@@ -63,7 +63,17 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,
-                onEditingComplete: () => setState(() {}),
+                onFieldSubmitted: (_) {
+                  if (_formKey.currentState!.validate()) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const RegisterPwdScreen(title: 'asd'),
+                      ),
+                    );
+                  }
+                },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '이메일 주소를 입력해주세요.';

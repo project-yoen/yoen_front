@@ -86,6 +86,27 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                 keyboardType: TextInputType.visiblePassword,
                 textInputAction: TextInputAction.done,
                 obscureText: isObscuredPwd,
+                onFieldSubmitted: (_) {
+                  final form = _formKey.currentState!;
+                  if (isValidInput == null || isValidInput == false) {
+                    // 아직 비밀번호 형식 검증 단계일 때
+                    if (form.validate()) {
+                      setState(() {
+                        isValidInput = true;
+                      });
+                    }
+                  } else {
+                    // 확인 입력까지 다 했을 때
+                    if (form.validate()) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterNicknameScreen(),
+                        ),
+                      );
+                    }
+                  }
+                },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '비밀번호를 입력해주세요.';
@@ -123,6 +144,28 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                   obscureText: isObscuredValidPwd,
                   keyboardType: TextInputType.visiblePassword,
                   textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    final form = _formKey.currentState!;
+                    if (isValidInput == null || isValidInput == false) {
+                      // 아직 비밀번호 형식 검증 단계일 때
+                      if (form.validate()) {
+                        setState(() {
+                          isValidInput = true;
+                        });
+                      }
+                    } else {
+                      // 확인 입력까지 다 했을 때
+                      if (form.validate()) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const RegisterNicknameScreen(),
+                          ),
+                        );
+                      }
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return '비밀번호를 입력해주세요.';

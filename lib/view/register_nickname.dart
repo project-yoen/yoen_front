@@ -48,6 +48,16 @@ class _RegisterNicknameScreenState extends State<RegisterNicknameScreen> {
                   labelText: '닉네임',
                   border: OutlineInputBorder(),
                 ),
+                onFieldSubmitted: (_) {
+                  if (_formKey.currentState!.validate()) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterAgeGenderScreen(),
+                      ),
+                    );
+                  }
+                },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '닉네임을 입력해주세요.';
