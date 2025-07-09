@@ -53,8 +53,26 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
     setState(() {
       _selectedDay = null;
       _focusedDay = focusedDay;
-      _rangeStart = start;
-      _rangeEnd = end;
+
+      // 아무 범위도 없는 경우 -> 새로 시작
+      if (_rangeStart == null || _rangeEnd == null) {
+        _rangeStart = focusedDay;
+        _rangeEnd = focusedDay;
+      }
+      // 선택한 날짜가 시작 이전 -> 시작만 갱신
+      else if (focusedDay.isBefore(_rangeStart!)) {
+        _rangeStart = focusedDay;
+      }
+      // 선택한 날짜가 끝 이후 -> 끝만 갱신
+      else if (focusedDay.isAfter(_rangeEnd!)) {
+        _rangeEnd = focusedDay;
+      }
+      // 범위 안쪽 -> 중앙값 기준 가까운 쪽 조정
+      else {
+        // 범위 안쪽 선택 시 → 무조건 앞쪽 (rangeStart)만 이동
+        _rangeStart = focusedDay;
+      }
+
       _rangeSelectionMode = RangeSelectionMode.toggledOn;
     });
   }
