@@ -4,6 +4,7 @@ import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/login_request.dart';
 
+// TODO: 따로 빼도 좋을듯
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
 });
