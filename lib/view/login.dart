@@ -13,6 +13,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool isObscuredPwd = true;
+  bool _isLoginButtonEnabled = false;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -20,7 +21,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final FocusNode passwordFocusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    emailController.addListener(_updateLoginButtonState);
+    passwordController.addListener(_updateLoginButtonState);
+  }
+
+  @override
   void dispose() {
+    emailController.removeListener(_updateLoginButtonState);
+    passwordController.removeListener(_updateLoginButtonState);
     emailController.dispose();
     passwordController.dispose();
     emailFocusNode.dispose();
@@ -28,8 +38,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _updateLoginButtonState() {
+    setState(() {
+      _isLoginButtonEnabled =
+          emailController.text.isNotEmpty && passwordController.text.isNotEmpty;
+    });
+  }
+
+  Future<void> _login() async {
+    final loginNotifier = ref.read(loginNotifierProvider.notifier);
+    await loginNotifier.login(
+      emailController.text.trim(),
+      passwordController.text.trim(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<LoginState>(loginNotifierProvider, (previous, next) {
+      if (next.status == LoginStatus.success) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const BaseScreen(),
+          ),
+          (route) => false,
+        );
+      }
+    });
+
+    final loginState = ref.watch(loginNotifierProvider);
+    final hasCredentialError = loginState.status == LoginStatus.error &&
+        loginState.errorMessage == "이메일 혹은 비밀번호가 잘못되었습니다.";
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -55,9 +95,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ).requestFocus(passwordFocusNode); // 다음으로 포커스 이동
                 },
                 decoration: InputDecoration(
-                  hintText: 'Email',
+                  labelText: 'Email',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: hasCredentialError ? Colors.red : Colors.grey,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: hasCredentialError
+                          ? Colors.red
+                          : Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -65,38 +120,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextField(
                 controller: passwordController,
                 focusNode: passwordFocusNode,
-                onSubmitted: (_) async {
-                  final loginNotifier = ref.read(
-                    loginNotifierProvider.notifier,
-                  );
-                  final navigator = Navigator.of(context);
-                  final messenger = ScaffoldMessenger.of(context);
-                  await loginNotifier.login(
-                    emailController.text.trim(),
-                    passwordController.text.trim(),
-                  );
-                  final state = ref.read(loginNotifierProvider);
-                  if (state.status == LoginStatus.success) {
-                    // 성공 시 페이지 이동
-                    navigator.pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const BaseScreen(),
-                      ),
-                      (route) => false,
-                    );
-                  } else if (state.status == LoginStatus.error) {
-                    // 실패 시 에러 메시지 표시
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(state.errorMessage ?? "로그인 실패")),
-                    );
+                onSubmitted: (_) {
+                  if (_isLoginButtonEnabled &&
+                      loginState.status != LoginStatus.loading) {
+                    _login();
                   }
                 },
                 obscureText: isObscuredPwd,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  hintText: isObscuredPwd ? '*******' : "Example1!",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: hasCredentialError ? Colors.red : Colors.grey,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: hasCredentialError
+                          ? Colors.red
+                          : Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -111,41 +160,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ),
+              if (loginState.status == LoginStatus.error &&
+                  loginState.errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    loginState.errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () async {
-                  final loginNotifier = ref.read(
-                    loginNotifierProvider.notifier,
-                  );
-                  final navigator = Navigator.of(context);
-                  final messenger = ScaffoldMessenger.of(context);
-                  await loginNotifier.login(
-                    emailController.text.trim(),
-                    passwordController.text.trim(),
-                  );
-                  final state = ref.read(loginNotifierProvider);
-                  if (state.status == LoginStatus.success) {
-                    // 성공 시 페이지 이동
-                    navigator.pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const BaseScreen(),
-                      ),
-                      (route) => false,
-                    );
-                  } else if (state.status == LoginStatus.error) {
-                    // 실패 시 에러 메시지 표시
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(state.errorMessage ?? "로그인 실패")),
-                    );
-                  }
-                },
+                onPressed: _isLoginButtonEnabled &&
+                        loginState.status != LoginStatus.loading
+                    ? _login
+                    : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Login', style: TextStyle(fontSize: 18)),
+                child: loginState.status == LoginStatus.loading
+                    ? const CircularProgressIndicator()
+                    : const Text('Login', style: TextStyle(fontSize: 18)),
               ),
               const Spacer(flex: 2),
               TextButton(

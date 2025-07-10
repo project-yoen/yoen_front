@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
@@ -39,7 +40,7 @@ class LoginNotifier extends Notifier<LoginState> {
   }
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(status: LoginStatus.loading);
+    state = state.copyWith(status: LoginStatus.loading, errorMessage: null);
 
     try {
       // 1. 로그인 API 호출
@@ -63,15 +64,26 @@ class LoginNotifier extends Notifier<LoginState> {
       } else {
         state = state.copyWith(
           status: LoginStatus.error,
-          errorMessage: "로그인 실패",
-          //Todo 로그아웃 실패 시 조건 분기하여 여러 에러 메세지 작성
+          errorMessage: "알 수 없는 오류가 발생했습니다.",
+        );
+      }
+    } on DioException catch (e) {
+      // 4. 에러 처리
+      if (e.response?.statusCode == 401) {
+        state = state.copyWith(
+          status: LoginStatus.error,
+          errorMessage: "이메일 혹은 비밀번호가 잘못되었습니다.",
+        );
+      } else {
+        state = state.copyWith(
+          status: LoginStatus.error,
+          errorMessage: "서버로부터 응답을 받을 수 없습니다.",
         );
       }
     } catch (e) {
-      // 4. 에러 처리
       state = state.copyWith(
         status: LoginStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: "알 수 없는 오류가 발생했습니다.",
       );
     }
   }
