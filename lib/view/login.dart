@@ -25,6 +25,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.initState();
     emailController.addListener(_updateLoginButtonState);
     passwordController.addListener(_updateLoginButtonState);
+    _clearTokens();
+  }
+
+  Future<void> _clearTokens() async {
+    final storage = ref.read(secureStorageProvider);
+    await storage.delete(key: 'accessToken');
+    await storage.delete(key: 'refreshToken');
   }
 
   @override
@@ -58,16 +65,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<LoginState>(loginNotifierProvider, (previous, next) {
       if (next.status == LoginStatus.success) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const BaseScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const BaseScreen()),
           (route) => false,
         );
       }
     });
 
     final loginState = ref.watch(loginNotifierProvider);
-    final hasCredentialError = loginState.status == LoginStatus.error &&
+    final hasCredentialError =
+        loginState.status == LoginStatus.error &&
         loginState.errorMessage == "이메일 혹은 비밀번호가 잘못되었습니다.";
 
     return GestureDetector(
@@ -171,7 +177,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isLoginButtonEnabled &&
+                onPressed:
+                    _isLoginButtonEnabled &&
                         loginState.status != LoginStatus.loading
                     ? _login
                     : null,
