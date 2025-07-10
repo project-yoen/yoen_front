@@ -56,8 +56,8 @@ class LoginNotifier extends Notifier<LoginState> {
         await storage.write(key: "accessToken", value: accessToken);
         await storage.write(key: "refreshToken", value: refreshToken);
         //Todo log로 변경
-        print('✅ accessToken: $accessToken');
-        print('✅ refreshToken: $refreshToken');
+        print('accessToken: $accessToken');
+        print('refreshToken: $refreshToken');
 
         // 3. 상태 업데이트
         state = state.copyWith(status: LoginStatus.success);

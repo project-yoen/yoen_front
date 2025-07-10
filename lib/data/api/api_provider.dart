@@ -3,5 +3,5 @@ import 'api_client.dart';
 import 'api_service.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) {
-  return ApiClient.apiService;
+  return ApiClient.createApiService(ref);
 });
