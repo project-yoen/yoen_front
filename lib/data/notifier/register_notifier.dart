@@ -44,6 +44,7 @@ class RegisterNotifier extends Notifier<RegisterState> {
         email: '',
         password: '',
         nickname: '',
+        name: '',
         birthday: null,
         gender: null,
       ),
@@ -52,6 +53,10 @@ class RegisterNotifier extends Notifier<RegisterState> {
 
   void setEmail(String email) {
     state = state.copyWith(data: state.data.copyWith(email: email));
+  }
+
+  void setName(String name) {
+    state = state.copyWith(data: state.data.copyWith(name: name));
   }
 
   void setPassword(String password) {

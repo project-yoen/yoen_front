@@ -56,7 +56,7 @@ class _RegisterNameScreenState extends ConsumerState<RegisterNameScreen> {
                     if (_formKey.currentState!.validate()) {
                       ref
                           .read(registerNotifierProvider.notifier)
-                          .setNickname(_nameController.text);
+                          .setName(_nameController.text);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -82,7 +82,7 @@ class _RegisterNameScreenState extends ConsumerState<RegisterNameScreen> {
                             if (_formKey.currentState!.validate()) {
                               ref
                                   .read(registerNotifierProvider.notifier)
-                                  .setNickname(_nameController.text);
+                                  .setName(_nameController.text);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

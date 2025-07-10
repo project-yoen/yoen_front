@@ -7,6 +7,7 @@ class RegisterRequest {
   final int? userId;
   final String? email;
   final String? password;
+  final String? name;
   final String? nickname;
   final String? gender;
   final String? birthday;
@@ -15,6 +16,7 @@ class RegisterRequest {
     this.userId,
     required this.email,
     required this.password,
+    this.name,
     this.nickname,
     this.gender,
     this.birthday,
@@ -29,6 +31,7 @@ class RegisterRequest {
     String? email,
     String? password,
     String? nickname,
+    String? name,
     String? birthday,
     String? gender,
   }) {
@@ -36,6 +39,7 @@ class RegisterRequest {
       email: email ?? this.email,
       password: password ?? this.password,
       nickname: nickname ?? this.nickname,
+      name: name ?? this.name,
       birthday: birthday ?? this.birthday,
       gender: gender ?? this.gender,
     );
