@@ -10,7 +10,7 @@ LoginResponse _$LoginResponseFromJson(Map<String, dynamic> json) =>
     LoginResponse(
       user: json['user'] == null
           ? null
-          : RegisterRequest.fromJson(json['user'] as Map<String, dynamic>),
+          : UserResponse.fromJson(json['user'] as Map<String, dynamic>),
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
     );

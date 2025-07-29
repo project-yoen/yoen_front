@@ -1,11 +1,11 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:yoen_front/data/model/register_request.dart';
+import 'package:yoen_front/data/model/user_response.dart';
 
 part 'login_response.g.dart';
 
 @JsonSerializable()
 class LoginResponse {
-  final RegisterRequest? user;
+  final UserResponse? user;
   final String accessToken;
   final String refreshToken;
 
