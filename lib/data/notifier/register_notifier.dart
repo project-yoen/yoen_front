@@ -94,6 +94,7 @@ class RegisterNotifier extends Notifier<RegisterState> {
         email: '',
         password: '',
         nickname: '',
+        name: '',
         birthday: null,
         gender: null,
       ),
