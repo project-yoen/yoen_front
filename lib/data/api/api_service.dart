@@ -1,6 +1,7 @@
 import 'package:retrofit/retrofit.dart';
 import 'package:dio/dio.dart';
 import 'package:yoen_front/data/model/api_response.dart';
+import 'package:yoen_front/data/model/destination_response.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/register_request.dart';
@@ -21,4 +22,8 @@ abstract class ApiService {
   Future<ApiResponse<LoginResponse>> checkValidEmail(
     @Query("email") String email,
   );
+
+  @GET("/common/destination/all")
+  Future<ApiResponse<List<DestinationResponse>>> getDestinations();
 }
+
