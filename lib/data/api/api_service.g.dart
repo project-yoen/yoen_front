@@ -80,12 +80,12 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<LoginResponse>> checkValidEmail(String email) async {
+  Future<ApiResponse<bool>> checkValidEmail(String email) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'email': email};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ApiResponse<LoginResponse>>(
+    final _options = _setStreamType<ApiResponse<bool>>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -96,11 +96,11 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ApiResponse<LoginResponse> _value;
+    late ApiResponse<bool> _value;
     try {
-      _value = ApiResponse<LoginResponse>.fromJson(
+      _value = ApiResponse<bool>.fromJson(
         _result.data!,
-        (json) => LoginResponse.fromJson(json as Map<String, dynamic>),
+        (json) => json as bool,
       );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);

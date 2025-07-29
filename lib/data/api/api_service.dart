@@ -19,11 +19,8 @@ abstract class ApiService {
   Future<ApiResponse<LoginResponse>> login(@Body() LoginRequest user);
 
   @GET("/user/exists")
-  Future<ApiResponse<LoginResponse>> checkValidEmail(
-    @Query("email") String email,
-  );
+  Future<ApiResponse<bool>> checkValidEmail(@Query("email") String email);
 
   @GET("/common/destination/all")
   Future<ApiResponse<List<DestinationResponse>>> getDestinations();
 }
-
