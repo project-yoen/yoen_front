@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:retrofit/retrofit.dart';
 import 'package:dio/dio.dart';
 import 'package:yoen_front/data/model/api_response.dart';
