@@ -54,23 +54,28 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
       _selectedDay = null;
       _focusedDay = focusedDay;
 
-      // 아무 범위도 없는 경우 -> 새로 시작
-      if (_rangeStart == null || _rangeEnd == null) {
+      // ✅ 범위가 이미 선택되어 있으면 → 초기화하고 다시 시작
+      if (_rangeStart != null &&
+          _rangeEnd != null &&
+          _rangeStart != _rangeEnd) {
         _rangeStart = focusedDay;
         _rangeEnd = focusedDay;
       }
-      // 선택한 날짜가 시작 이전 -> 시작만 갱신
-      else if (focusedDay.isBefore(_rangeStart!)) {
+      // ✅ 처음 선택하거나 아직 1개만 선택된 상태면 → 범위 확장
+      else if (_rangeStart == null && _rangeEnd == null) {
         _rangeStart = focusedDay;
-      }
-      // 선택한 날짜가 끝 이후 -> 끝만 갱신
-      else if (focusedDay.isAfter(_rangeEnd!)) {
         _rangeEnd = focusedDay;
+      } else if (_rangeStart != null && _rangeEnd == _rangeStart) {
+        if (focusedDay.isBefore(_rangeStart!)) {
+          _rangeStart = focusedDay;
+        } else {
+          _rangeEnd = focusedDay;
+        }
       }
-      // 범위 안쪽 -> 중앙값 기준 가까운 쪽 조정
+      // ✅ 기타 이상한 경우에도 안전하게 초기화
       else {
-        // 범위 안쪽 선택 시 → 무조건 앞쪽 (rangeStart)만 이동
         _rangeStart = focusedDay;
+        _rangeEnd = focusedDay;
       }
 
       _rangeSelectionMode = RangeSelectionMode.toggledOn;
@@ -98,6 +103,9 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
               rangeStartDay: _rangeStart,
               rangeEndDay: _rangeEnd,
+              onDayLongPressed: (day, focusedDay) {
+                _onRangeSelected(null, null, day);
+              },
               calendarFormat: _calendarFormat,
               rangeSelectionMode: _rangeSelectionMode,
               onDaySelected: _onDaySelected,
