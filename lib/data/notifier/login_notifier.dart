@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/login_request.dart';
+import 'package:yoen_front/data/model/user_response.dart';
 
 // TODO: 따로 빼도 좋을듯
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -30,6 +31,8 @@ final loginNotifierProvider = NotifierProvider<LoginNotifier, LoginState>(
   () => LoginNotifier(),
 );
 
+final userProvider = StateProvider<UserResponse?>((ref) => null);
+
 class LoginNotifier extends Notifier<LoginState> {
   late final ApiService _api;
 
@@ -55,6 +58,10 @@ class LoginNotifier extends Notifier<LoginState> {
         final refreshToken = response.data!.refreshToken;
         await storage.write(key: "accessToken", value: accessToken);
         await storage.write(key: "refreshToken", value: refreshToken);
+
+        // userProvider에 정보 저장
+        ref.read(userProvider.notifier).state = response.data!.user;
+
         //Todo log로 변경
         print('accessToken: $accessToken');
         print('refreshToken: $refreshToken');

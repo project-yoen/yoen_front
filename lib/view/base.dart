@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/login_notifier.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
-class BaseScreen extends StatelessWidget {
+class BaseScreen extends ConsumerWidget {
   const BaseScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.read(userProvider);
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
-        title: const Align(
+        title: Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            '닉네임', // 하드코딩된 닉네임
+            '${user?.name}', // 하드코딩된 닉네임
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
