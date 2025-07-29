@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
-import 'package:yoen_front/data/notifier/login_notifier.dart';
 
 enum DestinationStatus { idle, loading, success, error }
 
