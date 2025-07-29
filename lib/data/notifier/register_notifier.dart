@@ -1,4 +1,5 @@
 // notifiers/register_notifier.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
@@ -73,6 +74,15 @@ class RegisterNotifier extends Notifier<RegisterState> {
 
   void setGender(String gender) {
     state = state.copyWith(data: state.data.copyWith(gender: gender));
+  }
+
+  Future<bool> checkValidEmail(String email) async {
+    try {
+      final isValid = await _api.checkValidEmail(email);
+      return isValid.data ?? false;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> submit() async {

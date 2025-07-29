@@ -15,11 +15,20 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController email;
   bool? isValidInput;
+  String? _serverErrorMessage;
 
   @override
   void initState() {
     super.initState();
     email = TextEditingController();
+    email.addListener(() {
+      // 사용자가 입력을 수정하면 서버 에러 메시지 초기화
+      if (_serverErrorMessage != null) {
+        setState(() {
+          _serverErrorMessage = null;
+        });
+      }
+    });
   }
 
   @override
@@ -64,17 +73,31 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) {
+                  onFieldSubmitted: (_) async {
                     if (_formKey.currentState!.validate()) {
-                      ref
+                      final isExists = await ref
                           .read(registerNotifierProvider.notifier)
-                          .setEmail(email.text);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPwdScreen(),
-                        ),
-                      );
+                          .checkValidEmail(email.text);
+
+                      if (!mounted) return;
+
+                      if (!isExists) {
+                        ref
+                            .read(registerNotifierProvider.notifier)
+                            .setEmail(email.text);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPwdScreen(),
+                          ),
+                        );
+                      } else {
+                        setState(() {
+                          _serverErrorMessage = '이미 사용 중인 이메일입니다.';
+                        });
+                        _formKey.currentState!
+                            .validate(); // 폼을 다시 그려서 validator 실행
+                      }
                     }
                   },
                   validator: (value) {
@@ -84,6 +107,9 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                     if (!isValidEmail(email.text)) {
                       return '유효한 이메일 주소를 입력해주세요.';
                     }
+                    if (_serverErrorMessage != null) {
+                      return _serverErrorMessage;
+                    }
                     return null;
                   },
                 ),
@@ -92,22 +118,36 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
                   alignment: Alignment.center,
                   child: ElevatedButton(
                     onPressed: (email.text.isNotEmpty)
-                        ? () {
-                            // 유효성 검사 등 처리
+                        ? () async {
                             if (_formKey.currentState!.validate()) {
-                              ref
+                              final isExists = await ref
                                   .read(registerNotifierProvider.notifier)
-                                  .setEmail(email.text);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const RegisterPwdScreen(),
-                                ),
-                              );
+                                  .checkValidEmail(email.text);
+                              print(isExists);
+
+                              if (!mounted) return; // context 안전 검사
+
+                              if (!isExists) {
+                                ref
+                                    .read(registerNotifierProvider.notifier)
+                                    .setEmail(email.text);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RegisterPwdScreen(),
+                                  ),
+                                );
+                              } else {
+                                setState(() {
+                                  _serverErrorMessage = '이미 사용 중인 이메일입니다.';
+                                });
+                                _formKey.currentState!.validate(); // 재검증 유도
+                              }
                             }
                           }
                         : null,
+
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(), // 원형 버튼
                       padding: const EdgeInsets.all(20), // 버튼 크기 조절
