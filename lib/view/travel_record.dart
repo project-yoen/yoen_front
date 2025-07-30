@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/view/travel_record_create.dart';
 
 class TravelRecordScreen extends ConsumerWidget {
   final int travelId;
@@ -21,6 +22,17 @@ class TravelRecordScreen extends ConsumerWidget {
     return Scaffold(
       body: Center(
         child: Text('여행 기록 페이지: \${travelId}'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TravelRecordCreateScreen(travelId: travelId),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
