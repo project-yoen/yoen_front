@@ -29,7 +29,6 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.read(userProvider);
-    final joinNotifier = ref.read(joinNotifierProvider.notifier);
     final travelListState = ref.watch(travelListNotifierProvider);
 
     return Scaffold(
