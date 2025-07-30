@@ -49,5 +49,7 @@
     <string>이 앱은 프로필 사진 촬영을 위해 카메라를 사용합니다.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>이 앱은 사진 선택을 위해 사진 라이브러리에 접근합니다.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>이 앱은 비디오 녹화 시 오디오 녹음을 위해 마이크를 사용합니다.</string>
 </dict>
 </plist>

@@ -217,6 +217,46 @@ class _ApiService implements ApiService {
     return _value;
   }
 
+  @override
+  Future<ApiResponse<RecordCreateResponse>> createRecord(
+    Map<String, dynamic> request,
+    List<MultipartFile> images,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = FormData();
+    _data.fields.add(MapEntry('dto', jsonEncode(request)));
+    _data.files.addAll(images.map((i) => MapEntry('images', i)));
+    final _options = _setStreamType<ApiResponse<RecordCreateResponse>>(
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
+          .compose(
+            _dio.options,
+            '/record/create',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<RecordCreateResponse> _value;
+    try {
+      _value = ApiResponse<RecordCreateResponse>.fromJson(
+        _result.data!,
+        (json) => RecordCreateResponse.fromJson(json as Map<String, dynamic>),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||
