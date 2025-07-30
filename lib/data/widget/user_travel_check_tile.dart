@@ -54,7 +54,7 @@ class UserTravelCheckTile extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text('국가: $nation', style: Theme.of(context).textTheme.bodySmall),
+            Text(nation, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
 
             /// 참여 사용자 리스트

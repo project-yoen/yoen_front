@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/model/user_response.dart';
+import '../data/notifier/join_notifier.dart';
 import '../data/widget/user_travel_check_tile.dart';
 
 class UserTravelJoinScreen extends ConsumerStatefulWidget {
@@ -14,57 +15,65 @@ class UserTravelJoinScreen extends ConsumerStatefulWidget {
 
 class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
   @override
+  void initState() {
+    super.initState();
+    // 화면 첫 진입 시 API 호출
+    Future.microtask(
+      () => ref.read(joinNotifierProvider.notifier).getUserJoinList(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 예시용 더미 데이터
-    final dummyUsers = [
-      UserResponse(
-        name: "홍길동",
-        nickname: "길동이",
-        imageUrl: "https://i.pravatar.cc/150?img=3",
-        email: '',
-      ),
-      UserResponse(
-        name: "김영희",
-        nickname: "영희",
-        imageUrl: "https://i.pravatar.cc/150?img=5",
-        email: '',
-      ),
-      UserResponse(
-        name: "박철수",
-        nickname: "철수",
-        imageUrl: "https://i.pravatar.cc/150?img=7",
-        email: '',
-      ),
-    ];
+    final state = ref.watch(joinNotifierProvider);
 
-    final travelList = [
-      {"id": 1, "name": "제주도 여행", "nation": "대한민국", "users": dummyUsers},
-      {
-        "id": 2,
-        "name": "오사카 여행",
-        "nation": "일본",
-        "users": dummyUsers.sublist(0, 2),
-      },
-      {"id": 3, "name": "파리 여행", "nation": "프랑스", "users": <UserResponse>[]},
-    ];
+    Widget body;
+    switch (state.status) {
+      case JoinStatus.initial:
+      case JoinStatus.loading:
+        body = const Center(child: CircularProgressIndicator());
+        break;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("신청 여행 목록")),
-      body: ListView.builder(
-        itemCount: travelList.length,
-        itemBuilder: (context, index) {
-          final travel = travelList[index];
-          return UserTravelCheckTile(
-            travelId: travel["id"] as int,
-            travelName: travel["name"] as String,
-            nation: travel["nation"] as String,
-            users: travel["users"] as List<UserResponse>,
-            onCancel: () {
-              print(travel["id"]);
+      case JoinStatus.success:
+        if (state.userJoins.isEmpty) {
+          body = const Center(child: Text('신청한 여행이 없습니다.'));
+        } else {
+          body = ListView.builder(
+            itemCount: state.userJoins.length,
+            itemBuilder: (context, index) {
+              final join = state.userJoins[index];
+              return UserTravelCheckTile(
+                travelId: join.travelId,
+                travelName: join.travelName,
+                nation: join.nation,
+                users: join.users,
+                onCancel: () => ref
+                    .read(joinNotifierProvider.notifier)
+                    .deleteTravelJoin(join.travelJoinId),
+              );
             },
           );
-        },
+        }
+        break;
+
+      case JoinStatus.error:
+        body = Center(child: Text('에러: ${state.errorMessage ?? "알 수 없는 오류"}'));
+        break;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('신청 여행 목록'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            ref.read(joinNotifierProvider.notifier).reset();
+            Navigator.of(context).pop();
+          },
+        ),
       ),
+
+      body: body,
     );
   }
 }
