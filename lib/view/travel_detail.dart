@@ -4,13 +4,17 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'dart:math'; // Random 클래스를 위해 import 추가
+import 'package:yoen_front/view/travel_overview.dart';
 import '../data/dialog/travel_date_picker_dialog.dart'; // TravelDatePickerDialog 임포트 추가
 
 class TravelDetailScreen extends ConsumerStatefulWidget {
   final String nation;
   final List<int> destinationIds;
-  const TravelDetailScreen(
-      {super.key, required this.nation, required this.destinationIds});
+  const TravelDetailScreen({
+    super.key,
+    required this.nation,
+    required this.destinationIds,
+  });
 
   @override
   ConsumerState<TravelDetailScreen> createState() => _TravelDetailScreenState();
@@ -277,9 +281,9 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
 
   void _createTravel() {
     if (_selectedStartDate == null || _selectedEndDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('여행 기간을 선택해주세요.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('여행 기간을 선택해주세요.')));
       return;
     }
 
@@ -311,10 +315,16 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
         );
-      } else if (next.status == TravelStatus.success) {
-        // TODO: 여행 생성 성공 시 다음 화면으로 이동
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')),
+      } else if (next.status == TravelStatus.success && next.travel != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) =>
+                TravelOverviewScreen(travelName: next.travel!.travelName),
+          ),
+          (route) => false,
         );
       }
     });
@@ -386,7 +396,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                         _selectedEndDate != null) {
                       _travelDurationController.text =
                           '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')} - ' +
-                              '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
+                          '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
                     } else if (_selectedStartDate != null) {
                       _travelDurationController.text =
                           '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')}';
@@ -464,4 +474,3 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     );
   }
 }
-

@@ -10,7 +10,7 @@ class TravelCreateResponse {
   final String endDate;
   final String nation;
   final int numOfPeople;
-  final String travelCode;
+  final int? sharedFund;
 
   TravelCreateResponse({
     required this.travelId,
@@ -19,7 +19,7 @@ class TravelCreateResponse {
     required this.endDate,
     required this.nation,
     required this.numOfPeople,
-    required this.travelCode,
+    this.sharedFund,
   });
 
   factory TravelCreateResponse.fromJson(Map<String, dynamic> json) =>
