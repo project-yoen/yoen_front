@@ -1,17 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/view/travel_overview.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
-class BaseScreen extends ConsumerWidget {
+class BaseScreen extends ConsumerStatefulWidget {
   const BaseScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BaseScreen> createState() => _BaseScreenState();
+}
+
+class _BaseScreenState extends ConsumerState<BaseScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 위젯이 빌드된 후 첫 여행 목록을 가져옵니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(travelListNotifierProvider.notifier).fetchTravels();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.read(userProvider);
+    final travelListState = ref.watch(travelListNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,7 +37,7 @@ class BaseScreen extends ConsumerWidget {
           alignment: Alignment.centerLeft,
           child: Text(
             '${user?.name}', // 하드코딩된 닉네임
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
         actions: [
@@ -45,31 +62,90 @@ class BaseScreen extends ConsumerWidget {
               ),
             ),
             SizedBox(
-              // Expanded 대신 SizedBox로 높이 제한
-              height:
-                  MediaQuery.of(context).size.height *
-                  0.50, // 화면 높이의 25%로 설정 (대략 절반)
-              child: PageView.builder(
-                itemCount: 3, // 임시로 3개의 여행 이미지 (플레이스홀더)
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300], // 이미지 플레이스홀더
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '여행 이미지 ${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: Colors.black54,
-                        ),
+              height: MediaQuery.of(context).size.height * 0.50,
+              child: switch (travelListState.status) {
+                TravelListStatus.loading ||
+                TravelListStatus.initial =>
+                  const Center(child: CircularProgressIndicator()),
+                TravelListStatus.error => Center(
+                    child: Text(
+                        travelListState.errorMessage ?? '여행 목록을 불러오는데 실패했습니다.')),
+                TravelListStatus.success => travelListState.travels.isEmpty
+                    ? const Center(child: Text('아직 참여중인 여행이 없어요.'))
+                    : PageView.builder(
+                        itemCount: travelListState.travels.length,
+                        itemBuilder: (context, index) {
+                          final travel = travelListState.travels[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TravelOverviewScreen(
+                                    travelId: travel.travelId,
+                                    travelName: travel.travelName,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              clipBehavior: Clip.antiAlias,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  if (travel.imageUrl != null)
+                                    Image.network(
+                                      travel.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error,
+                                              stackTrace) =>
+                                          const Center(
+                                              child: Icon(Icons.error)),
+                                    )
+                                  else
+                                    Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                          child: Icon(Icons.image_not_supported)),
+                                    ),
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.7),
+                                          ],
+                                        ),
+                                      ),
+                                      child: Text(
+                                        travel.travelName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  );
-                },
-              ),
+              },
             ),
             Padding(
               padding: const EdgeInsets.symmetric(

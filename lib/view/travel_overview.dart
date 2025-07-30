@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
 
 class TravelOverviewScreen extends StatefulWidget {
+  final int travelId;
   final String travelName;
 
-  const TravelOverviewScreen({super.key, required this.travelName});
+  const TravelOverviewScreen({
+    super.key,
+    required this.travelId,
+    required this.travelName,
+  });
 
   @override
   State<TravelOverviewScreen> createState() => _TravelOverviewScreenState();
@@ -15,6 +21,9 @@ class TravelOverviewScreen extends StatefulWidget {
 
 class _TravelOverviewScreenState extends State<TravelOverviewScreen> {
   int _selectedIndex = 0;
+
+  // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
+  final String _travelCode = "DUMMY-CODE"; // 임시 코드
 
   static const List<Widget> _widgetOptions = <Widget>[
     TravelOverviewContentScreen(),
@@ -50,8 +59,34 @@ class _TravelOverviewScreenState extends State<TravelOverviewScreen> {
                     children: [
                       const Text('친구에게 코드를 공유하여 여행에 초대하세요!'),
                       const SizedBox(height: 20),
+                      SelectableText(
+                        _travelCode,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(text: _travelCode),
+                        ).then((_) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('초대 코드가 복사되었습니다.')),
+                          );
+                        });
+                      },
+                      child: const Text('복사하기'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('닫기'),
+                    ),
+                  ],
                 ),
               );
             },

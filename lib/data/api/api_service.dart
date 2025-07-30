@@ -4,6 +4,7 @@ import 'package:yoen_front/data/model/api_response.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
+import 'package:yoen_front/data/model/travel_response.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/register_request.dart';
@@ -30,4 +31,7 @@ abstract class ApiService {
   @POST("/travel/create")
   Future<ApiResponse<TravelCreateResponse>> createTravel(
       @Body() TravelCreateRequest request);
+
+  @GET("/travel")
+  Future<ApiResponse<List<TravelResponse>>> getTravels();
 }

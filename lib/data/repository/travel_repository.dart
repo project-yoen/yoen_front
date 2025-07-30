@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
+import 'package:yoen_front/data/model/travel_response.dart';
 import '../api/api_provider.dart';
 
 final travelRepositoryProvider = Provider<TravelRepository>((ref) {
@@ -20,6 +21,15 @@ class TravelRepository {
       return apiResponse.data!;
     } else {
       throw Exception(apiResponse.error ?? 'Failed to create travel');
+    }
+  }
+
+  Future<List<TravelResponse>> getTravels() async {
+    final apiResponse = await _apiService.getTravels();
+    if (apiResponse.data != null) {
+      return apiResponse.data!;
+    } else {
+      throw Exception(apiResponse.error ?? 'Failed to get travels');
     }
   }
 }

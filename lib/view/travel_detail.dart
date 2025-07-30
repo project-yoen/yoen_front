@@ -316,13 +316,15 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
           SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
         );
       } else if (next.status == TravelStatus.success && next.travel != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')),
+        );
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (_) =>
-                TravelOverviewScreen(travelName: next.travel!.travelName),
+            builder: (_) => TravelOverviewScreen(
+              travelId: next.travel!.travelId,
+              travelName: next.travel!.travelName,
+            ),
           ),
           (route) => false,
         );
