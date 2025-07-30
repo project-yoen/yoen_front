@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:yoen_front/data/model/travel_create_request.dart';
+import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'dart:math'; // Random 클래스를 위해 import 추가
 import '../data/dialog/travel_date_picker_dialog.dart'; // TravelDatePickerDialog 임포트 추가
 
-class TravelDetailScreen extends StatefulWidget {
-  const TravelDetailScreen({super.key});
+class TravelDetailScreen extends ConsumerStatefulWidget {
+  final String nation;
+  final List<int> destinationIds;
+  const TravelDetailScreen(
+      {super.key, required this.nation, required this.destinationIds});
 
   @override
-  State<TravelDetailScreen> createState() => _TravelDetailScreenState();
+  ConsumerState<TravelDetailScreen> createState() => _TravelDetailScreenState();
 }
 
-class _TravelDetailScreenState extends State<TravelDetailScreen> {
+class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
   final TextEditingController _travelNameController = TextEditingController();
   final TextEditingController _travelDurationController =
       TextEditingController();
@@ -268,8 +275,52 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
     return '$adjective $noun';
   }
 
+  void _createTravel() {
+    if (_selectedStartDate == null || _selectedEndDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('여행 기간을 선택해주세요.')),
+      );
+      return;
+    }
+
+    final travelName = _travelNameController.text.isEmpty
+        ? _currentHintTravelName!
+        : _travelNameController.text;
+    final numOfPeople = int.parse(_numberOfPeopleController.text);
+    final nation = widget.nation;
+    final startDate = DateFormat('yyyy-MM-dd').format(_selectedStartDate!);
+    final endDate = DateFormat('yyyy-MM-dd').format(_selectedEndDate!);
+    final destinationIds = widget.destinationIds;
+
+    final request = TravelCreateRequest(
+      travelName: travelName,
+      numOfPeople: numOfPeople,
+      nation: nation,
+      startDate: startDate,
+      endDate: endDate,
+      destinationIds: destinationIds,
+    );
+
+    ref.read(travelNotifierProvider.notifier).createTravel(request);
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<TravelState>(travelNotifierProvider, (previous, next) {
+      if (next.status == TravelStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
+        );
+      } else if (next.status == TravelStatus.success) {
+        // TODO: 여행 생성 성공 시 다음 화면으로 이동
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')),
+        );
+      }
+    });
+
+    final travelState = ref.watch(travelNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -335,7 +386,7 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
                         _selectedEndDate != null) {
                       _travelDurationController.text =
                           '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')} - ' +
-                          '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
+                              '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
                     } else if (_selectedStartDate != null) {
                       _travelDurationController.text =
                           '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')}';
@@ -381,15 +432,29 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
               ],
             ),
             const Spacer(),
-            Align(
-              alignment: Alignment.center,
-              child: FloatingActionButton(
-                onPressed: () {
-                  if (_travelNameController.text.isEmpty) {
-                    _travelNameController.text = _currentHintTravelName!;
-                  }
-                },
-                child: const Icon(Icons.arrow_forward),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: travelState.status == TravelStatus.loading
+                    ? null
+                    : _createTravel,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  backgroundColor: const Color(0xFF6A4FF9), // 버튼 배경색
+                  foregroundColor: Colors.white, // 버튼 텍스트색
+                ),
+                child: travelState.status == TravelStatus.loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        '여행 생성하기',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 20),
@@ -399,3 +464,4 @@ class _TravelDetailScreenState extends State<TravelDetailScreen> {
     );
   }
 }
+

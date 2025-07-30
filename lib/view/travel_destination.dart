@@ -177,12 +177,17 @@ class _TravelDestinationScreenState
                 alignment: Alignment.center,
                 child: FloatingActionButton(
                   onPressed: () {
-                    // TODO: 선택된 목적지들을 가지고 다음 화면으로 넘어가는 로직 구현
                     if (_selectedDestinations.isNotEmpty) {
+                      final destinationIds = _selectedDestinations
+                          .map((dest) => dest.destinationId)
+                          .toList();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const TravelDetailScreen(),
+                          builder: (context) => TravelDetailScreen(
+                            nation: _selectedCountry,
+                            destinationIds: destinationIds,
+                          ),
                         ),
                       );
                     } else {
