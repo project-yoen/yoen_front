@@ -27,9 +27,18 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedDay = _focusedDay;
+
+    // 기존에 선택한 범위가 있으면 그 시작 날짜를 기준으로 캘린더를 열도록
     _rangeStart = widget.initialStartDate;
     _rangeEnd = widget.initialEndDate;
+
+    if (_rangeStart != null) {
+      _focusedDay = _rangeStart!;
+    } else {
+      _focusedDay = DateTime.now();
+    }
+
+    _selectedDay = _focusedDay;
   }
 
   @override
@@ -54,14 +63,14 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
       _selectedDay = null;
       _focusedDay = focusedDay;
 
-      // ✅ 범위가 이미 선택되어 있으면 → 초기화하고 다시 시작
+      // 범위가 이미 선택되어 있으면 → 초기화하고 다시 시작
       if (_rangeStart != null &&
           _rangeEnd != null &&
           _rangeStart != _rangeEnd) {
         _rangeStart = focusedDay;
         _rangeEnd = focusedDay;
       }
-      // ✅ 처음 선택하거나 아직 1개만 선택된 상태면 → 범위 확장
+      // 처음 선택하거나 아직 1개만 선택된 상태면 → 범위 확장
       else if (_rangeStart == null && _rangeEnd == null) {
         _rangeStart = focusedDay;
         _rangeEnd = focusedDay;
@@ -72,7 +81,7 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
           _rangeEnd = focusedDay;
         }
       }
-      // ✅ 기타 이상한 경우에도 안전하게 초기화
+      // 기타 이상한 경우에도 안전하게 초기화
       else {
         _rangeStart = focusedDay;
         _rangeEnd = focusedDay;
