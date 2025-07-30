@@ -15,7 +15,6 @@ TravelCreateResponse _$TravelCreateResponseFromJson(
   endDate: json['endDate'] as String,
   nation: json['nation'] as String,
   numOfPeople: (json['numOfPeople'] as num).toInt(),
-  travelCode: json['travelCode'] as String,
 );
 
 Map<String, dynamic> _$TravelCreateResponseToJson(
@@ -27,5 +26,4 @@ Map<String, dynamic> _$TravelCreateResponseToJson(
   'endDate': instance.endDate,
   'nation': instance.nation,
   'numOfPeople': instance.numOfPeople,
-  'travelCode': instance.travelCode,
 };
