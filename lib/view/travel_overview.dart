@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
@@ -27,6 +30,20 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
   final String _travelCode = "DUMMY-CODE"; // 임시 코드
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final travelListState = ref.read(travelListNotifierProvider);
+      final travel = travelListState.travels.firstWhere(
+        (t) => t.travelId == widget.travelId,
+      );
+      ref
+          .read(dateNotifierProvider.notifier)
+          .setDate(DateTime.parse(travel.startDate));
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -35,10 +52,24 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final travelListState = ref.watch(travelListNotifierProvider);
+    final travel = travelListState.travels.firstWhere(
+      (t) => t.travelId == widget.travelId,
+    );
+    final currentDate = ref.watch(dateNotifierProvider);
+
     final List<Widget> widgetOptions = [
       TravelOverviewContentScreen(travelId: widget.travelId),
-      TravelPaymentScreen(travelId: widget.travelId),
-      TravelRecordScreen(travelId: widget.travelId),
+      TravelPaymentScreen(
+        travelId: widget.travelId,
+        startDate: DateTime.parse(travel.startDate),
+        endDate: DateTime.parse(travel.endDate),
+      ),
+      TravelRecordScreen(
+        travelId: widget.travelId,
+        startDate: DateTime.parse(travel.startDate),
+        endDate: DateTime.parse(travel.endDate),
+      ),
       TravelAdditionalScreen(travelId: widget.travelId),
     ];
 
@@ -108,7 +139,41 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
           ),
         ],
       ),
-      body: Center(child: widgetOptions.elementAt(_selectedIndex)),
+      body: Column(
+        children: [
+          if (currentDate != null && _selectedIndex != 3)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios),
+                    onPressed: () => ref
+                        .read(dateNotifierProvider.notifier)
+                        .previousDay(DateTime.parse(travel.startDate)),
+                  ),
+                  Text(
+                    DateFormat('yyyy.MM.dd').format(currentDate),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios),
+                    onPressed: () => ref
+                        .read(dateNotifierProvider.notifier)
+                        .nextDay(DateTime.parse(travel.endDate)),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: Center(child: widgetOptions.elementAt(_selectedIndex)),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '전체보기'),

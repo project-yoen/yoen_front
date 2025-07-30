@@ -7,12 +7,14 @@ class TravelResponse {
   final int travelId;
   final String travelName;
   final String startDate;
+  final String endDate;
   final String? imageUrl;
 
   TravelResponse({
     required this.travelId,
     required this.travelName,
     required this.startDate,
+    required this.endDate,
     this.imageUrl,
   });
 
