@@ -4,6 +4,7 @@ import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
+import '../data/notifier/join_notifier.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
 class BaseScreen extends ConsumerWidget {
@@ -12,6 +13,7 @@ class BaseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.read(userProvider);
+    final joinNotifier = ref.read(joinNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -107,7 +109,7 @@ class BaseScreen extends ConsumerWidget {
                     context: context,
                     // 주변 배경 누르면 꺼지는 설정
                     barrierDismissible: false,
-                    builder: (context) => const TravelCodeDialog(),
+                    builder: (context) => TravelCodeDialog(),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -130,7 +132,7 @@ class BaseScreen extends ConsumerWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const UserTravelJoinScreen(),
+                      builder: (context) => UserTravelJoinScreen(),
                     ),
                   );
                 },
