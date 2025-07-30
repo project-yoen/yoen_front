@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
