@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/date_notifier.dart';
 
-class TravelRecordScreen extends StatelessWidget {
-  const TravelRecordScreen({super.key});
+class TravelRecordScreen extends ConsumerWidget {
+  final int travelId;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const TravelRecordScreen({
+    super.key,
+    required this.travelId,
+    required this.startDate,
+    required this.endDate,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentDate = ref.watch(dateNotifierProvider);
+
+    return Scaffold(
       body: Center(
-        child: Text('여행 기록 페이지'),
+        child: Text('여행 기록 페이지: \${travelId}'),
       ),
     );
   }
