@@ -76,7 +76,7 @@ class _TravelCodeDialogState extends State<TravelCodeDialog> {
                               ),
                               SizedBox(height: 8),
                               Text(
-                                '인증이 완료되었습니다!',
+                                '요청이 완료되었습니다!',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
