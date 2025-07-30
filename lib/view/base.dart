@@ -64,87 +64,95 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.50,
               child: switch (travelListState.status) {
-                TravelListStatus.loading ||
-                TravelListStatus.initial =>
+                TravelListStatus.loading || TravelListStatus.initial =>
                   const Center(child: CircularProgressIndicator()),
                 TravelListStatus.error => Center(
-                    child: Text(
-                        travelListState.errorMessage ?? '여행 목록을 불러오는데 실패했습니다.')),
-                TravelListStatus.success => travelListState.travels.isEmpty
-                    ? const Center(child: Text('아직 참여중인 여행이 없어요.'))
-                    : PageView.builder(
-                        itemCount: travelListState.travels.length,
-                        itemBuilder: (context, index) {
-                          final travel = travelListState.travels[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TravelOverviewScreen(
-                                    travelId: travel.travelId,
-                                    travelName: travel.travelName,
+                  child: Text(
+                    travelListState.errorMessage ?? '여행 목록을 불러오는데 실패했습니다.',
+                  ),
+                ),
+                TravelListStatus.success =>
+                  travelListState.travels.isEmpty
+                      ? const Center(child: Text('아직 참여중인 여행이 없어요.'))
+                      : PageView.builder(
+                          itemCount: travelListState.travels.length,
+                          itemBuilder: (context, index) {
+                            final travel = travelListState.travels[index];
+                            return GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TravelOverviewScreen(
+                                      travelId: travel.travelId,
+                                      travelName: travel.travelName,
+                                    ),
                                   ),
+                                );
+                                ref.read(travelListNotifierProvider.notifier).fetchTravels();
+                              },
+                              child: Card(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
                                 ),
-                              );
-                            },
-                            child: Card(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
-                              clipBehavior: Clip.antiAlias,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (travel.imageUrl != null)
-                                    Image.network(
-                                      travel.imageUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error,
-                                              stackTrace) =>
-                                          const Center(
-                                              child: Icon(Icons.error)),
-                                    )
-                                  else
-                                    Container(
-                                      color: Colors.grey[300],
-                                      child: const Center(
-                                          child: Icon(Icons.image_not_supported)),
-                                    ),
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12.0),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black.withOpacity(0.7),
-                                          ],
+                                clipBehavior: Clip.antiAlias,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    if (travel.imageUrl != null)
+                                      Image.network(
+                                        travel.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Center(
+                                                  child: Icon(Icons.error),
+                                                ),
+                                      )
+                                    else
+                                      Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                          ),
                                         ),
                                       ),
-                                      child: Text(
-                                        travel.travelName,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12.0),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.7),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Text(
+                                          travel.travelName,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
               },
             ),
             Padding(

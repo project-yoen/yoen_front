@@ -1,10 +1,13 @@
+import 'dart:math'; // Random 클래스를 위해 import 추가
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
-import 'dart:math'; // Random 클래스를 위해 import 추가
 import 'package:yoen_front/view/travel_overview.dart';
+
 import '../data/dialog/travel_date_picker_dialog.dart'; // TravelDatePickerDialog 임포트 추가
 
 class TravelDetailScreen extends ConsumerStatefulWidget {
@@ -316,9 +319,10 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
           SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
         );
       } else if (next.status == TravelStatus.success && next.travel != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')),
-        );
+        ref.read(travelListNotifierProvider.notifier).fetchTravels();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (_) => TravelOverviewScreen(
@@ -326,7 +330,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
               travelName: next.travel!.travelName,
             ),
           ),
-          (route) => false,
+          (route) => route.isFirst,
         );
       }
     });

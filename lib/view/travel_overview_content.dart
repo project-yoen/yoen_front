@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 class TravelOverviewContentScreen extends StatelessWidget {
-  const TravelOverviewContentScreen({super.key});
+  final int travelId;
+
+  const TravelOverviewContentScreen({super.key, required this.travelId});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('전체보기 페이지'),
+    return Center(
+      child: Text('전체보기 페이지: $travelId'),
     );
   }
 }

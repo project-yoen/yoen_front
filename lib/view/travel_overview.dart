@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
 
-class TravelOverviewScreen extends StatefulWidget {
+class TravelOverviewScreen extends ConsumerStatefulWidget {
   final int travelId;
   final String travelName;
 
@@ -16,21 +18,15 @@ class TravelOverviewScreen extends StatefulWidget {
   });
 
   @override
-  State<TravelOverviewScreen> createState() => _TravelOverviewScreenState();
+  ConsumerState<TravelOverviewScreen> createState() =>
+      _TravelOverviewScreenState();
 }
 
-class _TravelOverviewScreenState extends State<TravelOverviewScreen> {
+class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   int _selectedIndex = 0;
 
   // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
   final String _travelCode = "DUMMY-CODE"; // 임시 코드
-
-  static const List<Widget> _widgetOptions = <Widget>[
-    TravelOverviewContentScreen(),
-    TravelPaymentScreen(),
-    TravelRecordScreen(),
-    TravelAdditionalScreen(),
-  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,10 +36,23 @@ class _TravelOverviewScreenState extends State<TravelOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> widgetOptions = [
+      TravelOverviewContentScreen(travelId: widget.travelId),
+      TravelPaymentScreen(travelId: widget.travelId),
+      TravelRecordScreen(travelId: widget.travelId),
+      TravelAdditionalScreen(travelId: widget.travelId),
+    ];
+
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         title: Text(widget.travelName),
-        automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -100,7 +109,7 @@ class _TravelOverviewScreenState extends State<TravelOverviewScreen> {
           ),
         ],
       ),
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: Center(child: widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '전체보기'),

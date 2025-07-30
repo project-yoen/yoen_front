@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 class TravelRecordScreen extends StatelessWidget {
-  const TravelRecordScreen({super.key});
+  final int travelId;
+
+  const TravelRecordScreen({super.key, required this.travelId});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text('여행 기록 페이지'),
+        child: Text('여행 기록 페이지: $travelId'),
       ),
     );
   }

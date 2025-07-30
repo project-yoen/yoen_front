@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 class TravelPaymentScreen extends StatelessWidget {
-  const TravelPaymentScreen({super.key});
+  final int travelId;
+
+  const TravelPaymentScreen({super.key, required this.travelId});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text('금액 기록 페이지'),
+        child: Text('금액 기록 페이지: $travelId'),
       ),
     );
   }
