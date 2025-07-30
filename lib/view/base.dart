@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
+import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
@@ -116,6 +117,30 @@ class BaseScreen extends ConsumerWidget {
                   ),
                 ),
                 child: const Text('여행 참여하기', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  //여행 생성하기 버튼 누를 시 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserTravelJoinScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('신청한 여행', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],
