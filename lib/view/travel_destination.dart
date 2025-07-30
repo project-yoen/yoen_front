@@ -230,7 +230,6 @@ class _TravelDestinationScreenState
             final destination = filteredList[index];
             return ListTile(
               title: Text(destination.destinationName),
-              subtitle: Text(destination.nation),
               onTap: () {
                 _selectDestination(destination);
               },
