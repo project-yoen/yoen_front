@@ -91,7 +91,9 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
                                     ),
                                   ),
                                 );
-                                ref.read(travelListNotifierProvider.notifier).fetchTravels();
+                                ref
+                                    .read(travelListNotifierProvider.notifier)
+                                    .fetchTravels();
                               },
                               child: Card(
                                 margin: const EdgeInsets.symmetric(
