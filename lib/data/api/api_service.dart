@@ -22,5 +22,6 @@ abstract class ApiService {
   Future<ApiResponse<bool>> checkValidEmail(@Query("email") String email);
 
   @GET("/common/destination/all")
-  Future<ApiResponse<List<DestinationResponse>>> getDestinations();
+  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
+      @Query("nation") String nation);
 }

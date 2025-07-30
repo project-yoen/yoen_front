@@ -110,9 +110,11 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<List<DestinationResponse>>> getDestinations() async {
+  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
+    String nation,
+  ) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'nation': nation};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<ApiResponse<List<DestinationResponse>>>(

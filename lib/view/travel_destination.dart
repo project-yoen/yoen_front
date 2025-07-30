@@ -14,12 +14,27 @@ class TravelDestinationScreen extends ConsumerStatefulWidget {
 
 class _TravelDestinationScreenState
     extends ConsumerState<TravelDestinationScreen> {
-  Set<String> _selectedCountry = {'한국'}; // 초기 선택값 설정
+  String _selectedCountry = 'KOREA'; // 초기 선택값 설정
   final TextEditingController _searchController = TextEditingController();
   final List<DestinationResponse> _selectedDestinations = [];
 
   // 검색 목록을 보여줄지 여부를 결정하는 상태
   bool _showDestinations = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 위젯이 빌드된 후 첫 목적지 목록을 가져옵니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchDestinationsByCountry();
+    });
+  }
+
+  void _fetchDestinationsByCountry() {
+    ref
+        .read(destinationNotifierProvider.notifier)
+        .fetchDestinations(_selectedCountry);
+  }
 
   @override
   void dispose() {
@@ -83,13 +98,15 @@ class _TravelDestinationScreenState
               Center(
                 child: SegmentedButton<String>(
                   segments: const <ButtonSegment<String>>[
-                    ButtonSegment<String>(value: '한국', label: Text('한국')),
-                    ButtonSegment<String>(value: '일본', label: Text('일본')),
+                    ButtonSegment<String>(value: 'KOREA', label: Text('한국')),
+                    ButtonSegment<String>(value: 'JAPAN', label: Text('일본')),
                   ],
-                  selected: _selectedCountry,
+                  selected: {_selectedCountry},
                   onSelectionChanged: (Set<String> newSelection) {
                     setState(() {
-                      _selectedCountry = newSelection;
+                      _selectedCountry = newSelection.first;
+                      _fetchDestinationsByCountry(); // 국가 변경 시 목적지 다시 로드
+                      _showDestinations = true; // 목록을 바로 보여줌
                     });
                   },
                 ),
@@ -100,9 +117,7 @@ class _TravelDestinationScreenState
                 onTap: () {
                   // 텍스트 필드를 탭하면 API 호출 및 목록 표시
                   if (!_showDestinations) {
-                    ref
-                        .read(destinationNotifierProvider.notifier)
-                        .fetchDestinations();
+                    _fetchDestinationsByCountry();
                     setState(() {
                       _showDestinations = true;
                     });
@@ -113,7 +128,6 @@ class _TravelDestinationScreenState
                   setState(() {});
                 },
                 decoration: const InputDecoration(
-                  // Todo: 이미 추가된 목적지를 선택했을 때 다른 반응 추가
                   hintText: '목적지를 검색하세요',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.search),

@@ -43,10 +43,10 @@ class DestinationNotifier extends Notifier<DestinationState> {
     return DestinationState();
   }
 
-  Future<void> fetchDestinations() async {
+  Future<void> fetchDestinations(String nation) async {
     state = state.copyWith(status: DestinationStatus.loading);
     try {
-      final response = await _api.getDestinations();
+      final response = await _api.getDestinations(nation);
       if (response.data != null) {
         state = state.copyWith(
           status: DestinationStatus.success,
