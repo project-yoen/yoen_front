@@ -27,8 +27,9 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     // access token이 만료되었을 경우
-    if (err.response?.statusCode == 401 && !_isRetry(err.requestOptions)) {
+    if (err.response?.statusCode == 403 && !_isRetry(err.requestOptions)) {
       final storage = ref.read(secureStorageProvider);
+      final accessToken = await storage.read(key: 'accessToken');
       final refreshToken = await storage.read(key: 'refreshToken');
 
       if (refreshToken != null) {
@@ -38,8 +39,8 @@ class AuthInterceptor extends Interceptor {
             data: {'refreshToken': refreshToken},
           );
 
-          final newAccessToken = response.data['accessToken'];
-          final newRefreshToken = response.data['refreshToken'];
+          final newAccessToken = response.data['data']['accessToken'];
+          final newRefreshToken = response.data['data']['refreshToken'];
 
           await storage.write(key: 'accessToken', value: newAccessToken);
           await storage.write(key: 'refreshToken', value: newRefreshToken);
