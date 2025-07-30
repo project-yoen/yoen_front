@@ -16,8 +16,7 @@ class _TravelDestinationScreenState
     extends ConsumerState<TravelDestinationScreen> {
   Set<String> _selectedCountry = {'한국'}; // 초기 선택값 설정
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _destination1Controller = TextEditingController();
-  final TextEditingController _destination2Controller = TextEditingController();
+  final List<DestinationResponse> _selectedDestinations = [];
 
   // 검색 목록을 보여줄지 여부를 결정하는 상태
   bool _showDestinations = false;
@@ -25,14 +24,27 @@ class _TravelDestinationScreenState
   @override
   void dispose() {
     _searchController.dispose();
-    _destination1Controller.dispose();
-    _destination2Controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final destinationState = ref.watch(destinationNotifierProvider);
+    List<DestinationResponse> filteredDestinations = [];
+
+    if (destinationState.status == DestinationStatus.success) {
+      final searchQuery = _searchController.text.toLowerCase();
+      if (searchQuery.isEmpty) {
+        filteredDestinations = destinationState.destinations;
+      } else {
+        filteredDestinations = destinationState.destinations
+            .where(
+              (dest) =>
+                  dest.destinationName.toLowerCase().contains(searchQuery),
+            )
+            .toList();
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -55,101 +67,135 @@ class _TravelDestinationScreenState
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Center(
-              child: SegmentedButton<String>(
-                segments: const <ButtonSegment<String>>[
-                  ButtonSegment<String>(value: '한국', label: Text('한국')),
-                  ButtonSegment<String>(value: '일본', label: Text('일본')),
-                ],
-                selected: _selectedCountry,
-                onSelectionChanged: (Set<String> newSelection) {
-                  setState(() {
-                    _selectedCountry = newSelection;
-                  });
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus(); // 키보드 숨기기
+          setState(() {
+            _showDestinations = false; // 목적지 목록 숨기기
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: SegmentedButton<String>(
+                  segments: const <ButtonSegment<String>>[
+                    ButtonSegment<String>(value: '한국', label: Text('한국')),
+                    ButtonSegment<String>(value: '일본', label: Text('일본')),
+                  ],
+                  selected: _selectedCountry,
+                  onSelectionChanged: (Set<String> newSelection) {
+                    setState(() {
+                      _selectedCountry = newSelection;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _searchController,
+                onTap: () {
+                  // 텍스트 필드를 탭하면 API 호출 및 목록 표시
+                  if (!_showDestinations) {
+                    ref
+                        .read(destinationNotifierProvider.notifier)
+                        .fetchDestinations();
+                    setState(() {
+                      _showDestinations = true;
+                    });
+                  }
                 },
+                onChanged: (value) {
+                  // 검색어가 변경될 때마다 화면을 다시 그려서 목록을 필터링
+                  setState(() {});
+                },
+                decoration: const InputDecoration(
+                  // Todo: 이미 추가된 목적지를 선택했을 때 다른 반응 추가
+                  hintText: '목적지를 검색하세요',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.search),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _searchController,
-              onTap: () {
-                // 텍스트 필드를 탭하면 API 호출 및 목록 표시
-                ref
-                    .read(destinationNotifierProvider.notifier)
-                    .fetchDestinations();
-                setState(() {
-                  _showDestinations = true;
-                });
-              },
-              decoration: const InputDecoration(
-                hintText: '목적지를 검색하세요',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-              readOnly: true, // 사용자가 직접 입력하는 것을 방지하고 탭 이벤트만 사용
-            ),
-            const SizedBox(height: 20),
-            // _showDestinations가 true일 때만 목록을 보여줌
-            if (_showDestinations)
-              Expanded(
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.outline,
+              const SizedBox(height: 10),
+              // _showDestinations가 true일 때만 목록을 보여줌
+              if (_showDestinations)
+                SizedBox(
+                  height: 250,
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
                     ),
-                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    child: _buildDestinationList(
+                      destinationState,
+                      filteredDestinations,
+                    ),
                   ),
-                  child: _buildDestinationList(destinationState),
                 ),
-              ),
-            if (!_showDestinations) ...[
               const SizedBox(height: 20),
-              TextFormField(
-                controller: _destination1Controller,
-                decoration: const InputDecoration(
-                  labelText: '목적지 1',
-                  border: OutlineInputBorder(),
+              if (_selectedDestinations.isNotEmpty)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: _selectedDestinations
+                      .map(
+                        (dest) => Chip(
+                          label: Text(dest.destinationName),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedDestinations.removeWhere(
+                                (d) => d.destinationId == dest.destinationId,
+                              );
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
                 ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _destination2Controller,
-                decoration: const InputDecoration(
-                  labelText: '목적지 2',
-                  border: OutlineInputBorder(),
-                ),
-              ),
               const Spacer(),
               Align(
                 alignment: Alignment.center,
                 child: FloatingActionButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TravelDetailScreen(),
-                      ),
-                    );
+                    // TODO: 선택된 목적지들을 가지고 다음 화면으로 넘어가는 로직 구현
+                    if (_selectedDestinations.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TravelDetailScreen(),
+                        ),
+                      );
+                    } else {
+                      // 목적지가 선택되지 않았을 때 사용자에게 알림
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('목적지를 하나 이상 선택해주세요.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                   child: const Icon(Icons.arrow_forward),
                 ),
               ),
               const SizedBox(height: 20),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDestinationList(DestinationState state) {
+  Widget _buildDestinationList(
+    DestinationState state,
+    List<DestinationResponse> filteredList,
+  ) {
     switch (state.status) {
       case DestinationStatus.loading:
         return const Center(child: CircularProgressIndicator());
@@ -161,13 +207,13 @@ class _TravelDestinationScreenState
           ),
         );
       case DestinationStatus.success:
-        if (state.destinations.isEmpty) {
+        if (filteredList.isEmpty) {
           return const Center(child: Text('검색 결과가 없습니다.'));
         }
         return ListView.builder(
-          itemCount: state.destinations.length,
+          itemCount: filteredList.length,
           itemBuilder: (context, index) {
-            final destination = state.destinations[index];
+            final destination = filteredList[index];
             return ListTile(
               title: Text(destination.destinationName),
               subtitle: Text(destination.nation),
@@ -184,23 +230,14 @@ class _TravelDestinationScreenState
   }
 
   void _selectDestination(DestinationResponse destination) {
-    // 검색창에 선택한 목적지 이름을 표시
-    _searchController.text = destination.destinationName;
-
-    // 목적지 1 또는 2에 할당
-    if (_destination1Controller.text.isEmpty) {
-      _destination1Controller.text = destination.destinationName;
-    } else if (_destination2Controller.text.isEmpty) {
-      _destination2Controller.text = destination.destinationName;
-    } else {
-      _destination1Controller.text = destination.destinationName;
+    // 중복 추가 방지
+    if (!_selectedDestinations.any(
+      (d) => d.destinationId == destination.destinationId,
+    )) {
+      setState(() {
+        _selectedDestinations.add(destination);
+      });
     }
-
-    // 목록을 숨김
-    setState(() {
-      _showDestinations = false;
-    });
-    // 키보드 숨기기
-    FocusScope.of(context).unfocus();
+    _searchController.clear();
   }
 }
