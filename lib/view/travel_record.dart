@@ -87,8 +87,8 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                   child: Text(
                     record.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Text(
@@ -102,16 +102,15 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
             const SizedBox(height: 8.0),
             Text(
               '작성자: ${record.travelNickName}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey[700]),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
             ),
             const SizedBox(height: 8.0),
             Text(record.content, style: Theme.of(context).textTheme.bodyMedium),
             if (record.images.isNotEmpty) ...[
               const SizedBox(height: 16.0),
-              _buildImageGallery(record.images),
+              _buildImageGallery(record.images.map((e) => e.imageUrl).toList()),
             ],
           ],
         ),
