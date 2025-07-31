@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
-import 'package:yoen_front/view/travel_overview.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
-import '../data/notifier/join_notifier.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
 class BaseScreen extends ConsumerStatefulWidget {
@@ -36,9 +34,23 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
         automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            '${user?.name}', // 하드코딩된 닉네임
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          child: GestureDetector(
+            onTap: () {
+              showLogoutDialog(
+                context,
+                () => ref.read(loginNotifierProvider.notifier).logout(context),
+              );
+              // 클릭 시 동작 정의
+              print('닉네임 클릭됨: ${user?.name}');
+            },
+            child: Text(
+              '${user?.name}',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                decoration: TextDecoration.underline, // 밑줄 추가 (선택)
+              ),
+            ),
           ),
         ),
         actions: [
@@ -132,4 +144,25 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
       ),
     );
   }
+}
+
+void showLogoutDialog(BuildContext context, VoidCallback onLogout) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃 하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              onLogout(); // 로그아웃 실행
+            },
+            child: const Text('로그아웃'),
+          ),
+        ],
+      );
+    },
+  );
 }
