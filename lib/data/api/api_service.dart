@@ -7,6 +7,7 @@ import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
+import 'package:yoen_front/data/model/record_response.dart';
 
 import '../model/login_request.dart';
 import '../model/login_response.dart';
@@ -56,5 +57,11 @@ abstract class ApiService {
   @POST("/record/create")
   Future<ApiResponse<RecordCreateResponse>> createRecord(
     @Body() FormData formData,
+  );
+
+  @GET("/record")
+  Future<ApiResponse<List<RecordResponse>>> getRecords(
+    @Query("travelId") int travelId,
+    @Query("date") String date,
   );
 }
