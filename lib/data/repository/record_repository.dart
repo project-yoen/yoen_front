@@ -6,10 +6,17 @@ import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:http_parser/http_parser.dart';
 
+import 'package:yoen_front/data/model/record_response.dart';
+
 class RecordRepository {
   final ApiService _apiService;
 
   RecordRepository(this._apiService);
+
+  Future<List<RecordResponse>> getRecords(int travelId, String date) async {
+    final response = await _apiService.getRecords(travelId, date);
+    return response.data!;
+  }
 
   Future<RecordCreateResponse> createRecord(
     RecordCreateRequest request,
