@@ -180,14 +180,19 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios),
-                    onPressed: () => ref
-                        .read(dateNotifierProvider.notifier)
-                        .previousDay(DateTime.parse(travel.startDate)),
-                  ),
+                  if (currentDate
+                      .isAfter(DateTime.parse(travel.startDate)))
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios),
+                      onPressed: () => ref
+                          .read(dateNotifierProvider.notifier)
+                          .previousDay(DateTime.parse(travel.startDate)),
+                    )
+                  else
+                    const SizedBox(width: 48), // 화살표 공간 확보
+                  const SizedBox(width: 16),
                   Text(
                     DateFormat('yyyy.MM.dd').format(currentDate),
                     style: const TextStyle(
@@ -195,12 +200,16 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios),
-                    onPressed: () => ref
-                        .read(dateNotifierProvider.notifier)
-                        .nextDay(DateTime.parse(travel.endDate)),
-                  ),
+                  const SizedBox(width: 16),
+                  if (currentDate.isBefore(DateTime.parse(travel.endDate)))
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward_ios),
+                      onPressed: () => ref
+                          .read(dateNotifierProvider.notifier)
+                          .nextDay(DateTime.parse(travel.endDate)),
+                    )
+                  else
+                    const SizedBox(width: 48), // 화살표 공간 확보
                 ],
               ),
             ),
