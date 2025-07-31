@@ -9,8 +9,6 @@ import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
 
-import '../data/model/travel_response.dart';
-
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   final int travelId;
   final String travelName;
