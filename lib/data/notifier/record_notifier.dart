@@ -47,6 +47,8 @@ class RecordNotifier extends StateNotifier<RecordState> {
     try {
       final dateString = date.toIso8601String();
       final records = await _repository.getRecords(travelId, dateString);
+      // recordTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
+      records.sort((a, b) => a.recordTime.compareTo(b.recordTime));
       state = state.copyWith(getStatus: Status.success, records: records);
     } catch (e) {
       state = state.copyWith(

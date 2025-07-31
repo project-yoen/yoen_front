@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
   const TravelRecordScreen({super.key});
@@ -40,9 +41,7 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
       }
     });
 
-    return Scaffold(
-      body: _buildBody(recordState),
-    );
+    return Scaffold(body: _buildBody(recordState));
   }
 
   Widget _buildBody(RecordState state) {
@@ -50,14 +49,10 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
       case Status.loading:
         return const Center(child: CircularProgressIndicator());
       case Status.error:
-        return Center(
-          child: Text('오류가 발생했습니다: ${state.errorMessage}'),
-        );
+        return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
       case Status.success:
         if (state.records.isEmpty) {
-          return const Center(
-            child: Text('이 날짜에 작성된 기록이 없습니다.'),
-          );
+          return const Center(child: Text('이 날짜에 작성된 기록이 없습니다.'));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
@@ -73,6 +68,9 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   }
 
   Widget _buildRecordCard(RecordResponse record) {
+    final recordTime = DateTime.parse(record.recordTime);
+    final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 4.0,
@@ -82,18 +80,35 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              record.title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    record.title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                Text(
+                  formattedTime,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                ),
+              ],
             ),
             const SizedBox(height: 8.0),
             Text(
-              record.content,
-              style: Theme.of(context).textTheme.bodyMedium,
+              '작성자: ${record.travelNickName}',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.grey[700]),
             ),
+            const SizedBox(height: 8.0),
+            Text(record.content, style: Theme.of(context).textTheme.bodyMedium),
             if (record.images.isNotEmpty) ...[
               const SizedBox(height: 16.0),
               _buildImageGallery(record.images),

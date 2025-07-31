@@ -180,26 +180,43 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios),
-                    onPressed: () => ref
-                        .read(dateNotifierProvider.notifier)
-                        .previousDay(DateTime.parse(travel.startDate)),
-                  ),
-                  Text(
-                    DateFormat('yyyy.MM.dd').format(currentDate),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Visibility(
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    visible: currentDate
+                        .isAfter(DateTime.parse(travel.startDate)),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios),
+                      onPressed: () => ref
+                          .read(dateNotifierProvider.notifier)
+                          .previousDay(DateTime.parse(travel.startDate)),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios),
-                    onPressed: () => ref
-                        .read(dateNotifierProvider.notifier)
-                        .nextDay(DateTime.parse(travel.endDate)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      DateFormat('yyyy.MM.dd').format(currentDate),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    visible:
+                        currentDate.isBefore(DateTime.parse(travel.endDate)),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_forward_ios),
+                      onPressed: () => ref
+                          .read(dateNotifierProvider.notifier)
+                          .nextDay(DateTime.parse(travel.endDate)),
+                    ),
                   ),
                 ],
               ),

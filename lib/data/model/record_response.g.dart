@@ -13,6 +13,8 @@ RecordResponse _$RecordResponseFromJson(Map<String, dynamic> json) =>
       images: (json['images'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      recordTime: json['recordTime'] as String,
+      travelNickName: json['travelNickName'] as String,
     );
 
 Map<String, dynamic> _$RecordResponseToJson(RecordResponse instance) =>
@@ -20,4 +22,6 @@ Map<String, dynamic> _$RecordResponseToJson(RecordResponse instance) =>
       'title': instance.title,
       'content': instance.content,
       'images': instance.images,
+      'recordTime': instance.recordTime,
+      'travelNickName': instance.travelNickName,
     };
