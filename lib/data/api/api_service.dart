@@ -40,8 +40,6 @@ abstract class ApiService {
 
   @GET("/travel")
   Future<ApiResponse<List<TravelResponse>>> getTravels();
-    @Body() TravelCreateRequest request,
-  );
 
   @GET("/join/userlist")
   Future<ApiResponse<List<UserTravelJoinResponse>>> getUserJoinList();
