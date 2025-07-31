@@ -57,14 +57,6 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     final travelListState = ref.watch(travelListNotifierProvider);
     final travel = travelListState.travels.firstWhere(
       (t) => t.travelId == widget.travelId,
-      orElse: () => TravelResponse(
-        // 예시
-        travelId: -1,
-        startDate: '1900-01-01',
-        endDate: '1900-01-02',
-        travelName: 'Invalid',
-        // 필요한 기본값들 입력
-      ),
     );
     final currentDate = ref.watch(dateNotifierProvider);
 
