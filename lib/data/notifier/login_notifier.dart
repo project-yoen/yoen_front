@@ -1,10 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/login_request.dart';
 import 'package:yoen_front/data/model/user_response.dart';
+
+import '../../view/login.dart';
 
 // TODO: 따로 빼도 좋을듯
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -93,6 +97,18 @@ class LoginNotifier extends Notifier<LoginState> {
         errorMessage: "알 수 없는 오류가 발생했습니다.",
       );
     }
+  }
+
+  void logout(BuildContext context) {
+    // 1. 저장된 토큰 등 삭제
+    final storage = ref.read(secureStorageProvider);
+    storage.deleteAll();
+
+    // 2. 로그인 화면으로 이동 (기존 화면들 제거)
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   void reset() {
