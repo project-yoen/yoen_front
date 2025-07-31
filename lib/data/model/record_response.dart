@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:yoen_front/data/model/travel_record_image_response.dart';
 
 part 'record_response.g.dart';
 
@@ -6,7 +7,7 @@ part 'record_response.g.dart';
 class RecordResponse {
   final String title;
   final String content;
-  final List<String> images;
+  final List<TravelRecordImageResponse> images;
   final String recordTime; // recordTime 추가
   final String travelNickName; //작성자
 

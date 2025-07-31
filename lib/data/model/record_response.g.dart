@@ -11,7 +11,10 @@ RecordResponse _$RecordResponseFromJson(Map<String, dynamic> json) =>
       title: json['title'] as String,
       content: json['content'] as String,
       images: (json['images'] as List<dynamic>)
-          .map((e) => e as String)
+          .map(
+            (e) =>
+                TravelRecordImageResponse.fromJson(e as Map<String, dynamic>),
+          )
           .toList(),
       recordTime: json['recordTime'] as String,
       travelNickName: json['travelNickName'] as String,
