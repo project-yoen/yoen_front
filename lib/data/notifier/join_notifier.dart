@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/repository/join_repository.dart';
 
 import '../model/user_travel_join_response.dart';
