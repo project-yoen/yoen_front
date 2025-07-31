@@ -4,14 +4,21 @@ import 'package:yoen_front/data/repository/travel_repository.dart';
 
 final travelListNotifierProvider =
     StateNotifierProvider<TravelListNotifier, TravelListState>((ref) {
-  final repository = ref.watch(travelRepositoryProvider);
-  return TravelListNotifier(repository);
-});
+      final repository = ref.watch(travelRepositoryProvider);
+      return TravelListNotifier(repository);
+    });
 
 class TravelListNotifier extends StateNotifier<TravelListState> {
   final TravelRepository _repository;
 
   TravelListNotifier(this._repository) : super(TravelListState.initial());
+
+  void selectTravel(TravelResponse travel) {
+    state = state.copyWith(
+      status: TravelListStatus.success,
+      selectedTravel: travel,
+    );
+  }
 
   Future<void> fetchTravels() async {
     state = state.copyWith(status: TravelListStatus.loading);
@@ -37,11 +44,13 @@ enum TravelListStatus { initial, loading, success, error }
 class TravelListState {
   final TravelListStatus status;
   final List<TravelResponse> travels;
+  final TravelResponse? selectedTravel;
   final String? errorMessage;
 
   TravelListState({
     required this.status,
     this.travels = const [],
+    this.selectedTravel,
     this.errorMessage,
   });
 
@@ -52,11 +61,13 @@ class TravelListState {
   TravelListState copyWith({
     TravelListStatus? status,
     List<TravelResponse>? travels,
+    TravelResponse? selectedTravel,
     String? errorMessage,
   }) {
     return TravelListState(
       status: status ?? this.status,
       travels: travels ?? this.travels,
+      selectedTravel: selectedTravel ?? this.selectedTravel,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }

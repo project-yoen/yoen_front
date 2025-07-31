@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter/material.dart';
 import '../../view/travel_overview.dart';
 import '../notifier/travel_list_notifier.dart';
 
@@ -45,13 +45,17 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                         final travel = travelListState.travels[index];
                         return GestureDetector(
                           onTap: () async {
+                            // 1. 선택된 여행 정보를 전역 Notifier에 저장
+                            ref
+                                .read(travelListNotifierProvider.notifier)
+                                .selectTravel(travel);
+
+                            // 2. 파라미터 없이 화면 이동
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => TravelOverviewScreen(
-                                  travelId: travel.travelId,
-                                  travelName: travel.travelName,
-                                ),
+                                builder: (context) =>
+                                    const TravelOverviewScreen(),
                               ),
                             );
                             ref

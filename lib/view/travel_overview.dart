@@ -3,23 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
-import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
-  final int travelId;
-  final String travelName;
-
-  const TravelOverviewScreen({
-    super.key,
-    required this.travelId,
-    required this.travelName,
-  });
+  // 파라미터 제거
+  const TravelOverviewScreen({super.key});
 
   @override
   ConsumerState<TravelOverviewScreen> createState() =>
@@ -29,20 +24,17 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   int _selectedIndex = 0;
 
-  // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
-  final String _travelCode = "DUMMY-CODE"; // 임시 코드
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final travelListState = ref.read(travelListNotifierProvider);
-      final travel = travelListState.travels.firstWhere(
-        (t) => t.travelId == widget.travelId,
-      );
-      ref
-          .read(dateNotifierProvider.notifier)
-          .setDate(DateTime.parse(travel.startDate));
+      // 화면에 들어올 때, 현재 '선택된' 여행의 시작일로 날짜 Notifier를 초기화
+      final travel = ref.read(travelListNotifierProvider).selectedTravel;
+      if (travel != null) {
+        ref
+            .read(dateNotifierProvider.notifier)
+            .setDate(DateTime.parse(travel.startDate));
+      }
     });
   }
 
@@ -54,26 +46,20 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final travelListState = ref.watch(travelListNotifierProvider);
-    final travel = travelListState.travels.firstWhere(
-      (t) => t.travelId == widget.travelId,
-    );
+    // 전역 Notifier에서 현재 선택된 여행 정보를 가져옴
+    final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final currentDate = ref.watch(dateNotifierProvider);
 
+    // 여행 정보가 아직 로드되지 않았다면 로딩 인디케이터 표시
+    if (travel == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final List<Widget> widgetOptions = [
-      TravelOverviewContentScreen(travelId: widget.travelId),
-      TravelPaymentScreen(
-        travelId: widget.travelId,
-        startDate: DateTime.parse(travel.startDate),
-        endDate: DateTime.parse(travel.endDate),
-      ),
-      TravelRecordScreen(
-        travelId: widget.travelId,
-        date: currentDate ?? DateTime.now(), // 이 날짜의 기록을 가져오게 API요청을 보냄
-        startDate: DateTime.parse(travel.startDate),
-        endDate: DateTime.parse(travel.endDate),
-      ),
-      TravelAdditionalScreen(travelId: widget.travelId),
+      const TravelOverviewContentScreen(),
+      const TravelPaymentScreen(),
+      const TravelRecordScreen(),
+      const TravelAdditionalScreen(),
     ];
 
     return Scaffold(
@@ -84,7 +70,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(widget.travelName),
+        title: Text(travel.travelName), // Notifier에서 가져온 이름 사용
         centerTitle: true,
         actions: [
           IconButton(
@@ -102,7 +88,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                       const Text('친구에게 코드를 공유하여 여행에 초대하세요!'),
                       const SizedBox(height: 20),
                       SelectableText(
-                        _travelCode,
+                        "DUMMY_CODE", // Notifier에서 가져온 코드 사용
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -114,7 +100,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     TextButton(
                       onPressed: () {
                         Clipboard.setData(
-                          ClipboardData(text: _travelCode),
+                          ClipboardData(text: "DUMMY_CODE"),
                         ).then((_) {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -190,27 +176,21 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      // 여행 기록 탭일때 나오는 버튼. 여행 기록 생성 페이지로 이동
       floatingActionButton: _selectedIndex == 2
           ? FloatingActionButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => TravelRecordCreateScreen(
-                      travelId: widget.travelId,
-                      startDate: DateTime.parse(travel.startDate),
-                      endDate: DateTime.parse(travel.endDate),
-                    ),
+                    // 파라미터 없이 화면 이동
+                    builder: (context) => const TravelRecordCreateScreen(),
                   ),
                 ).then((_) {
-                  // travel_record_create 페이지에서 돌아왔을 때,
-                  // 현재 날짜의 기록을 다시 불러옵니다.
                   final currentDate = ref.read(dateNotifierProvider);
                   if (currentDate != null) {
                     ref
                         .read(recordNotifierProvider.notifier)
-                        .getRecords(widget.travelId, currentDate);
+                        .getRecords(travel.travelId, currentDate);
                   }
                 });
               },

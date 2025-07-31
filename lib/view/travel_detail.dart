@@ -1,14 +1,15 @@
-import 'dart:math'; // Random 클래스를 위해 import 추가
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
+import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/view/travel_overview.dart';
 
-import '../data/dialog/travel_date_picker_dialog.dart'; // TravelDatePickerDialog 임포트 추가
+import '../data/dialog/travel_date_picker_dialog.dart';
 
 class TravelDetailScreen extends ConsumerStatefulWidget {
   final String nation;
@@ -88,7 +89,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     "혼돈의",
     "잔잔한",
     "도전적인",
-    "자연스러운",
+    "자유로운",
     "즉흥적인",
     "아름다운",
     "행운의",
@@ -243,9 +244,8 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _numberOfPeopleController.text = '1'; // 초기 인원수 1로 설정
-    _currentHintTravelName =
-        _generateRandomTravelName(); // 힌트 텍스트로 사용할 랜덤 이름 생성
+    _numberOfPeopleController.text = '1';
+    _currentHintTravelName = _generateRandomTravelName();
   }
 
   @override
@@ -268,7 +268,6 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
   void _decrementPeople() {
     int currentCount = int.tryParse(_numberOfPeopleController.text) ?? 0;
     if (currentCount > 1) {
-      // 최소 인원 1명
       setState(() {
         _numberOfPeopleController.text = (currentCount - 1).toString();
       });
@@ -282,7 +281,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     return '$adjective $noun';
   }
 
-  void _createTravel() {
+  Future<void> _createTravel() async {
     if (_selectedStartDate == null || _selectedEndDate == null) {
       ScaffoldMessenger.of(
         context,
@@ -308,7 +307,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
       destinationIds: destinationIds,
     );
 
-    ref.read(travelNotifierProvider.notifier).createTravel(request);
+    await ref.read(travelNotifierProvider.notifier).createTravel(request);
   }
 
   @override
@@ -319,17 +318,30 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
           SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
         );
       } else if (next.status == TravelStatus.success && next.travel != null) {
+        final newTravel = next.travel!;
+        // TravelCreateResponse를 TravelResponse로 변환
+        final selectedTravel = TravelResponse(
+          travelId: newTravel.travelId,
+          travelName: newTravel.travelName,
+          startDate: newTravel.startDate,
+          endDate: newTravel.endDate,
+        );
+
+        // 1. 생성된 여행을 travelListNotifier의 selectedTravel로 설정
+        ref
+            .read(travelListNotifierProvider.notifier)
+            .selectTravel(selectedTravel);
+
+        // 2. 전체 여행 목록을 다시 불러옴
         ref.read(travelListNotifierProvider.notifier).fetchTravels();
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
+
+        // 3. 파라미터 없이 화면 이동
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => TravelOverviewScreen(
-              travelId: next.travel!.travelId,
-              travelName: next.travel!.travelName,
-            ),
-          ),
+          MaterialPageRoute(builder: (_) => const TravelOverviewScreen()),
           (route) => route.isFirst,
         );
       }
@@ -371,7 +383,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
               controller: _travelNameController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                hintText: _currentHintTravelName, // 랜덤 여행 이름을 힌트 텍스트로 설정
+                hintText: _currentHintTravelName,
               ),
             ),
             const SizedBox(height: 40),
@@ -382,7 +394,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _travelDurationController,
-              readOnly: true, // 읽기 전용으로 설정
+              readOnly: true,
               onTap: () async {
                 final result = await showDialog<Map<String, DateTime?>>(
                   context: context,
@@ -401,11 +413,11 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                     if (_selectedStartDate != null &&
                         _selectedEndDate != null) {
                       _travelDurationController.text =
-                          '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')} - ' +
-                          '${_selectedEndDate!.year}.${_selectedEndDate!.month.toString().padLeft(2, '0')}.${_selectedEndDate!.day.toString().padLeft(2, '0')}';
+                          '${DateFormat('yyyy.MM.dd').format(_selectedStartDate!)} - ${DateFormat('yyyy.MM.dd').format(_selectedEndDate!)}';
                     } else if (_selectedStartDate != null) {
-                      _travelDurationController.text =
-                          '${_selectedStartDate!.year}.${_selectedStartDate!.month.toString().padLeft(2, '0')}.${_selectedStartDate!.day.toString().padLeft(2, '0')}';
+                      _travelDurationController.text = DateFormat(
+                        'yyyy.MM.dd',
+                      ).format(_selectedStartDate!);
                     } else {
                       _travelDurationController.text = '';
                     }
@@ -430,7 +442,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                   onPressed: _decrementPeople,
                 ),
                 SizedBox(
-                  width: 100.0, // 인원수 칸 너비 조절
+                  width: 100.0,
                   child: TextFormField(
                     controller: _numberOfPeopleController,
                     keyboardType: TextInputType.number,
@@ -459,8 +471,8 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
-                  backgroundColor: const Color(0xFF6A4FF9), // 버튼 배경색
-                  foregroundColor: Colors.white, // 버튼 텍스트색
+                  backgroundColor: const Color(0xFF6A4FF9),
+                  foregroundColor: Colors.white,
                 ),
                 child: travelState.status == TravelStatus.loading
                     ? const CircularProgressIndicator(color: Colors.white)

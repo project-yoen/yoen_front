@@ -8,18 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelRecordCreateScreen extends ConsumerStatefulWidget {
-  final int travelId;
-  final DateTime startDate;
-  final DateTime endDate;
-
-  const TravelRecordCreateScreen({
-    super.key,
-    required this.travelId,
-    required this.startDate,
-    required this.endDate,
-  });
+  const TravelRecordCreateScreen({super.key});
 
   @override
   ConsumerState<TravelRecordCreateScreen> createState() =>
@@ -38,18 +30,15 @@ class _TravelRecordCreateScreenState
   @override
   void initState() {
     super.initState();
-    final currentDate = ref.read(dateNotifierProvider);
+    final recordDate = ref.read(dateNotifierProvider) ?? DateTime.now();
     final now = DateTime.now();
-    
-    // 현재 선택된 날짜가 여행 기간 내에 있는지 확인
-    DateTime initialDate = currentDate ?? now;
-    if (initialDate.isBefore(widget.startDate)) {
-      initialDate = widget.startDate;
-    } else if (initialDate.isAfter(widget.endDate)) {
-      initialDate = widget.endDate;
-    }
-    
-    _selectedDateTime = DateTime(initialDate.year, initialDate.month, initialDate.day, now.hour, now.minute);
+    _selectedDateTime = DateTime(
+      recordDate.year,
+      recordDate.month,
+      recordDate.day,
+      now.hour,
+      now.minute,
+    );
   }
 
   @override
@@ -59,32 +48,23 @@ class _TravelRecordCreateScreenState
     super.dispose();
   }
 
-  Future<void> _selectDateTime(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialDate: _selectedDateTime,
-      firstDate: widget.startDate,
-      lastDate: widget.endDate,
+      initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+      initialEntryMode: TimePickerEntryMode.input,
     );
 
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
-        initialEntryMode: TimePickerEntryMode.input,
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDateTime = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
+    if (pickedTime != null) {
+      setState(() {
+        _selectedDateTime = DateTime(
+          _selectedDateTime.year,
+          _selectedDateTime.month,
+          _selectedDateTime.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+      });
     }
   }
 
@@ -102,17 +82,21 @@ class _TravelRecordCreateScreenState
   }
 
   Future<void> _saveRecord() async {
-    if (_formKey.currentState!.validate()) {
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+    if (_formKey.currentState!.validate() && travel != null) {
       final request = RecordCreateRequest(
-        travelId: widget.travelId,
+        travelId: travel.travelId,
         title: _titleController.text,
         content: _contentController.text,
         recordTime: _selectedDateTime.toIso8601String(),
       );
 
-      final imageFiles = _images.map((image) => MultipartFile.fromFileSync(image.path)).toList();
+      final imageFiles =
+          _images.map((image) => MultipartFile.fromFileSync(image.path)).toList();
 
-      await ref.read(recordNotifierProvider.notifier).createRecord(request, imageFiles);
+      await ref
+          .read(recordNotifierProvider.notifier)
+          .createRecord(request, imageFiles);
     }
   }
 
@@ -173,8 +157,8 @@ class _TravelRecordCreateScreenState
                 title: Text(
                   '작성 시간: ${DateFormat('yyyy.MM.dd a hh:mm', 'ko_KR').format(_selectedDateTime)}',
                 ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDateTime(context),
+                trailing: const Icon(Icons.access_time),
+                onTap: () => _selectTime(context),
               ),
               const SizedBox(height: 16),
               GestureDetector(
@@ -220,7 +204,8 @@ class _TravelRecordCreateScreenState
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                            child: const Icon(Icons.close,
+                                color: Colors.white, size: 16),
                           ),
                         ),
                       ),
@@ -230,7 +215,9 @@ class _TravelRecordCreateScreenState
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: recordState.createStatus == Status.loading ? null : _saveRecord,
+                onPressed: recordState.createStatus == Status.loading
+                    ? null
+                    : _saveRecord,
                 child: recordState.createStatus == Status.loading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('저장'),

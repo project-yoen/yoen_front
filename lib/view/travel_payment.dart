@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelPaymentScreen extends ConsumerWidget {
-  final int travelId;
-  final DateTime startDate;
-  final DateTime endDate;
-
-  const TravelPaymentScreen({
-    super.key,
-    required this.travelId,
-    required this.startDate,
-    required this.endDate,
-  });
+  const TravelPaymentScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final currentDate = ref.watch(dateNotifierProvider);
 
-    return Scaffold(body: Center(child: Text('금액 기록 페이지: \${travelId}')));
+    if (travel == null) {
+      return const Scaffold(
+        body: Center(child: Text("여행 정보가 없습니다.")),
+      );
+    }
+
+    return Scaffold(body: Center(child: Text('금액 기록 페이지: \${travel.travelId}')));
   }
 }

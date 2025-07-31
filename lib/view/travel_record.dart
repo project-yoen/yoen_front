@@ -1,21 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
-  final int travelId;
-  final DateTime date;
-  final DateTime startDate;
-  final DateTime endDate;
-
-  const TravelRecordScreen({
-    super.key,
-    required this.travelId,
-    required this.date,
-    required this.startDate,
-    required this.endDate,
-  });
+  const TravelRecordScreen({super.key});
 
   @override
   ConsumerState<TravelRecordScreen> createState() => _TravelRecordScreenState();
@@ -25,28 +16,31 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   @override
   void initState() {
     super.initState();
-    // initState에서 데이터를 비동기적으로 로드합니다.
-    Future.microtask(() => ref
-        .read(recordNotifierProvider.notifier)
-        .getRecords(widget.travelId, widget.date));
-  }
-
-  @override
-  void didUpdateWidget(covariant TravelRecordScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.date != oldWidget.date) {
-      Future.microtask(() => ref
-          .read(recordNotifierProvider.notifier)
-          .getRecords(widget.travelId, widget.date));
-    }
+    Future.microtask(() {
+      final travel = ref.read(travelListNotifierProvider).selectedTravel;
+      final date = ref.read(dateNotifierProvider);
+      if (travel != null && date != null) {
+        ref
+            .read(recordNotifierProvider.notifier)
+            .getRecords(travel.travelId, date);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final recordState = ref.watch(recordNotifierProvider);
 
+    ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
+      final travel = ref.read(travelListNotifierProvider).selectedTravel;
+      if (travel != null && next != null && previous != next) {
+        ref
+            .read(recordNotifierProvider.notifier)
+            .getRecords(travel.travelId, next);
+      }
+    });
+
     return Scaffold(
-      // AppBar는 travel_overview.dart에 있으므로 여기서는 제거합니다.
       body: _buildBody(recordState),
     );
   }
