@@ -182,34 +182,42 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (currentDate
-                      .isAfter(DateTime.parse(travel.startDate)))
-                    IconButton(
+                  Visibility(
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    visible: currentDate
+                        .isAfter(DateTime.parse(travel.startDate)),
+                    child: IconButton(
                       icon: const Icon(Icons.arrow_back_ios),
                       onPressed: () => ref
                           .read(dateNotifierProvider.notifier)
                           .previousDay(DateTime.parse(travel.startDate)),
-                    )
-                  else
-                    const SizedBox(width: 48), // 화살표 공간 확보
-                  const SizedBox(width: 16),
-                  Text(
-                    DateFormat('yyyy.MM.dd').format(currentDate),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  if (currentDate.isBefore(DateTime.parse(travel.endDate)))
-                    IconButton(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      DateFormat('yyyy.MM.dd').format(currentDate),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    visible:
+                        currentDate.isBefore(DateTime.parse(travel.endDate)),
+                    child: IconButton(
                       icon: const Icon(Icons.arrow_forward_ios),
                       onPressed: () => ref
                           .read(dateNotifierProvider.notifier)
                           .nextDay(DateTime.parse(travel.endDate)),
-                    )
-                  else
-                    const SizedBox(width: 48), // 화살표 공간 확보
+                    ),
+                  ),
                 ],
               ),
             ),
