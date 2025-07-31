@@ -1,17 +1,16 @@
-import 'package:retrofit/retrofit.dart';
 import 'package:dio/dio.dart';
+import 'package:retrofit/retrofit.dart';
 import 'package:yoen_front/data/model/api_response.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
-import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
+
 import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/register_request.dart';
-import 'dart:convert';
 
 part 'api_service.g.dart';
 
@@ -40,8 +39,6 @@ abstract class ApiService {
 
   @GET("/travel")
   Future<ApiResponse<List<TravelResponse>>> getTravels();
-    @Body() TravelCreateRequest request,
-  );
 
   @GET("/join/userlist")
   Future<ApiResponse<List<UserTravelJoinResponse>>> getUserJoinList();
@@ -57,9 +54,7 @@ abstract class ApiService {
   );
 
   @POST("/record/create")
-  @MultiPart()
   Future<ApiResponse<RecordCreateResponse>> createRecord(
-    @Part(name: "dto") Map<String, dynamic> request,
-    @Part(name: "images") List<MultipartFile> images,
+    @Body() FormData formData,
   );
 }
