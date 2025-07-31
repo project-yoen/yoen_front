@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_join_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
@@ -23,6 +25,9 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   int _selectedIndex = 0;
+
+  // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
+  String _travelCode = "DUMMY-CODE"; // 임시 코드
 
   @override
   void initState() {
@@ -76,37 +81,77 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: '초대 코드 공유',
-            onPressed: () {
+            onPressed: () async {
+              // 1. 여행 코드 요청
+              await ref
+                  .read(travelJoinNotifierProvider.notifier)
+                  .getTravelCode(travel.travelId);
+
+              final travelJoinState = ref.read(travelJoinNotifierProvider);
+              final joinCode = travelJoinState.joinCode;
+
+              if (joinCode == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('초대 코드를 불러오지 못했습니다.')),
+                );
+                return;
+              }
+
+              // 2. 만료일자 파싱
+              String? formattedExpireDate;
+              try {
+                final expireDate = DateTime.parse(joinCode.expiredAt);
+                formattedExpireDate = DateFormat(
+                  'yyyy년 M월 d일 HH:mm까지',
+                ).format(expireDate);
+              } catch (_) {
+                formattedExpireDate = '만료일자 파싱 실패';
+              }
+
+              // 3. 다이얼로그 표시
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('여행 초대 코드'),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('친구에게 코드를 공유하여 여행에 초대하세요!'),
-                      const SizedBox(height: 20),
-                      SelectableText(
-                        "DUMMY_CODE", // Notifier에서 가져온 코드 사용
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      const Text(
+                        '친구에게 코드를 공유하여 여행에 초대하세요!',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: SelectableText(
+                          joinCode.code,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      if (formattedExpireDate != null)
+                        Text(
+                          '유효기간: $formattedExpireDate',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
                     ],
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(text: "DUMMY_CODE"),
-                        ).then((_) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('초대 코드가 복사되었습니다.')),
-                          );
-                        });
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: joinCode.code),
+                        );
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('초대 코드가 복사되었습니다.')),
+                        );
                       },
                       child: const Text('복사하기'),
                     ),
@@ -119,6 +164,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
               );
             },
           ),
+
           IconButton(
             icon: const Icon(Icons.notifications),
             tooltip: '알림',
