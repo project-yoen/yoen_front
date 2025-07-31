@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 import '../notifier/travel_join_notifier.dart';
 
@@ -19,6 +20,7 @@ class TravelUserJoinTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final travelJoinNotifier = ref.watch(travelJoinNotifierProvider.notifier);
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -42,6 +44,7 @@ class TravelUserJoinTile extends ConsumerWidget {
                   onPressed: () => travelJoinNotifier.acceptTravelJoin(
                     travelJoinId,
                     "WRITER",
+                    travel!.travelId,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red[400],
@@ -58,6 +61,7 @@ class TravelUserJoinTile extends ConsumerWidget {
                   onPressed: () => travelJoinNotifier.acceptTravelJoin(
                     travelJoinId,
                     "READER",
+                    travel!.travelId,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red[400],
@@ -71,8 +75,10 @@ class TravelUserJoinTile extends ConsumerWidget {
                   label: const Text("읽기 권한", style: TextStyle(fontSize: 13)),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () =>
-                      travelJoinNotifier.rejectTravelJoin(travelJoinId),
+                  onPressed: () => travelJoinNotifier.rejectTravelJoin(
+                    travelJoinId,
+                    travel!.travelId,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red[400],
                     foregroundColor: Colors.white,

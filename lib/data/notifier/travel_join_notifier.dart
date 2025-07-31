@@ -47,7 +47,11 @@ class TravelJoinNotifier extends StateNotifier<TravelJoinState> {
     }
   }
 
-  Future<void> acceptTravelJoin(int travelJoinId, String role) async {
+  Future<void> acceptTravelJoin(
+    int travelJoinId,
+    String role,
+    int travelId,
+  ) async {
     state = state.copyWith(status: TravelJoinStatus.loading);
     try {
       AcceptJoinRequest request = AcceptJoinRequest(
@@ -56,7 +60,7 @@ class TravelJoinNotifier extends StateNotifier<TravelJoinState> {
       );
       final response = await _repository.acceptTravelJoin(request);
       state = state.copyWith(status: TravelJoinStatus.success);
-      // await getTravelJoinList();
+      await getTravelJoinList(travelId);
     } catch (e) {
       state = state.copyWith(
         status: TravelJoinStatus.error,
@@ -65,11 +69,12 @@ class TravelJoinNotifier extends StateNotifier<TravelJoinState> {
     }
   }
 
-  Future<void> rejectTravelJoin(int travelJoinId) async {
+  Future<void> rejectTravelJoin(int travelJoinId, int travelId) async {
     state = state.copyWith(status: TravelJoinStatus.loading);
     try {
       final response = await _repository.rejectTravelJoin(travelJoinId);
       state = state.copyWith(status: TravelJoinStatus.success);
+      await getTravelJoinList(travelId);
     } catch (e) {
       state = state.copyWith(
         status: TravelJoinStatus.error,
