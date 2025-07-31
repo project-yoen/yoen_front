@@ -18,9 +18,10 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
   void initState() {
     super.initState();
     // 화면 첫 진입 시 API 호출
-    Future.microtask(
-      () => ref.read(joinNotifierProvider.notifier).getUserJoinList(),
-    );
+    Future.microtask(() {
+      ref.read(joinNotifierProvider.notifier).reset();
+      ref.read(joinNotifierProvider.notifier).getUserJoinList();
+    });
   }
 
   @override

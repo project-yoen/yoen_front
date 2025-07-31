@@ -2,13 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:yoen_front/data/model/api_response.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
+import 'package:yoen_front/data/model/join_code_response.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
+import 'package:yoen_front/data/model/travel_user_join_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 
+import '../model/accept_join_request.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/register_request.dart';
@@ -44,6 +47,11 @@ abstract class ApiService {
   @GET("/join/userlist")
   Future<ApiResponse<List<UserTravelJoinResponse>>> getUserJoinList();
 
+  @GET("/join/code")
+  Future<ApiResponse<JoinCodeResponse>> getJoinCode(
+    @Query("travelId") int travelId,
+  );
+
   @POST("/join/{joinCode}")
   Future<ApiResponse<String>> joinTravelByCode(
     @Path("joinCode") String joinCode,
@@ -52,6 +60,21 @@ abstract class ApiService {
   @DELETE("/join/delete/{id}")
   Future<ApiResponse<String>> deleteUserJoinTravel(
     @Path("id") int travelJoinId,
+  );
+
+  @GET("/join/travellist")
+  Future<ApiResponse<List<TravelUserJoinResponse>>> getTravelJoinList(
+    @Query("travelId") int travelId,
+  );
+
+  @POST("/join/accept")
+  Future<ApiResponse<void>> acceptTravelJoinRequest(
+    @Body() AcceptJoinRequest request,
+  );
+
+  @POST("/join/reject/{id}")
+  Future<ApiResponse<void>> rejectTravelJoinRequest(
+    @Path("id") int travelJoinRequestId,
   );
 
   @POST("/record/create")
