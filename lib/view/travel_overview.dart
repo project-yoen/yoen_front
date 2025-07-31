@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
+import 'package:yoen_front/view/travel_record_create.dart';
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   final int travelId;
@@ -67,6 +69,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
       ),
       TravelRecordScreen(
         travelId: widget.travelId,
+        date: currentDate ?? DateTime.now(), // 이 날짜의 기록을 가져오게 API요청을 보냄
         startDate: DateTime.parse(travel.startDate),
         endDate: DateTime.parse(travel.endDate),
       ),
@@ -187,6 +190,33 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
+      // 여행 기록 탭일때 나오는 버튼. 여행 기록 생성 페이지로 이동
+      floatingActionButton: _selectedIndex == 2
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TravelRecordCreateScreen(
+                      travelId: widget.travelId,
+                      startDate: DateTime.parse(travel.startDate),
+                      endDate: DateTime.parse(travel.endDate),
+                    ),
+                  ),
+                ).then((_) {
+                  // travel_record_create 페이지에서 돌아왔을 때,
+                  // 현재 날짜의 기록을 다시 불러옵니다.
+                  final currentDate = ref.read(dateNotifierProvider);
+                  if (currentDate != null) {
+                    ref
+                        .read(recordNotifierProvider.notifier)
+                        .getRecords(widget.travelId, currentDate);
+                  }
+                });
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

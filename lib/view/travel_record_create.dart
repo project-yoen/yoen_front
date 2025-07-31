@@ -11,8 +11,15 @@ import 'package:yoen_front/data/notifier/record_notifier.dart';
 
 class TravelRecordCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
+  final DateTime startDate;
+  final DateTime endDate;
 
-  const TravelRecordCreateScreen({super.key, required this.travelId});
+  const TravelRecordCreateScreen({
+    super.key,
+    required this.travelId,
+    required this.startDate,
+    required this.endDate,
+  });
 
   @override
   ConsumerState<TravelRecordCreateScreen> createState() =>
@@ -32,9 +39,16 @@ class _TravelRecordCreateScreenState
   void initState() {
     super.initState();
     final currentDate = ref.read(dateNotifierProvider);
-    // Combine the selected date with the current time
     final now = DateTime.now();
-    final initialDate = currentDate ?? now;
+    
+    // 현재 선택된 날짜가 여행 기간 내에 있는지 확인
+    DateTime initialDate = currentDate ?? now;
+    if (initialDate.isBefore(widget.startDate)) {
+      initialDate = widget.startDate;
+    } else if (initialDate.isAfter(widget.endDate)) {
+      initialDate = widget.endDate;
+    }
+    
     _selectedDateTime = DateTime(initialDate.year, initialDate.month, initialDate.day, now.hour, now.minute);
   }
 
@@ -49,15 +63,15 @@ class _TravelRecordCreateScreenState
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDateTime,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      firstDate: widget.startDate,
+      lastDate: widget.endDate,
     );
 
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
-        initialEntryMode: TimePickerEntryMode.input, // Always show keyboard input first
+        initialEntryMode: TimePickerEntryMode.input,
       );
 
       if (pickedTime != null) {
@@ -105,11 +119,11 @@ class _TravelRecordCreateScreenState
   @override
   Widget build(BuildContext context) {
     ref.listen<RecordState>(recordNotifierProvider, (previous, next) {
-      if (next.status == RecordStatus.error) {
+      if (next.createStatus == Status.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.errorMessage ?? '기록 저장에 실패했습니다.')),
         );
-      } else if (next.status == RecordStatus.success) {
+      } else if (next.createStatus == Status.success) {
         Navigator.pop(context);
       }
     });
@@ -216,8 +230,8 @@ class _TravelRecordCreateScreenState
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: recordState.status == RecordStatus.loading ? null : _saveRecord,
-                child: recordState.status == RecordStatus.loading
+                onPressed: recordState.createStatus == Status.loading ? null : _saveRecord,
+                child: recordState.createStatus == Status.loading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('저장'),
               ),
