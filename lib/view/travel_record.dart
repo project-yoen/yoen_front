@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/model/record_response.dart';
@@ -54,16 +55,34 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
       case Status.error:
         return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
       case Status.success:
-        if (state.records.isEmpty) {
-          return const Center(child: Text('이 날짜에 작성된 기록이 없습니다.'));
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16.0),
-          itemCount: state.records.length,
-          itemBuilder: (context, index) {
-            final record = state.records[index];
-            return _buildRecordCard(record);
+        final travel = ref.read(travelListNotifierProvider).selectedTravel;
+        final date = ref.read(dateNotifierProvider);
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.mediumImpact();
+            if (travel != null && date != null) {
+              await ref
+                  .read(recordNotifierProvider.notifier)
+                  .getRecords(travel.travelId, date);
+            }
           },
+          child: state.records.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 200),
+                    Center(child: Text('이 날짜에 작성된 기록이 없습니다.')),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: state.records.length,
+                  itemBuilder: (context, index) {
+                    final record = state.records[index];
+                    return _buildRecordCard(record);
+                  },
+                ),
         );
       default:
         return const Center(child: Text('기록을 불러오는 중...'));

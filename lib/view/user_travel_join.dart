@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/model/user_response.dart';
@@ -36,25 +37,36 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
         break;
 
       case JoinStatus.success:
-        if (state.userJoins.isEmpty) {
-          body = const Center(child: Text('신청한 여행이 없습니다.'));
-        } else {
-          body = ListView.builder(
-            itemCount: state.userJoins.length,
-            itemBuilder: (context, index) {
-              final join = state.userJoins[index];
-              return UserTravelCheckTile(
-                travelId: join.travelId,
-                travelName: join.travelName,
-                nation: join.nation,
-                users: join.users,
-                onCancel: () => ref
-                    .read(joinNotifierProvider.notifier)
-                    .deleteTravelJoin(join.travelJoinId),
-              );
-            },
-          );
-        }
+        body = RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.mediumImpact(); //  진동 추가
+            ref.read(joinNotifierProvider.notifier).reset();
+            ref.read(joinNotifierProvider.notifier).getUserJoinList();
+          },
+          child: state.userJoins.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 200),
+                    Center(child: Text('신청한 여행이 없습니다.')),
+                  ],
+                )
+              : ListView.builder(
+                  itemCount: state.userJoins.length,
+                  itemBuilder: (context, index) {
+                    final join = state.userJoins[index];
+                    return UserTravelCheckTile(
+                      travelId: join.travelId,
+                      travelName: join.travelName,
+                      nation: join.nation,
+                      users: join.users,
+                      onCancel: () => ref
+                          .read(joinNotifierProvider.notifier)
+                          .deleteTravelJoin(join.travelJoinId),
+                    );
+                  },
+                ),
+        );
         break;
 
       case JoinStatus.error:
@@ -64,6 +76,8 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent, // 그림자 아예 제거
         title: const Text('신청 여행 목록'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

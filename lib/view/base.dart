@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
+import 'package:yoen_front/view/user_settings.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
@@ -31,17 +33,17 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent, // 그림자 아예 제거
         automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: Align(
           alignment: Alignment.centerLeft,
           child: GestureDetector(
             onTap: () {
-              showLogoutDialog(
+              Navigator.push(
                 context,
-                () => ref.read(loginNotifierProvider.notifier).logout(context),
+                MaterialPageRoute(builder: (context) => UserSettingsScreen()),
               );
-              // 클릭 시 동작 정의
-              print('닉네임 클릭됨: ${user?.name}');
             },
             child: Text(
               '${user?.name}',
@@ -62,107 +64,93 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            UserTravelList(),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  //여행 생성하기 버튼 누를 시 동작
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TravelDestinationScreen(),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          HapticFeedback.mediumImpact(); // ← 진동 추가
+          ref.read(travelListNotifierProvider.notifier).fetchTravels();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              UserTravelList(),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    //여행 생성하기 버튼 누를 시 동작
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TravelDestinationScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: const Text('여행 생성하기', style: TextStyle(fontSize: 18)),
                 ),
-                child: const Text('여행 생성하기', style: TextStyle(fontSize: 18)),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  // 여행 참여하기 버튼 클릭 시 동작
-                  showDialog(
-                    context: context,
-                    // 주변 배경 누르면 꺼지는 설정
-                    barrierDismissible: false,
-                    builder: (context) => const TravelCodeDialog(),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
                 ),
-                child: const Text('여행 참여하기', style: TextStyle(fontSize: 18)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  //여행 생성하기 버튼 누를 시 동작
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const UserTravelJoinScreen(),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // 여행 참여하기 버튼 클릭 시 동작
+                    showDialog(
+                      context: context,
+                      // 주변 배경 누르면 꺼지는 설정
+                      barrierDismissible: false,
+                      builder: (context) => const TravelCodeDialog(),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: const Text('여행 참여하기', style: TextStyle(fontSize: 18)),
                 ),
-                child: const Text('신청한 여행', style: TextStyle(fontSize: 18)),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    //여행 생성하기 버튼 누를 시 동작
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserTravelJoinScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('신청한 여행', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-void showLogoutDialog(BuildContext context, VoidCallback onLogout) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('로그아웃'),
-        content: const Text('정말 로그아웃 하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-              onLogout(); // 로그아웃 실행
-            },
-            child: const Text('로그아웃'),
-          ),
-        ],
-      );
-    },
-  );
 }

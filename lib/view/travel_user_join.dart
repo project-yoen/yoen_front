@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_join_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
@@ -20,6 +21,7 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
   @override
   void initState() {
     super.initState();
+
     // 화면 첫 진입 시 API 호출
     Future.microtask(() {
       ref.read(travelJoinNotifierProvider.notifier).reset();
@@ -27,7 +29,6 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
           .read(travelListNotifierProvider)
           .selectedTravel!
           .travelId;
-
       setState(() {
         _travelId = travelId;
       });
@@ -36,45 +37,29 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
           .read(travelJoinNotifierProvider.notifier)
           .getTravelJoinList(_travelId);
     });
+
+    // 에러 감시
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listen<TravelJoinState>(travelJoinNotifierProvider, (previous, next) {
+        if (previous?.status != next.status &&
+            next.status == TravelJoinStatus.error &&
+            next.errorMessage != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+        }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(travelJoinNotifierProvider);
 
-    Widget body;
-    switch (state.status) {
-      case TravelJoinStatus.initial:
-      case TravelJoinStatus.loading:
-        body = const Center(child: CircularProgressIndicator());
-        break;
-
-      case TravelJoinStatus.success:
-        if (state.userJoins.isEmpty) {
-          body = const Center(child: Text('신청자가 없습니다.'));
-        } else {
-          body = ListView.builder(
-            itemCount: state.userJoins.length,
-            itemBuilder: (context, index) {
-              final join = state.userJoins[index];
-              return TravelUserJoinTile(
-                travelJoinId: join.travelJoinRequestId,
-                name: join.name,
-                gender: join.gender,
-                imageUrl: join.imageUrl,
-              );
-            },
-          );
-        }
-        break;
-
-      case TravelJoinStatus.error:
-        body = Center(child: Text('에러: ${state.errorMessage ?? "알 수 없는 오류"}'));
-        break;
-    }
-
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent, // 그림자 아예 제거
         title: const Text('신청 여행 목록'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -85,7 +70,48 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
         ),
       ),
 
-      body: body,
+      body: Builder(
+        builder: (_) {
+          switch (state.status) {
+            case TravelJoinStatus.initial:
+            case TravelJoinStatus.loading:
+              return const Center(child: CircularProgressIndicator());
+
+            case TravelJoinStatus.success:
+              return RefreshIndicator(
+                onRefresh: () async {
+                  HapticFeedback.mediumImpact();
+                  await ref
+                      .read(travelJoinNotifierProvider.notifier)
+                      .getTravelJoinList(_travelId);
+                },
+                child: state.userJoins.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 200),
+                          Center(child: Text('신청자가 없습니다.')),
+                        ],
+                      )
+                    : ListView.builder(
+                        itemCount: state.userJoins.length,
+                        itemBuilder: (context, index) {
+                          final join = state.userJoins[index];
+                          return TravelUserJoinTile(
+                            travelJoinId: join.travelJoinRequestId,
+                            name: join.name,
+                            gender: join.gender,
+                            imageUrl: join.imageUrl,
+                          );
+                        },
+                      ),
+              );
+
+            case TravelJoinStatus.error:
+              return const Center(child: Text('문제가 발생했습니다.'));
+          }
+        },
+      ),
     );
   }
 }
