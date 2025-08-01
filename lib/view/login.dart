@@ -95,6 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextField(
                 controller: emailController,
                 focusNode: emailFocusNode,
+                keyboardType: TextInputType.emailAddress,
                 onSubmitted: (_) {
                   FocusScope.of(
                     context,
