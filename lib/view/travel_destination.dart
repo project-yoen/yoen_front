@@ -24,10 +24,6 @@ class _TravelDestinationScreenState
   @override
   void initState() {
     super.initState();
-    // 위젯이 빌드된 후 첫 목적지 목록을 가져옵니다.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchDestinationsByCountry();
-    });
   }
 
   void _fetchDestinationsByCountry() {

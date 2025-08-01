@@ -37,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     emailController.removeListener(_updateLoginButtonState);
-    passwordController.removeListener(_updateLoginButtonState);
+    passwordController.addListener(_updateLoginButtonState);
     emailController.dispose();
     passwordController.dispose();
     emailFocusNode.dispose();
@@ -200,7 +200,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     MaterialPageRoute(
                       builder: (context) => const RegisterEmailPageScreen(),
                     ),
-                  );
+                  ).then((_) {
+                    ref.read(loginNotifierProvider.notifier).reset();
+                    emailController.clear();
+                    passwordController.clear();
+                  });
                 },
                 child: const Text(
                   '회원가입',
