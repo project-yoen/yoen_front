@@ -1,6 +1,7 @@
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 import '../../view/travel_overview.dart';
 import '../notifier/travel_list_notifier.dart';
 
@@ -74,14 +75,8 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                               fit: StackFit.expand,
                               children: [
                                 if (travel.imageUrl != null)
-                                  Image.network(
-                                    travel.imageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Center(
-                                              child: Icon(Icons.error),
-                                            ),
+                                  ResponsiveShimmerImage(
+                                    imageUrl: travel.imageUrl!,
                                   )
                                 else
                                   Container(

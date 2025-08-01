@@ -1,10 +1,13 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
   const TravelRecordScreen({super.key});
@@ -129,20 +132,7 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
             padding: const EdgeInsets.only(right: 8.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
-              child: Image.network(
-                images[index],
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) {
-                  return progress == null
-                      ? child
-                      : const Center(child: CircularProgressIndicator());
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.error, color: Colors.red);
-                },
-              ),
+              child: ResponsiveShimmerImage(imageUrl: images[index]),
             ),
           );
         },
