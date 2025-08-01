@@ -30,7 +30,9 @@ class RecordState {
   }) {
     return RecordState(
       getStatus: getStatus ?? this.getStatus,
-      createStatus: resetCreateStatus == true ? Status.initial : (createStatus ?? this.createStatus),
+      createStatus: resetCreateStatus == true
+          ? Status.initial
+          : (createStatus ?? this.createStatus),
       records: records ?? this.records,
       errorMessage: errorMessage ?? this.errorMessage,
     );
@@ -58,6 +60,10 @@ class RecordNotifier extends StateNotifier<RecordState> {
     }
   }
 
+  void resetAll() {
+    state = RecordState();
+  }
+
   Future<void> createRecord(
     RecordCreateRequest request,
     List<MultipartFile> images,
@@ -82,6 +88,6 @@ final recordRepositoryProvider = Provider<RecordRepository>((ref) {
 
 final recordNotifierProvider =
     StateNotifierProvider<RecordNotifier, RecordState>((ref) {
-  final repository = ref.watch(recordRepositoryProvider);
-  return RecordNotifier(repository);
-});
+      final repository = ref.watch(recordRepositoryProvider);
+      return RecordNotifier(repository);
+    });
