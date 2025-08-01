@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/model/accept_join_request.dart';
 import 'package:yoen_front/data/model/join_code_response.dart';
@@ -60,12 +61,31 @@ class TravelJoinNotifier extends StateNotifier<TravelJoinState> {
       );
       final response = await _repository.acceptTravelJoin(request);
       state = state.copyWith(status: TravelJoinStatus.success);
-      await getTravelJoinList(travelId);
     } catch (e) {
+      String errorMessage = '알 수 없는 오류가 발생했습니다.';
+      // TODO: 잘 작동하는거 확인하긴했는데, travelUserjoinList에서 에러를 처리하는게 아직 살짝 문제가 있음
+
+      if (e is DioException) {
+        try {
+          final responseData = e.response?.data;
+
+          if (responseData is Map<String, dynamic> &&
+              responseData['error'] != null) {
+            errorMessage = responseData['error'];
+          } else if (responseData is String) {
+            // 혹시 서버가 JSON이 아닌 plain text로 보낸 경우
+            errorMessage = responseData;
+          }
+        } catch (_) {
+          // 파싱 중 오류가 나도 기본 메시지 유지
+        }
+      }
       state = state.copyWith(
         status: TravelJoinStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: errorMessage,
       );
+    } finally {
+      await getTravelJoinList(travelId);
     }
   }
 
@@ -74,12 +94,13 @@ class TravelJoinNotifier extends StateNotifier<TravelJoinState> {
     try {
       final response = await _repository.rejectTravelJoin(travelJoinId);
       state = state.copyWith(status: TravelJoinStatus.success);
-      await getTravelJoinList(travelId);
     } catch (e) {
       state = state.copyWith(
         status: TravelJoinStatus.error,
         errorMessage: e.toString(),
       );
+    } finally {
+      await getTravelJoinList(travelId);
     }
   }
 
