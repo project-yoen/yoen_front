@@ -85,123 +85,144 @@ class _TravelDestinationScreenState
             _showDestinations = false; // 목적지 목록 숨기기
           });
         },
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Center(
-                child: SegmentedButton<String>(
-                  segments: const <ButtonSegment<String>>[
-                    ButtonSegment<String>(value: 'KOREA', label: Text('한국')),
-                    ButtonSegment<String>(value: 'JAPAN', label: Text('일본')),
-                  ],
-                  selected: {_selectedCountry},
-                  onSelectionChanged: (Set<String> newSelection) {
-                    setState(() {
-                      _selectedCountry = newSelection.first;
-                      _fetchDestinationsByCountry(); // 국가 변경 시 목적지 다시 로드
-                      _showDestinations = true; // 목록을 바로 보여줌
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _searchController,
-                onTap: () {
-                  // 텍스트 필드를 탭하면 API 호출 및 목록 표시
-                  if (!_showDestinations) {
-                    _fetchDestinationsByCountry();
-                    setState(() {
-                      _showDestinations = true;
-                    });
-                  }
-                },
-                onChanged: (value) {
-                  // 검색어가 변경될 때마다 화면을 다시 그려서 목록을 필터링
-                  setState(() {});
-                },
-                decoration: const InputDecoration(
-                  hintText: '목적지를 검색하세요',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.search),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // _showDestinations가 true일 때만 목록을 보여줌
-              if (_showDestinations)
-                SizedBox(
-                  height: 250,
-                  child: Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      borderRadius: const BorderRadius.all(Radius.circular(12)),
-                    ),
-                    child: _buildDestinationList(
-                      destinationState,
-                      filteredDestinations,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 20),
-              if (_selectedDestinations.isNotEmpty)
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: _selectedDestinations
-                      .map(
-                        (dest) => Chip(
-                          label: Text(dest.destinationName),
-                          onDeleted: () {
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      Center(
+                        child: SegmentedButton<String>(
+                          segments: const <ButtonSegment<String>>[
+                            ButtonSegment<String>(
+                              value: 'KOREA',
+                              label: Text('한국'),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'JAPAN',
+                              label: Text('일본'),
+                            ),
+                          ],
+                          selected: {_selectedCountry},
+                          onSelectionChanged: (Set<String> newSelection) {
                             setState(() {
-                              _selectedDestinations.removeWhere(
-                                (d) => d.destinationId == dest.destinationId,
-                              );
+                              _selectedCountry = newSelection.first;
+                              _fetchDestinationsByCountry(); // 국가 변경 시 목적지 다시 로드
+                              _showDestinations = true; // 목록을 바로 보여줌
                             });
                           },
                         ),
-                      )
-                      .toList(),
-                ),
-              const Spacer(),
-              Align(
-                alignment: Alignment.center,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    if (_selectedDestinations.isNotEmpty) {
-                      final destinationIds = _selectedDestinations
-                          .map((dest) => dest.destinationId)
-                          .toList();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TravelDetailScreen(
-                            nation: _selectedCountry,
-                            destinationIds: destinationIds,
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _searchController,
+                        onTap: () {
+                          // 텍스트 필드를 탭하면 API 호출 및 목록 표시
+                          if (!_showDestinations) {
+                            _fetchDestinationsByCountry();
+                            setState(() {
+                              _showDestinations = true;
+                            });
+                          }
+                        },
+                        onChanged: (value) {
+                          // 검색어가 변경될 때마다 화면을 다시 그려서 목록을 필터링
+                          setState(() {});
+                        },
+                        decoration: const InputDecoration(
+                          hintText: '목적지를 검색하세요',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // _showDestinations가 true일 때만 목록을 보여줌
+                      if (_showDestinations)
+                        SizedBox(
+                          height: 250,
+                          child: Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(12),
+                              ),
+                            ),
+                            child: _buildDestinationList(
+                              destinationState,
+                              filteredDestinations,
+                            ),
                           ),
                         ),
-                      );
-                    } else {
-                      // 목적지가 선택되지 않았을 때 사용자에게 알림
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('목적지를 하나 이상 선택해주세요.'),
-                          duration: Duration(seconds: 2),
+                      const SizedBox(height: 20),
+                      if (_selectedDestinations.isNotEmpty)
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _selectedDestinations
+                              .map(
+                                (dest) => Chip(
+                                  label: Text(dest.destinationName),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedDestinations.removeWhere(
+                                        (d) =>
+                                            d.destinationId ==
+                                            dest.destinationId,
+                                      );
+                                    });
+                                  },
+                                ),
+                              )
+                              .toList(),
                         ),
-                      );
-                    }
-                  },
-                  child: const Icon(Icons.arrow_forward),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 40, bottom: 20),
+                          child: FloatingActionButton(
+                            onPressed: () {
+                              if (_selectedDestinations.isNotEmpty) {
+                                final destinationIds = _selectedDestinations
+                                    .map((dest) => dest.destinationId)
+                                    .toList();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TravelDetailScreen(
+                                      nation: _selectedCountry,
+                                      destinationIds: destinationIds,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                // 목적지가 선택되지 않았을 때 사용자에게 알림
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('목적지를 하나 이상 선택해주세요.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Icon(Icons.arrow_forward),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -238,7 +259,6 @@ class _TravelDestinationScreenState
           },
         );
       case DestinationStatus.idle:
-      default:
         return const Center(child: Text('목적지를 선택해주세요.'));
     }
   }
@@ -252,6 +272,7 @@ class _TravelDestinationScreenState
         _selectedDestinations.add(destination);
       });
     }
+    setState(() {});
     _searchController.clear();
   }
 }
