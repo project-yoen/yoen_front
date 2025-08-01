@@ -9,7 +9,7 @@ class ApiClient {
       BaseOptions(
         baseUrl: 'http://localhost:8080',
         connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true',
