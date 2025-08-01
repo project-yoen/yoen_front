@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
-import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_join_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
@@ -12,7 +12,6 @@ import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
-import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   // 파라미터 제거
@@ -25,9 +24,6 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   int _selectedIndex = 0;
-
-  // TODO: travelCode를 travelId를 이용해 가져오는 로직 필요
-  String _travelCode = "DUMMY-CODE"; // 임시 코드
 
   @override
   void initState() {
@@ -69,6 +65,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent, // 그림자 아예 제거
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -91,6 +89,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
               final joinCode = travelJoinState.joinCode;
 
               if (joinCode == null) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('초대 코드를 불러오지 못했습니다.')),
                 );
@@ -108,6 +107,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                 formattedExpireDate = '만료일자 파싱 실패';
               }
 
+              if (!mounted) return;
               // 3. 다이얼로그 표시
               showDialog(
                 context: context,
@@ -122,12 +122,25 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                       ),
                       const SizedBox(height: 24),
                       Center(
-                        child: SelectableText(
-                          joinCode.code,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                        child: GestureDetector(
+                          onTap: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: joinCode.code),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('초대 코드가 복사되었습니다.'),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            joinCode.code,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -145,15 +158,23 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                   actions: [
                     TextButton(
                       onPressed: () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: joinCode.code),
+                        final shareText =
+                            '''
+여행 초대 코드: ${joinCode.code}
+유효기간: $formattedExpireDate
+
+아래 앱에서 코드를 입력하여 여행에 참여하세요!
+https://your-app-link.com
+''';
+
+                        await Share.share(
+                          shareText.trim(),
+                          subject: '여행 초대 코드 공유',
                         );
+
                         Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('초대 코드가 복사되었습니다.')),
-                        );
                       },
-                      child: const Text('복사하기'),
+                      child: const Text('공유하기'),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -186,8 +207,9 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     maintainSize: true,
                     maintainAnimation: true,
                     maintainState: true,
-                    visible: currentDate
-                        .isAfter(DateTime.parse(travel.startDate)),
+                    visible: currentDate.isAfter(
+                      DateTime.parse(travel.startDate),
+                    ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back_ios),
                       onPressed: () => ref
@@ -209,8 +231,9 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     maintainSize: true,
                     maintainAnimation: true,
                     maintainState: true,
-                    visible:
-                        currentDate.isBefore(DateTime.parse(travel.endDate)),
+                    visible: currentDate.isBefore(
+                      DateTime.parse(travel.endDate),
+                    ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_forward_ios),
                       onPressed: () => ref

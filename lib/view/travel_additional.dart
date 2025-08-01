@@ -29,7 +29,7 @@ class TravelAdditionalScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('신청한 여행', style: TextStyle(fontSize: 18)),
+                child: const Text('신청자 리스트', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

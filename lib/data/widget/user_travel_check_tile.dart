@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/model/user_response.dart';
@@ -74,7 +75,7 @@ class UserTravelCheckTile extends ConsumerWidget {
                           (user) => Chip(
                             avatar: CircleAvatar(
                               backgroundImage: user.imageUrl != null
-                                  ? NetworkImage(user.imageUrl!)
+                                  ? CachedNetworkImageProvider(user.imageUrl!)
                                   : null,
                               child: user.imageUrl == null
                                   ? const Icon(Icons.person, size: 16)
