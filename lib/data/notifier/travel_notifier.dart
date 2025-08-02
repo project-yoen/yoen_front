@@ -40,7 +40,23 @@ class TravelNotifier extends StateNotifier<TravelState> {
       final response = await _repository.createTravel(request);
       state = state.copyWith(status: TravelStatus.success, travel: response);
     } catch (e) {
-      state = state.copyWith(status: TravelStatus.error, errorMessage: e.toString());
+      state = state.copyWith(
+        status: TravelStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> leaveTravel(int travelId) async {
+    state = state.copyWith(status: TravelStatus.loading);
+    try {
+      final response = await _repository.leaveTravel(travelId);
+      state = state.copyWith(status: TravelStatus.success);
+    } catch (e) {
+      state = state.copyWith(
+        status: TravelStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 }
@@ -52,6 +68,6 @@ final travelRepositoryProvider = Provider<TravelRepository>((ref) {
 
 final travelNotifierProvider =
     StateNotifierProvider<TravelNotifier, TravelState>((ref) {
-  final repository = ref.watch(travelRepositoryProvider);
-  return TravelNotifier(repository);
-});
+      final repository = ref.watch(travelRepositoryProvider);
+      return TravelNotifier(repository);
+    });

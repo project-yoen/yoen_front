@@ -32,4 +32,13 @@ class TravelRepository {
       throw Exception(apiResponse.error ?? 'Failed to get travels');
     }
   }
+
+  Future<String> leaveTravel(int travelId) async {
+    final apiResponse = await _apiService.leaveTravel(travelId);
+    if (apiResponse.data != null) {
+      return apiResponse.data!;
+    } else {
+      throw Exception(apiResponse.error ?? 'Failed to get travels');
+    }
+  }
 }
