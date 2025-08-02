@@ -110,6 +110,49 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<ApiResponse<List<TravelUserDetailResponse>>> getTravelUsers(
+    int travelId,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'travelId': travelId};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options =
+        _setStreamType<ApiResponse<List<TravelUserDetailResponse>>>(
+          Options(method: 'GET', headers: _headers, extra: _extra)
+              .compose(
+                _dio.options,
+                '/travel/userdetail',
+                queryParameters: queryParameters,
+                data: _data,
+              )
+              .copyWith(
+                baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl),
+              ),
+        );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<List<TravelUserDetailResponse>> _value;
+    try {
+      _value = ApiResponse<List<TravelUserDetailResponse>>.fromJson(
+        _result.data!,
+        (json) => json is List<dynamic>
+            ? json
+                  .map<TravelUserDetailResponse>(
+                    (i) => TravelUserDetailResponse.fromJson(
+                      i as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList()
+            : List.empty(),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<ApiResponse<List<DestinationResponse>>> getDestinations(
     String nation,
   ) async {

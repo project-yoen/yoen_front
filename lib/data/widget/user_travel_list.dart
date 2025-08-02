@@ -1,3 +1,4 @@
+import 'package:yoen_front/data/dialog/travel_user_dialog.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,36 +121,43 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                     ),
                                   ),
                                 ),
-                                // 유저 수 표시하기
                                 Positioned(
                                   top: 8,
                                   right: 8,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.people,
-                                          color: Colors.white,
-                                          size: 16,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => TravelUserDialog(
+                                          travelId: travel.travelId,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${travel.numOfPeople}',
-                                          style: const TextStyle(
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.people,
                                             color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                            size: 16,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${travel.numOfPeople}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -165,3 +173,4 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
     );
   }
 }
+

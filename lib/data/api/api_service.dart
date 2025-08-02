@@ -11,6 +11,7 @@ import 'package:yoen_front/data/model/travel_user_join_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 
+import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import '../model/accept_join_request.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
@@ -30,6 +31,11 @@ abstract class ApiService {
 
   @GET("/user/exists")
   Future<ApiResponse<bool>> checkValidEmail(@Query("email") String email);
+
+  @GET("/travel/userdetail")
+  Future<ApiResponse<List<TravelUserDetailResponse>>> getTravelUsers(
+    @Query("travelId") int travelId,
+  );
 
   @GET("/common/destination/all")
   Future<ApiResponse<List<DestinationResponse>>> getDestinations(
