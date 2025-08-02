@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/view/travel_user_join.dart';
 
-class TravelAdditionalScreen extends StatelessWidget {
+import 'base.dart';
+
+class TravelAdditionalScreen extends ConsumerWidget {
   const TravelAdditionalScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -31,10 +36,70 @@ class TravelAdditionalScreen extends StatelessWidget {
                 ),
                 child: const Text('신청자 리스트', style: TextStyle(fontSize: 18)),
               ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  showTravelOutDialog(context, () async {
+                    try {
+                      // 1. 여행 나가기 API 호출
+                      int travelId = ref
+                          .read(travelListNotifierProvider)
+                          .selectedTravel!
+                          .travelId;
+                      await ref
+                          .read(travelNotifierProvider.notifier)
+                          .leaveTravel(travelId);
+
+                      // 3. BaseScreen으로 이동
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => const BaseScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    } catch (e) {
+                      // 에러 처리
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('여행 나가기에 실패했습니다.')),
+                      );
+                    }
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('여행 나가기', style: TextStyle(fontSize: 18)),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+void showTravelOutDialog(BuildContext context, VoidCallback onOut) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('여행 나가기'),
+        content: const Text('정말 여행을 나가시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              onOut();
+            },
+            child: const Text('나가기'),
+          ),
+        ],
+      );
+    },
+  );
 }
