@@ -5,6 +5,7 @@ part 'travel_response.g.dart';
 @JsonSerializable()
 class TravelResponse {
   final int travelId;
+  final int numOfPeople;
   final String travelName;
   final String startDate;
   final String endDate;
@@ -12,6 +13,7 @@ class TravelResponse {
 
   TravelResponse({
     required this.travelId,
+    required this.numOfPeople,
     required this.travelName,
     required this.startDate,
     required this.endDate,

@@ -322,6 +322,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
         // TravelCreateResponse를 TravelResponse로 변환
         final selectedTravel = TravelResponse(
           travelId: newTravel.travelId,
+          numOfPeople: newTravel.numOfPeople,
           travelName: newTravel.travelName,
           startDate: newTravel.startDate,
           endDate: newTravel.endDate,
