@@ -1,12 +1,14 @@
 import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
-import 'package:yoen_front/view/travel_user_join.dart';
 import 'package:yoen_front/view/user_details.dart';
+
+import '../data/notifier/user_notifier.dart';
 
 class UserSettingsScreen extends ConsumerStatefulWidget {
   const UserSettingsScreen({super.key});
@@ -19,7 +21,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
 
-  Future<void> _showImageSourceSelector() async {
+  Future<void> _showImageSourceSelector(WidgetRef ref) async {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -35,7 +37,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                 title: const Text('사진 찍기'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickAndCropImage(ImageSource.camera);
+                  _pickAndCropImage(ImageSource.camera, ref);
                 },
               ),
               ListTile(
@@ -43,7 +45,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                 title: const Text('갤러리에서 선택'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickAndCropImage(ImageSource.gallery);
+                  _pickAndCropImage(ImageSource.gallery, ref);
                 },
               ),
             ],
@@ -53,7 +55,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
     );
   }
 
-  Future<void> _pickAndCropImage(ImageSource source) async {
+  Future<void> _pickAndCropImage(ImageSource source, WidgetRef ref) async {
     final picked = await _picker.pickImage(source: source);
     if (picked == null) return;
 
@@ -78,12 +80,13 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
       });
 
       // TODO: 서버 업로드 로직 추가 (8/2일에 마저 하기)
+      ref.read(userNotifierProvider.notifier).updateImage(_selectedImage!);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.read(userProvider);
+    final userAsync = ref.watch(userNotifierProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final avatarRadius = screenWidth * 0.15;
 
@@ -93,106 +96,120 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Stack(
-                    alignment: Alignment.bottomRight,
+      body: userAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('오류 발생: $error')),
+        data: (user) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTap: _showImageSourceSelector,
-                        child: Container(
-                          width: avatarRadius * 2,
-                          height: avatarRadius * 2,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey,
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showImageSourceSelector(ref),
+                            child: Container(
+                              width: avatarRadius * 2,
+                              height: avatarRadius * 2,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey,
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: _selectedImage != null
+                                  ? Image.file(
+                                      _selectedImage!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : user.imageUrl!.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: user.imageUrl!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.person, size: 32),
+                                    ),
+                            ),
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: _selectedImage != null
-                              ? Image.file(_selectedImage!, fit: BoxFit.cover)
-                              : user?.imageUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: user!.imageUrl!,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Center(
-                                  child: Icon(Icons.person, size: 32),
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _showImageSourceSelector(ref),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blueAccent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: _showImageSourceSelector,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            padding: const EdgeInsets.all(6),
-                            child: const Icon(
-                              Icons.add,
-                              size: 16,
-                              color: Colors.white,
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        user!.name!,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    user!.name!,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const UserDetailsScreen(),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserDetailsScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  child: const Text('개인정보 변경', style: TextStyle(fontSize: 18)),
                 ),
-              ),
-              child: const Text('개인정보 변경', style: TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => showLogoutDialog(
-                context,
-                () => ref.read(loginNotifierProvider.notifier).logout(context),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => showLogoutDialog(
+                    context,
+                    () => ref
+                        .read(loginNotifierProvider.notifier)
+                        .logout(context),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('로그아웃', style: TextStyle(fontSize: 18)),
                 ),
-              ),
-              child: const Text('로그아웃', style: TextStyle(fontSize: 18)),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
