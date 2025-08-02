@@ -71,10 +71,10 @@ class _TravelUserDialogState extends ConsumerState<TravelUserDialog> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundImage: user.imageUrl != null
+                        backgroundImage: user.imageUrl != ""
                             ? CachedNetworkImageProvider(user.imageUrl!)
                             : null,
-                        child: user.imageUrl == null
+                        child: user.imageUrl == ""
                             ? const Icon(Icons.person)
                             : null,
                       ),
