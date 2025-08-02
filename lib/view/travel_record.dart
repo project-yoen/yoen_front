@@ -1,3 +1,4 @@
+import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -93,48 +94,58 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
     final recordTime = DateTime.parse(record.recordTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    record.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => RecordDetailDialog(record: record),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      record.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  formattedTime,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  Text(
+                    formattedTime,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                '작성자: ${record.travelNickName}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+              ),
+              if (record.images.isNotEmpty) ...[
+                const SizedBox(height: 16.0),
+                _buildImageGallery(
+                  record.images.map((e) => e.imageUrl).toList(),
                 ),
               ],
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              '작성자: ${record.travelNickName}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 8.0),
-            Text(record.content, style: Theme.of(context).textTheme.bodyMedium),
-            if (record.images.isNotEmpty) ...[
-              const SizedBox(height: 16.0),
-              _buildImageGallery(record.images.map((e) => e.imageUrl).toList()),
             ],
-          ],
+          ),
         ),
       ),
     );
