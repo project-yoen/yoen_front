@@ -1,12 +1,11 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/login_request.dart';
-import 'package:yoen_front/data/model/user_response.dart';
+import 'package:yoen_front/data/notifier/user_notifier.dart';
 
 import '../../view/login.dart';
 
@@ -35,8 +34,6 @@ final loginNotifierProvider = NotifierProvider<LoginNotifier, LoginState>(
   () => LoginNotifier(),
 );
 
-final userProvider = StateProvider<UserResponse?>((ref) => null);
-
 class LoginNotifier extends Notifier<LoginState> {
   late final ApiService _api;
 
@@ -64,7 +61,7 @@ class LoginNotifier extends Notifier<LoginState> {
         await storage.write(key: "refreshToken", value: refreshToken);
 
         // userProvider에 정보 저장
-        ref.read(userProvider.notifier).state = response.data!.user;
+        ref.read(userNotifierProvider.notifier).setUser(response.data!.user!);
 
         //Todo log로 변경
         print('accessToken: $accessToken');
