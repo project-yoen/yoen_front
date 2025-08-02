@@ -36,9 +36,12 @@ class TravelUserJoinTile extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 16,
-                  backgroundImage: CachedNetworkImageProvider(imageUrl),
-                  child: const Icon(Icons.person, size: 16),
+                  backgroundImage: imageUrl != ""
+                      ? CachedNetworkImageProvider(imageUrl)
+                      : null,
+                  child: imageUrl == ""
+                      ? const Icon(Icons.person, size: 16)
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 Expanded(

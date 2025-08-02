@@ -74,10 +74,10 @@ class UserTravelCheckTile extends ConsumerWidget {
                         .map(
                           (user) => Chip(
                             avatar: CircleAvatar(
-                              backgroundImage: user.imageUrl != null
+                              backgroundImage: user.imageUrl != ""
                                   ? CachedNetworkImageProvider(user.imageUrl!)
                                   : null,
-                              child: user.imageUrl == null
+                              child: user.imageUrl == ""
                                   ? const Icon(Icons.person, size: 16)
                                   : null,
                             ),
