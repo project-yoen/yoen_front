@@ -53,12 +53,6 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                 .read(travelListNotifierProvider.notifier)
                                 .selectTravel(travel);
 
-                            // TODO: 여행기록 리셋함수, 나중에 금액기록이나 해당 여행에서 상태관리하는 것들은 전부 초기화 해주고 다른 여행 들어가야함
-                            // TODO: 그렇지 않으면 다른 여행에서 상태관리하던게 뜬금없이 남아있을때가 있음
-                            ref
-                                .read(recordNotifierProvider.notifier)
-                                .resetAll();
-
                             // 2. 파라미터 없이 화면 이동
                             await Navigator.push(
                               context,

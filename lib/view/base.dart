@@ -9,6 +9,7 @@ import 'package:yoen_front/view/user_settings.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
+import '../data/notifier/record_notifier.dart';
 import 'login.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
@@ -26,6 +27,10 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
     // 위젯이 빌드된 후 첫 여행 목록을 가져옵니다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(travelListNotifierProvider.notifier).fetchTravels();
+
+      // TODO: 여행기록 리셋함수, 나중에 금액기록이나 해당 여행에서 상태관리하는 것들은 전부 초기화 해주고 다른 여행 들어가야함
+      // TODO: 그렇지 않으면 다른 여행에서 상태관리하던게 뜬금없이 남아있을때가 있음
+      ref.read(recordNotifierProvider.notifier).resetAll();
     });
   }
 
@@ -123,7 +128,6 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
                     showDialog(
                       context: context,
                       // 주변 배경 누르면 꺼지는 설정
-                      barrierDismissible: false,
                       builder: (context) => const TravelCodeDialog(),
                     );
                   },
