@@ -194,23 +194,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : const Text('Login', style: TextStyle(fontSize: 18)),
               ),
               const Spacer(flex: 2),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegisterEmailPageScreen(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterEmailPageScreen(),
+                        ),
+                      ).then((_) {
+                        ref.read(loginNotifierProvider.notifier).reset();
+                        emailController.clear();
+                        passwordController.clear();
+                      });
+                    },
+                    child: const Text(
+                      '회원가입',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
-                  ).then((_) {
-                    ref.read(loginNotifierProvider.notifier).reset();
-                    emailController.clear();
-                    passwordController.clear();
-                  });
-                },
-                child: const Text(
-                  '회원가입',
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
+                  ),
+                ],
               ),
             ],
           ),
