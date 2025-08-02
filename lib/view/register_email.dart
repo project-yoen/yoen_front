@@ -22,12 +22,12 @@ class _RegisterEmailPageState extends ConsumerState<RegisterEmailPageScreen> {
     super.initState();
     email = TextEditingController();
     email.addListener(() {
-      // 사용자가 입력을 수정하면 서버 에러 메시지 초기화
-      if (_serverErrorMessage != null) {
-        setState(() {
+      // 버튼 상태를 업데이트하기 위해 setState 호출
+      setState(() {
+        if (_serverErrorMessage != null) {
           _serverErrorMessage = null;
-        });
-      }
+        }
+      });
     });
   }
 

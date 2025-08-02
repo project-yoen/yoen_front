@@ -43,6 +43,7 @@ class _RegisterAgeGenderScreenState
     _dayFocusNode = FocusNode();
 
     _yearController.addListener(() {
+      setState(() {});
       final current = _yearController.text.length;
 
       if (_prevYearLength < current && current == 4) {
@@ -53,6 +54,7 @@ class _RegisterAgeGenderScreenState
     });
 
     _monthController.addListener(() {
+      setState(() {});
       final current = _monthController.text.length;
 
       if (_prevMonthLength < current && current == 2) {
@@ -60,6 +62,10 @@ class _RegisterAgeGenderScreenState
       }
 
       _prevMonthLength = current;
+    });
+
+    _dayController.addListener(() {
+      setState(() {});
     });
   }
 

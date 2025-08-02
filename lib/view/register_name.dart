@@ -15,9 +15,11 @@ class _RegisterNameScreenState extends ConsumerState<RegisterNameScreen> {
   final TextEditingController _nameController = TextEditingController();
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _nameController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override

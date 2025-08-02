@@ -30,6 +30,12 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
     super.initState();
     password = TextEditingController();
     validPassword = TextEditingController();
+    password.addListener(() {
+      setState(() {});
+    });
+    validPassword.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -188,7 +194,8 @@ class _RegisterPwdPageState extends ConsumerState<RegisterPwdScreen> {
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: (password.text.isNotEmpty)
+                    onPressed: (password.text.isNotEmpty &&
+                            (isValidInput != true || validPassword.text.isNotEmpty))
                         ? () {
                             final form = _formKey.currentState!;
                             if (isValidInput == null || isValidInput == false) {
