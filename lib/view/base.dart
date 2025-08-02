@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/notifier/user_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
 import 'package:yoen_front/view/user_settings.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
+import 'login.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
 class BaseScreen extends ConsumerStatefulWidget {
@@ -29,7 +31,7 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.read(userProvider);
+    final userAsync = ref.watch(userNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -38,19 +40,30 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
         automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: Align(
           alignment: Alignment.centerLeft,
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserSettingsScreen()),
-              );
-            },
-            child: Text(
-              '${user?.name}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline, // 밑줄 추가 (선택)
+          child: userAsync.when(
+            data: (user) => GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserSettingsScreen(),
+                  ),
+                );
+              },
+              child: Text(user.name ?? '이름 없음'),
+            ),
+            loading: () => const CircularProgressIndicator(),
+            error: (err, _) => GestureDetector(
+              onTap: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                '오류 발생',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ),

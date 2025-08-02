@@ -82,9 +82,9 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                if (travel.imageUrl != null)
+                                if (travel.travelImageUrl != null)
                                   ResponsiveShimmerImage(
-                                    imageUrl: travel.imageUrl!,
+                                    imageUrl: travel.travelImageUrl!,
                                   )
                                 else
                                   Container(
@@ -135,7 +135,9 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.black.withOpacity(0.5),
                                         borderRadius: BorderRadius.circular(12),
@@ -173,4 +175,3 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
     );
   }
 }
-

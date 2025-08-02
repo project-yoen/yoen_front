@@ -13,7 +13,7 @@ TravelResponse _$TravelResponseFromJson(Map<String, dynamic> json) =>
       travelName: json['travelName'] as String,
       startDate: json['startDate'] as String,
       endDate: json['endDate'] as String,
-      imageUrl: json['imageUrl'] as String?,
+      travelImageUrl: json['travelImageUrl'] as String?,
     );
 
 Map<String, dynamic> _$TravelResponseToJson(TravelResponse instance) =>
@@ -23,5 +23,5 @@ Map<String, dynamic> _$TravelResponseToJson(TravelResponse instance) =>
       'travelName': instance.travelName,
       'startDate': instance.startDate,
       'endDate': instance.endDate,
-      'imageUrl': instance.imageUrl,
+      'travelImageUrl': instance.travelImageUrl,
     };

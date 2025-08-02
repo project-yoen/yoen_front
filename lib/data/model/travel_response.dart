@@ -9,7 +9,7 @@ class TravelResponse {
   final String travelName;
   final String startDate;
   final String endDate;
-  final String? imageUrl;
+  final String? travelImageUrl;
 
   TravelResponse({
     required this.travelId,
@@ -17,7 +17,7 @@ class TravelResponse {
     required this.travelName,
     required this.startDate,
     required this.endDate,
-    this.imageUrl,
+    this.travelImageUrl,
   });
 
   factory TravelResponse.fromJson(Map<String, dynamic> json) =>
