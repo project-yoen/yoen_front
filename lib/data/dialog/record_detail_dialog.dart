@@ -1,7 +1,16 @@
-import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 class RecordDetailDialog extends StatefulWidget {
   final RecordResponse record;
@@ -36,18 +45,6 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                const Text(
-                  '여행기록 보기',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
@@ -60,6 +57,11 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.record.travelNickName,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
                     if (widget.record.images.isNotEmpty)
@@ -76,16 +78,151 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                                 });
                               },
                               itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4.0,
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    child: ResponsiveShimmerImage(
-                                      imageUrl:
-                                          widget.record.images[index].imageUrl,
-                                      aspectRatio: 4 / 3,
+                                final imageUrl =
+                                    widget.record.images[index].imageUrl;
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  onLongPress: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(16),
+                                        ),
+                                      ),
+                                      builder: (_) => SafeArea(
+                                        child: Wrap(
+                                          children: [
+                                            ListTile(
+                                              leading: const Icon(
+                                                Icons.download,
+                                              ),
+                                              title: const Text('사진 저장하기'),
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  context,
+                                                ); // BottomSheet 닫기
+
+                                                // 권한 요청
+                                                final granted =
+                                                    await requestImageSavePermission();
+                                                if (!granted) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        '저장 권한이 필요합니다.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
+                                                try {
+                                                  final response = await http
+                                                      .get(Uri.parse(imageUrl));
+                                                  final Uint8List bytes =
+                                                      response.bodyBytes;
+
+                                                  final result =
+                                                      await ImageGallerySaverPlus.saveImage(
+                                                        bytes,
+                                                        quality: 100,
+                                                        name:
+                                                            "travel_image_${DateTime.now().millisecondsSinceEpoch}",
+                                                      );
+
+                                                  final isSuccess =
+                                                      result['isSuccess'] ??
+                                                      result['success'] ??
+                                                      false;
+
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        isSuccess
+                                                            ? '이미지를 저장했습니다.'
+                                                            : '저장에 실패했습니다.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '저장 중 오류 발생: $e',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                            ListTile(
+                                              leading: const Icon(Icons.share),
+                                              title: const Text('공유하기'),
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  context,
+                                                ); // BottomSheet 닫기
+
+                                                try {
+                                                  final uri = Uri.parse(
+                                                    imageUrl,
+                                                  );
+                                                  final response = await http
+                                                      .get(uri);
+                                                  final bytes =
+                                                      response.bodyBytes;
+
+                                                  // temp 디렉토리에 저장
+                                                  final tempDir =
+                                                      await getTemporaryDirectory();
+                                                  final file = await File(
+                                                    '${tempDir.path}/shared_image.jpg',
+                                                  ).create();
+                                                  await file.writeAsBytes(
+                                                    bytes,
+                                                  );
+
+                                                  await Share.shareXFiles([
+                                                    XFile(file.path),
+                                                  ]);
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '공유 중 오류 발생: $e',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0,
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      child: ResponsiveShimmerImage(
+                                        imageUrl: imageUrl,
+                                        aspectRatio: 4 / 3,
+                                      ),
                                     ),
                                   ),
                                 );
@@ -141,4 +278,24 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
       ),
     );
   }
+}
+
+Future<bool> requestImageSavePermission() async {
+  if (Platform.isAndroid) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final sdkInt = androidInfo.version.sdkInt;
+
+    if (sdkInt >= 33) {
+      final status = await Permission.photos.request();
+      return status.isGranted;
+    } else {
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  } else if (Platform.isIOS) {
+    final status = await Permission.photosAddOnly.request();
+    return status.isGranted;
+  }
+
+  return false;
 }
