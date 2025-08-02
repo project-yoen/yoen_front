@@ -28,29 +28,43 @@ class _TravelUserDialogState extends ConsumerState<TravelUserDialog> {
     return response.data!;
   }
 
+  String _getGenderString(String? gender) {
+    switch (gender) {
+      case 'MALE':
+        return '남성';
+      case 'FEMALE':
+        return '여성';
+      case 'OTHERS':
+        return '기타';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('참여중인 유저'),
-      content: FutureBuilder<List<TravelUserDetailResponse>>(
-        future: _usersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Text('사용자 정보를 불러오는데 실패했습니다.');
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Text('참여중인 사용자가 없습니다.');
-          }
+      content: SizedBox(
+        width: 300,
+        height: 400,
+        child: FutureBuilder<List<TravelUserDetailResponse>>(
+          future: _usersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('사용자 정보를 불러오는데 실패했습니다.'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('참여중인 사용자가 없습니다.'));
+            }
 
-          final users = snapshot.data!;
-          return SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
+            final users = snapshot.data!;
+            return ListView.builder(
               itemCount: users.length,
               itemBuilder: (context, index) {
                 final user = users[index];
+                final genderString = _getGenderString(user.gender);
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
@@ -66,19 +80,45 @@ class _TravelUserDialogState extends ConsumerState<TravelUserDialog> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          '${user.nickName} (${user.travelNickName}) ${user.gender} ${user.birthDay}',
-                          style: const TextStyle(fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${user.nickName} (${user.travelNickName})',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    genderString,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    user.birthDay ?? '',
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.end,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 );
               },
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       actions: [
         TextButton(
