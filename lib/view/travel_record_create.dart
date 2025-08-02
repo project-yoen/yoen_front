@@ -91,8 +91,9 @@ class _TravelRecordCreateScreenState
         recordTime: _selectedDateTime.toIso8601String(),
       );
 
-      final imageFiles =
-          _images.map((image) => MultipartFile.fromFileSync(image.path)).toList();
+      final imageFiles = _images
+          .map((image) => MultipartFile.fromFileSync(image.path))
+          .toList();
 
       await ref
           .read(recordNotifierProvider.notifier)
@@ -119,9 +120,7 @@ class _TravelRecordCreateScreenState
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('여행 기록 작성'),
-        ),
+        appBar: AppBar(title: const Text('여행 기록 작성')),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -162,11 +161,18 @@ class _TravelRecordCreateScreenState
                     '작성 시간: ${DateFormat('yyyy.MM.dd a hh:mm', 'ko_KR').format(_selectedDateTime)}',
                   ),
                   trailing: const Icon(Icons.access_time),
-                  onTap: () => _selectTime(context),
+                  onTap: () {
+                    // FocusScope.of(context).unfocus(); 작동 안함
+
+                    _selectTime(context);
+                  },
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: _pickImages,
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    _pickImages();
+                  },
                   child: Container(
                     height: 100,
                     decoration: BoxDecoration(
@@ -174,8 +180,11 @@ class _TravelRecordCreateScreenState
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Center(
-                      child:
-                          Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                      child: Icon(
+                        Icons.add_a_photo,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -209,8 +218,11 @@ class _TravelRecordCreateScreenState
                                 color: Colors.black54,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close,
-                                  color: Colors.white, size: 16),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ),

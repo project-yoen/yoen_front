@@ -445,6 +445,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                 SizedBox(
                   width: 100.0,
                   child: TextFormField(
+                    readOnly: true,
                     controller: _numberOfPeopleController,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
