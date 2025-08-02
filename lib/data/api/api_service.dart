@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:yoen_front/data/model/api_response.dart';
@@ -16,6 +18,7 @@ import '../model/accept_join_request.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/register_request.dart';
+import '../model/user_response.dart';
 
 part 'api_service.g.dart';
 
@@ -26,11 +29,20 @@ abstract class ApiService {
   @POST("/user/register")
   Future<ApiResponse<String>> register(@Body() RegisterRequest user);
 
+  @GET("/user/profile")
+  Future<ApiResponse<UserResponse>> getUserProfile();
+
   @POST("/user/login")
   Future<ApiResponse<LoginResponse>> login(@Body() LoginRequest user);
 
   @GET("/user/exists")
   Future<ApiResponse<bool>> checkValidEmail(@Query("email") String email);
+
+  @MultiPart()
+  @POST("/user/profileImage")
+  Future<ApiResponse<String>> setProfileImage(
+    @Part(name: "profileImage") File image,
+  );
 
   @GET("/travel/userdetail")
   Future<ApiResponse<List<TravelUserDetailResponse>>> getTravelUsers(
