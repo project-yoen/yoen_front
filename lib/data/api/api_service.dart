@@ -62,6 +62,9 @@ abstract class ApiService {
   @GET("/travel")
   Future<ApiResponse<List<TravelResponse>>> getTravels();
 
+  @POST("/travel/leave/{travelId}")
+  Future<ApiResponse<String>> leaveTravel(@Path("travelId") int travelId);
+
   @GET("/join/userlist")
   Future<ApiResponse<List<UserTravelJoinResponse>>> getUserJoinList();
 
