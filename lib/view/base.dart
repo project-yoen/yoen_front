@@ -55,7 +55,13 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
                   ),
                 );
               },
-              child: Text(user.name ?? '이름 없음'),
+              child: Text(
+                user.nickname ?? '이름 없음',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
             loading: () => const CircularProgressIndicator(),
             error: (err, _) => GestureDetector(
