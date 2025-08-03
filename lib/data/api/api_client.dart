@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_service.dart';
@@ -5,9 +7,12 @@ import 'interceptor/auth_interceptor.dart';
 
 class ApiClient {
   static Dio createDio(Ref ref) {
+    final baseUrl = Platform.isAndroid
+        ? 'http://10.0.2.2:8080' // Android 에뮬레이터
+        : 'http://localhost:8080'; // iOS 시뮬레이터
     final dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8080',
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
