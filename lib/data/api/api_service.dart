@@ -32,6 +32,11 @@ abstract class ApiService {
   @GET("/user/profile")
   Future<ApiResponse<UserResponse>> getUserProfile();
 
+  @POST("/user/update")
+  Future<ApiResponse<UserResponse>> updateUserProfile(
+    @Body() UserResponse updatedUser,
+  );
+
   @POST("/user/login")
   Future<ApiResponse<LoginResponse>> login(@Body() LoginRequest user);
 
