@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
-import 'package:yoen_front/view/user_details.dart';
+import 'package:yoen_front/view/user_edit.dart';
 
 import '../data/notifier/user_notifier.dart';
 
@@ -178,7 +178,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const UserDetailsScreen(),
+                        builder: (context) => const UserEditScreen(),
                       ),
                     );
                   },
