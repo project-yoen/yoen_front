@@ -127,11 +127,42 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
                 }
               },
               onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
+                setState(() {
+                  _focusedDay = focusedDay;
+                });
               },
               headerStyle: const HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
+              ),
+              calendarBuilders: CalendarBuilders(
+                prioritizedBuilder: (context, day, focusedDay) {
+                  final bool isOutside = day.month != _focusedDay.month;
+
+                  if (day.weekday == DateTime.saturday) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(
+                            color: isOutside
+                                ? Colors.blue.withOpacity(0.5)
+                                : Colors.blue),
+                      ),
+                    );
+                  }
+                  if (day.weekday == DateTime.sunday) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(
+                            color: isOutside
+                                ? Colors.red.withOpacity(0.5)
+                                : Colors.red),
+                      ),
+                    );
+                  }
+                  return null;
+                },
               ),
               calendarStyle: CalendarStyle(
                 todayTextStyle: const TextStyle(color: Colors.black),
