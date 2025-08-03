@@ -29,4 +29,12 @@ class UserRepository {
     }
     return apiResponse.data!;
   }
+
+  Future<UserResponse> updateUserProfile(UserResponse updatedUser) async {
+    final apiResponse = await _apiService.updateUserProfile(updatedUser);
+    if (apiResponse.success == false) {
+      throw Exception(apiResponse.error ?? 'Failed to update user profile');
+    }
+    return apiResponse.data!;
+  }
 }

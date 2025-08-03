@@ -1,5 +1,3 @@
-
-
 import 'package:json_annotation/json_annotation.dart';
 
 part 'user_response.g.dart';
@@ -17,7 +15,7 @@ class UserResponse {
   UserResponse({
     this.userId,
     this.name,
-    required this.email,
+    this.email,
     this.gender,
     this.nickname,
     this.birthday,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_provider.dart';
+import '../model/register_request.dart';
 import '../model/user_response.dart';
 import '../repository/user_repository.dart';
 
@@ -29,5 +30,11 @@ class UserNotifier extends AsyncNotifier<UserResponse> {
   Future<void> updateImage(File image) async {
     await _repo.setProfileImage(image);
     state = AsyncValue.data(await _repo.getUserProfile()); // 갱신
+  }
+
+  Future<UserResponse> updateUserProfile(UserResponse updatedUser) async {
+    final response = await _repo.updateUserProfile(updatedUser);
+    state = AsyncValue.data(response);
+    return response;
   }
 }
