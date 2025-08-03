@@ -82,9 +82,6 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                                     widget.record.images[index].imageUrl;
 
                                 return GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
                                   onLongPress: () {
                                     showModalBottomSheet(
                                       context: context,
