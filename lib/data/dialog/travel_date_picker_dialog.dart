@@ -137,6 +137,14 @@ class _TravelDatePickerDialogState extends State<TravelDatePickerDialog> {
               ),
               calendarBuilders: CalendarBuilders(
                 prioritizedBuilder: (context, day, focusedDay) {
+                  final isSelected = isSameDay(_selectedDay, day);
+                  final isRangeStart = isSameDay(_rangeStart, day);
+                  final isRangeEnd = isSameDay(_rangeEnd, day);
+
+                  if (isSelected || isRangeStart || isRangeEnd) {
+                    return null;
+                  }
+                  
                   final bool isOutside = day.month != _focusedDay.month;
 
                   if (day.weekday == DateTime.saturday) {
