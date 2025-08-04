@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -5,6 +6,7 @@ import 'package:retrofit/retrofit.dart';
 import 'package:yoen_front/data/model/api_response.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
 import 'package:yoen_front/data/model/join_code_response.dart';
+import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
@@ -103,9 +105,16 @@ abstract class ApiService {
     @Path("id") int travelJoinRequestId,
   );
 
+  // @POST("/record/create")
+  // Future<ApiResponse<RecordCreateResponse>> createRecord(
+  //   @Body() FormData formData,
+  // );
+
+  @MultiPart()
   @POST("/record/create")
   Future<ApiResponse<RecordCreateResponse>> createRecord(
-    @Body() FormData formData,
+    @Part(name: 'dto', contentType: 'application/json') RecordCreateRequest dto,
+    @Part(name: 'images') List<File> images,
   );
 
   @GET("/record")

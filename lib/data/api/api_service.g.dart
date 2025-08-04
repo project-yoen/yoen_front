@@ -626,14 +626,40 @@ class _ApiService implements ApiService {
 
   @override
   Future<ApiResponse<RecordCreateResponse>> createRecord(
-    FormData formData,
+    RecordCreateRequest dto,
+    List<File> images,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    final _data = formData;
+    final _data = FormData();
+    _data.files.add(
+      MapEntry(
+        'dto',
+        MultipartFile.fromString(
+          jsonEncode(dto),
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    _data.files.addAll(
+      images.map(
+        (i) => MapEntry(
+          'images',
+          MultipartFile.fromFileSync(
+            i.path,
+            filename: i.path.split(Platform.pathSeparator).last,
+          ),
+        ),
+      ),
+    );
     final _options = _setStreamType<ApiResponse<RecordCreateResponse>>(
-      Options(method: 'POST', headers: _headers, extra: _extra)
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
           .compose(
             _dio.options,
             '/record/create',
