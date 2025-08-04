@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/user_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
@@ -10,6 +9,7 @@ import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
 import '../data/notifier/record_notifier.dart';
+import '../main.dart';
 import 'login.dart';
 import 'travel_destination.dart'; // TravelDestinationScreen 임포트 추가
 
@@ -20,7 +20,7 @@ class BaseScreen extends ConsumerStatefulWidget {
   ConsumerState<BaseScreen> createState() => _BaseScreenState();
 }
 
-class _BaseScreenState extends ConsumerState<BaseScreen> {
+class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
@@ -35,13 +35,36 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // 다른 페이지에서 다시 돌아왔을 때
+    ref.read(travelListNotifierProvider.notifier).fetchTravels();
+    ref.read(recordNotifierProvider.notifier).resetAll();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(travelListNotifierProvider.notifier).fetchTravels();
+      ref.read(recordNotifierProvider.notifier).resetAll();
+    });
     final userAsync = ref.watch(userNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent, // 그림자 아예 제거
         automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: Align(
           alignment: Alignment.centerLeft,
