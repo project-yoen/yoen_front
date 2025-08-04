@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TravelPaymentCreateScreen extends StatefulWidget {
-  const TravelPaymentCreateScreen({super.key});
+  final String paymentType;
+  const TravelPaymentCreateScreen({super.key, required this.paymentType});
 
   @override
   State<TravelPaymentCreateScreen> createState() =>
