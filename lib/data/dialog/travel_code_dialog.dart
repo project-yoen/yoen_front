@@ -29,11 +29,10 @@ class _TravelCodeDialogState extends ConsumerState<TravelCodeDialog> {
       await ref.read(joinNotifierProvider.notifier).joinTravelByCode(code);
       setState(() {
         successMessage = joinNotifier.message ?? "여행 가입신청 완료";
-        isLoading = false;
       });
     } catch (_) {
       setState(() {
-        errorMessage = joinNotifier.errorMessage;
+        errorMessage = joinNotifier.errorMessage ?? '알 수 없는 오류가 발생했습니다';
       });
     } finally {
       if (mounted) {
