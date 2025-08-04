@@ -74,6 +74,7 @@ class RegisterResultScreen extends ConsumerWidget {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Theme.of(context).colorScheme.surface,
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0.0,
       ),
       body: content,
