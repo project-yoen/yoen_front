@@ -21,13 +21,13 @@ class TravelPaymentScreen extends ConsumerWidget {
     return Scaffold(
       body: Center(child: Text('금액 기록 페이지: ${travel.travelId}')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showPaymentOptions(context),
+        onPressed: () => _showPaymentOptions(context, travel.travelId),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _showPaymentOptions(BuildContext context) {
+  void _showPaymentOptions(BuildContext context, int travelId) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -40,7 +40,8 @@ class TravelPaymentScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const TravelSharedfundCreateScreen(
+                    builder: (context) => TravelSharedfundCreateScreen(
+                      travelId: travelId,
                       paymentType: "SHAREDFUND",
                     ),
                   ),
@@ -54,8 +55,10 @@ class TravelPaymentScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const TravelPaymentCreateScreen(paymentType: "PAYMENT"),
+                    builder: (context) => TravelPaymentCreateScreen(
+                      paymentType: "PAYMENT",
+                      travelId: travelId,
+                    ),
                   ),
                 );
               },
@@ -67,8 +70,9 @@ class TravelPaymentScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const TravelPrepaymentCreateScreen(
+                    builder: (context) => TravelPrepaymentCreateScreen(
                       paymentType: "PREPAYMENT",
+                      travelId: travelId,
                     ),
                   ),
                 );
