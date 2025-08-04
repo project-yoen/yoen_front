@@ -12,6 +12,7 @@ import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/model/travel_user_join_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/model/category_response.dart';
 
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import '../model/accept_join_request.dart';
@@ -112,5 +113,9 @@ abstract class ApiService {
   Future<ApiResponse<List<RecordResponse>>> getRecords(
     @Query("travelId") int travelId,
     @Query("date") String date,
+  );
+  @GET('/common/category')
+  Future<ApiResponse<List<Category>>> getCategories(
+    @Query('type') String type,
   );
 }
