@@ -28,16 +28,27 @@ class ResponsiveShimmerImage extends StatelessWidget {
           fit: BoxFit.cover,
           fadeInDuration: const Duration(milliseconds: 300),
           placeholderFadeInDuration: const Duration(milliseconds: 100),
-          placeholder: (context, url) => Container(
-            color: theme.colorScheme.surfaceContainerHighest,
-            alignment: Alignment.center,
-            child: Lottie.asset(
-              'assets/lotties/shimmer_image.json',
-              width: 100,
-              height: 100,
-              fit: BoxFit.contain,
-            ),
-          ),
+          placeholder: (context, url) {
+            return FutureBuilder<LottieComposition>(
+              future: AssetLottie('assets/lotties/shimmer_image.json').load(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
+                  return Lottie(
+                    composition: snapshot.data!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
+                  );
+                } else {
+                  return const SizedBox(
+                    width: 100,
+                    height: 100,
+                  ); // or a spinner
+                }
+              },
+            );
+          },
           errorWidget: (context, url, error) => Container(
             color: Colors.grey.shade200,
             alignment: Alignment.center,
