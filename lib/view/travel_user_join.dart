@@ -38,18 +38,7 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
           .getTravelJoinList(_travelId);
     });
 
-    // 에러 감시
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen<TravelJoinState>(travelJoinNotifierProvider, (previous, next) {
-        if (previous?.status != next.status &&
-            next.status == TravelJoinStatus.error &&
-            next.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-        }
-      });
-    });
+    // TODO: 에러 감시 구현
   }
 
   @override
@@ -58,8 +47,8 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent, // 그림자 아예 제거
         title: const Text('신청 여행 목록'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

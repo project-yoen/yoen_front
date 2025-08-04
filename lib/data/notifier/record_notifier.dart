@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -66,7 +68,7 @@ class RecordNotifier extends StateNotifier<RecordState> {
 
   Future<void> createRecord(
     RecordCreateRequest request,
-    List<MultipartFile> images,
+    List<File> images,
   ) async {
     state = state.copyWith(createStatus: Status.loading);
     try {

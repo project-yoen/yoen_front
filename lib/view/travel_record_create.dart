@@ -91,9 +91,7 @@ class _TravelRecordCreateScreenState
         recordTime: _selectedDateTime.toIso8601String(),
       );
 
-      final imageFiles = _images
-          .map((image) => MultipartFile.fromFileSync(image.path))
-          .toList();
+      final imageFiles = _images.map((image) => File(image.path)).toList();
 
       await ref
           .read(recordNotifierProvider.notifier)

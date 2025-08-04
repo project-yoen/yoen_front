@@ -60,6 +60,7 @@ class _TravelDestinationScreenState
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0.0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

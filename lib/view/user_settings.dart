@@ -93,8 +93,8 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("사용자 설정"),
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
