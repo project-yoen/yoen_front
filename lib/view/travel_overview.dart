@@ -65,8 +65,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent, // 그림자 아예 제거
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

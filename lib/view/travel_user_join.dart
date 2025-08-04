@@ -58,8 +58,8 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        forceMaterialTransparency: true,
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent, // 그림자 아예 제거
         title: const Text('신청 여행 목록'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

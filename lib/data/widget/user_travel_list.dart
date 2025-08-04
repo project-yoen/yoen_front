@@ -61,9 +61,6 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                     const TravelOverviewScreen(),
                               ),
                             );
-                            ref
-                                .read(travelListNotifierProvider.notifier)
-                                .fetchTravels();
                           },
                           child: Card(
                             margin: const EdgeInsets.symmetric(
@@ -76,7 +73,7 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                if (travel.travelImageUrl != null)
+                                if (travel.travelImageUrl != "")
                                   ResponsiveShimmerImage(
                                     imageUrl: travel.travelImageUrl!,
                                   )
