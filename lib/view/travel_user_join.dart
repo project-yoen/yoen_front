@@ -38,18 +38,7 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
           .getTravelJoinList(_travelId);
     });
 
-    // 에러 감시
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen<TravelJoinState>(travelJoinNotifierProvider, (previous, next) {
-        if (previous?.status != next.status &&
-            next.status == TravelJoinStatus.error &&
-            next.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-        }
-      });
-    });
+    // TODO: 에러 감시 구현
   }
 
   @override
