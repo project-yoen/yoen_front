@@ -20,15 +20,6 @@ class ApiClient {
           'ngrok-skip-browser-warning': 'true',
         },
       ),
-      //       BaseOptions(
-      //   baseUrl: 'https://99dfaa0c7dfb.ngrok-free.app',
-      //   connectTimeout: const Duration(seconds: 10),
-      //   receiveTimeout: const Duration(seconds: 10),
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'ngrok-skip-browser-warning': 'true',
-      //   },
-      // ),
     );
 
     dio.interceptors.add(AuthInterceptor(ref, dio));
