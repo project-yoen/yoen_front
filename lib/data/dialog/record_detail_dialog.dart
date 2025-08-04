@@ -12,6 +12,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
+import '../../main.dart';
+
 class RecordDetailDialog extends StatefulWidget {
   final RecordResponse record;
 
@@ -98,68 +100,73 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                                                 Icons.download,
                                               ),
                                               title: const Text('사진 저장하기'),
-                                              onTap: () async {
+                                              onTap: () {
                                                 Navigator.pop(
                                                   context,
                                                 ); // BottomSheet 닫기
 
-                                                // 권한 요청
-                                                final granted =
-                                                    await requestImageSavePermission();
-                                                if (!granted) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text(
-                                                        '저장 권한이 필요합니다.',
-                                                      ),
-                                                    ),
-                                                  );
-                                                  return;
-                                                }
-
-                                                try {
-                                                  final response = await http
-                                                      .get(Uri.parse(imageUrl));
-                                                  final Uint8List bytes =
-                                                      response.bodyBytes;
-
-                                                  final result =
-                                                      await ImageGallerySaverPlus.saveImage(
-                                                        bytes,
-                                                        quality: 100,
-                                                        name:
-                                                            "travel_image_${DateTime.now().millisecondsSinceEpoch}",
+                                                Future.delayed(Duration.zero, () async {
+                                                  final granted =
+                                                      await requestImageSavePermission(
+                                                        context,
                                                       );
+                                                  if (!granted) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            '저장 권한이 필요합니다.',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                    return;
+                                                  }
 
-                                                  final isSuccess =
-                                                      result['isSuccess'] ??
-                                                      result['success'] ??
-                                                      false;
+                                                  try {
+                                                    final response = await http
+                                                        .get(
+                                                          Uri.parse(imageUrl),
+                                                        );
+                                                    final Uint8List bytes =
+                                                        response.bodyBytes;
 
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        isSuccess
-                                                            ? '이미지를 저장했습니다.'
-                                                            : '저장에 실패했습니다.',
-                                                      ),
-                                                    ),
-                                                  );
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        '저장 중 오류 발생: $e',
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
+                                                    final result =
+                                                        await ImageGallerySaverPlus.saveImage(
+                                                          bytes,
+                                                          quality: 100,
+                                                          name:
+                                                              "travel_image_${DateTime.now().millisecondsSinceEpoch}",
+                                                        );
+
+                                                    final isSuccess =
+                                                        result['isSuccess'] ??
+                                                        result['success'] ??
+                                                        false;
+
+                                                    snackbarKey.currentState
+                                                        ?.showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              isSuccess
+                                                                  ? '이미지를 저장했습니다.'
+                                                                  : '저장에 실패했습니다.',
+                                                            ),
+                                                          ),
+                                                        );
+                                                  } catch (e) {
+                                                    snackbarKey.currentState
+                                                        ?.showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              '저장 중 오류 발생: $e',
+                                                            ),
+                                                          ),
+                                                        );
+                                                  }
+                                                });
                                               },
                                             ),
                                             ListTile(
@@ -193,15 +200,14 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                                                     XFile(file.path),
                                                   ]);
                                                 } catch (e) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        '공유 중 오류 발생: $e',
-                                                      ),
-                                                    ),
-                                                  );
+                                                  snackbarKey.currentState
+                                                      ?.showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            '공유 중 오류 발생: $e',
+                                                          ),
+                                                        ),
+                                                      );
                                                 }
                                               },
                                             ),
@@ -277,21 +283,57 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
   }
 }
 
-Future<bool> requestImageSavePermission() async {
+Future<bool> requestImageSavePermission(BuildContext context) async {
   if (Platform.isAndroid) {
     final androidInfo = await DeviceInfoPlugin().androidInfo;
     final sdkInt = androidInfo.version.sdkInt;
 
     if (sdkInt >= 33) {
       final status = await Permission.photos.request();
-      return status.isGranted;
+      if (status.isGranted) return true;
+      return await _handleDenied(context, Permission.photos);
     } else {
       final status = await Permission.storage.request();
-      return status.isGranted;
+      if (status.isGranted) return true;
+      return await _handleDenied(context, Permission.storage);
     }
   } else if (Platform.isIOS) {
-    final status = await Permission.photosAddOnly.request();
-    return status.isGranted;
+    final status = await Permission.photos.request();
+    if (status.isGranted || status.isLimited) return true;
+    return await _handleDenied(context, Permission.photos);
+  }
+
+  return false;
+}
+
+Future<bool> _handleDenied(BuildContext context, Permission permission) async {
+  final currentStatus = await permission.status;
+
+  if (currentStatus.isDenied ||
+      currentStatus.isPermanentlyDenied ||
+      currentStatus.isRestricted) {
+    final shouldOpenSettings = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('권한이 필요합니다'),
+        content: const Text('사진을 저장하려면 권한이 필요합니다. 설정으로 이동하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('설정 열기'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldOpenSettings == true) {
+      await openAppSettings();
+    }
+    return false;
   }
 
   return false;
