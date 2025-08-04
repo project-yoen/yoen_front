@@ -9,6 +9,7 @@ part of 'travel_user_detail_response.dart';
 TravelUserDetailResponse _$TravelUserDetailResponseFromJson(
   Map<String, dynamic> json,
 ) => TravelUserDetailResponse(
+  travelUserId: (json['travelUserId'] as num).toInt(),
   nickName: json['nickName'] as String,
   travelNickName: json['travelNickName'] as String,
   gender: json['gender'] as String,
@@ -19,6 +20,7 @@ TravelUserDetailResponse _$TravelUserDetailResponseFromJson(
 Map<String, dynamic> _$TravelUserDetailResponseToJson(
   TravelUserDetailResponse instance,
 ) => <String, dynamic>{
+  'travelUserId': instance.travelUserId,
   'nickName': instance.nickName,
   'travelNickName': instance.travelNickName,
   'gender': instance.gender,

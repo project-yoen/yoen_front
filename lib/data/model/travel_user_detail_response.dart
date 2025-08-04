@@ -4,6 +4,7 @@ part 'travel_user_detail_response.g.dart';
 
 @JsonSerializable()
 class TravelUserDetailResponse {
+  final int travelUserId;
   final String nickName;
   final String travelNickName;
   final String gender;
@@ -11,6 +12,7 @@ class TravelUserDetailResponse {
   final String? imageUrl;
 
   TravelUserDetailResponse({
+    required this.travelUserId,
     required this.nickName,
     required this.travelNickName,
     required this.gender,
