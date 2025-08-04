@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
@@ -13,6 +14,7 @@ import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 import '../../main.dart';
+import '../../view/image_preview.dart';
 
 class RecordDetailDialog extends StatefulWidget {
   final RecordResponse record;
@@ -84,6 +86,16 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
                                     widget.record.images[index].imageUrl;
 
                                 return GestureDetector(
+                                  onTap: () {
+                                    context.pushTransparentRoute(
+                                      ImagePreviewPage(
+                                        imageUrls: widget.record.images
+                                            .map((image) => image.imageUrl)
+                                            .toList(),
+                                        initialIndex: index,
+                                      ),
+                                    );
+                                  },
                                   onLongPress: () {
                                     showModalBottomSheet(
                                       context: context,
