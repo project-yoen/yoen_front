@@ -1,10 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/dialog/payment_user_dialog.dart';
+import 'package:yoen_front/data/dialog/settlement_user_dialog.dart';
 import 'package:yoen_front/data/model/category_response.dart';
 import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:flutter/material.dart';
 
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
+
+class SettlementItem {
+  TextEditingController nameController = TextEditingController();
+  TextEditingController amountController = TextEditingController();
+  bool isPaid = false;
+  List<int> travelUserIds = [];
+  List<String> travelUserNames = [];
+}
 
 class TravelPaymentCreateScreen extends ConsumerStatefulWidget {
   final String paymentType;
@@ -29,10 +38,17 @@ class _TravelPaymentCreateScreenState
   final _memoController = TextEditingController();
 
   DateTime _selectedTime = DateTime.now();
-  String _paymentMethod = '카드';
+  String _paymentMethod = 'CARD';
+  String _payerType = 'INDIVIDUAL'; // INDIVIDUAL or SHAREDFUND
   int? _selectedCategoryId;
   int? _selectedPayerTravelUserId;
+  List<SettlementItem> _settlementItems = [SettlementItem()];
 
+  final Map<String, String> _paymentMethodMap = {
+    '카드': 'CARD',
+    '현금': 'CASH',
+    '트레블카드': 'TRAVELCARD',
+  };
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,10 +71,14 @@ class _TravelPaymentCreateScreenState
           key: _formKey,
           child: ListView(
             children: [
+              _buildPayerTypeSelector(),
+              const SizedBox(height: 16.0),
               _buildTimePicker(),
               const SizedBox(height: 16.0),
-              _buildPayerSelector(),
-              const SizedBox(height: 16.0),
+              if (_payerType == 'INDIVIDUAL') ...[
+                _buildPayerSelector(),
+                const SizedBox(height: 16.0),
+              ],
               _buildPaymentMethodSelector(),
               const SizedBox(height: 16.0),
               TextFormField(
@@ -74,9 +94,11 @@ class _TravelPaymentCreateScreenState
               const SizedBox(height: 16.0),
               _buildCategorySelector(),
               const SizedBox(height: 16.0),
+              _buildSettlementList(),
+              const SizedBox(height: 16.0),
               TextFormField(
                 controller: _memoController,
-                decoration: const InputDecoration(labelText: '결제 내역'),
+                decoration: const InputDecoration(labelText: '메모'),
                 maxLines: 3,
               ),
               const SizedBox(height: 16.0),
@@ -85,6 +107,21 @@ class _TravelPaymentCreateScreenState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPayerTypeSelector() {
+    return SegmentedButton<String>(
+      segments: const <ButtonSegment<String>>[
+        ButtonSegment<String>(value: 'INDIVIDUAL', label: Text('개인')),
+        ButtonSegment<String>(value: 'SHAREDFUND', label: Text('공금')),
+      ],
+      selected: {_payerType},
+      onSelectionChanged: (Set<String> newSelection) {
+        setState(() {
+          _payerType = newSelection.first;
+        });
+      },
     );
   }
 
@@ -98,7 +135,7 @@ class _TravelPaymentCreateScreenState
       ),
       onTap: () => _showPayerDialog(),
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        if (_payerType == 'INDIVIDUAL' && (value == null || value.isEmpty)) {
           return '결제자를 선택하세요.';
         }
         return null;
@@ -155,8 +192,13 @@ class _TravelPaymentCreateScreenState
     return DropdownButtonFormField<String>(
       value: _paymentMethod,
       decoration: const InputDecoration(labelText: '결제 방식'),
-      items: ['카드', '현금']
-          .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+      items: _paymentMethodMap.entries
+          .map(
+            (entry) => DropdownMenuItem(
+              value: entry.value, // 내부 값 (e.g. 'CARD')
+              child: Text(entry.key), // UI에 보여질 텍스트 (e.g. '카드')
+            ),
+          )
           .toList(),
       onChanged: (value) {
         if (value != null) {
@@ -211,7 +253,8 @@ class _TravelPaymentCreateScreenState
                             title: Text(category.categoryName),
                             onTap: () {
                               setState(() {
-                                _categoryController.text = category.categoryName;
+                                _categoryController.text =
+                                    category.categoryName;
                                 _selectedCategoryId = category.categoryId;
                               });
                               Navigator.of(context).pop();
@@ -230,6 +273,93 @@ class _TravelPaymentCreateScreenState
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSettlementList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _settlementItems.length,
+      itemBuilder: (context, index) {
+        return _buildSettlementItem(index);
+      },
+    );
+  }
+
+  Widget _buildSettlementItem(int index) {
+    final item = _settlementItems[index];
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: item.nameController,
+              decoration: const InputDecoration(labelText: '결제 내역 이름'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '내역 이름을 입력하세요.';
+                }
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: item.amountController,
+              decoration: const InputDecoration(labelText: '금액'),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '금액을 입력하세요.';
+                }
+                return null;
+              },
+            ),
+            CheckboxListTile(
+              title: const Text('정산 여부'),
+              value: item.isPaid,
+              onChanged: (bool? value) {
+                setState(() {
+                  item.isPaid = value ?? false;
+                });
+              },
+            ),
+            ListTile(
+              title: const Text('참여 유저'),
+              subtitle: Text(item.travelUserNames.join(', ')),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: () async {
+                final selectedUsers =
+                    await showDialog<List<TravelUserDetailResponse>>(
+                      context: context,
+                      builder: (context) =>
+                          SettlementUserDialog(travelId: widget.travelId),
+                    );
+                if (selectedUsers != null) {
+                  setState(() {
+                    item.travelUserIds = selectedUsers
+                        .map((e) => e.travelUserId)
+                        .toList();
+                    item.travelUserNames = selectedUsers
+                        .map((e) => e.travelNickName)
+                        .toList();
+                  });
+                }
+              },
+            ),
+            if (index > 0)
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    _settlementItems.removeAt(index);
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 
