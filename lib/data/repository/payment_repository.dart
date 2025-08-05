@@ -27,6 +27,10 @@ class PaymentRepository {
     return response.data!;
   }
 
+  Future<void> deletePayment(int paymentId) async {
+    await _apiService.deletePayment(paymentId);
+  }
+
   Future<PaymentDetailResponse> getPaymentDetails(int paymentId) async {
     final response = await _apiService.getPaymentDetails(paymentId);
     return response.data!;

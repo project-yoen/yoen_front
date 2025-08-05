@@ -12,6 +12,7 @@ enum Status { initial, loading, success, error }
 class PaymentState {
   final Status getStatus;
   final Status createStatus;
+  final Status deleteStatus;
   final Status getDetailsStatus;
   final List<PaymentResponse> payments;
   final PaymentDetailResponse? selectedPayment;
@@ -20,6 +21,7 @@ class PaymentState {
   PaymentState({
     this.getStatus = Status.initial,
     this.createStatus = Status.initial,
+    this.deleteStatus = Status.initial,
     this.getDetailsStatus = Status.initial,
     this.payments = const [],
     this.selectedPayment,
@@ -30,16 +32,21 @@ class PaymentState {
     Status? getStatus,
     Status? createStatus,
     Status? getDetailsStatus,
+    Status? deleteStatus,
     List<PaymentResponse>? payments,
     PaymentDetailResponse? selectedPayment,
     String? errorMessage,
     bool? resetCreateStatus,
+    bool? resetDeleteStatus,
   }) {
     return PaymentState(
       getStatus: getStatus ?? this.getStatus,
       createStatus: resetCreateStatus == true
           ? Status.initial
           : (createStatus ?? this.createStatus),
+      deleteStatus: resetDeleteStatus == true
+          ? Status.initial
+          : (deleteStatus ?? this.deleteStatus),
       getDetailsStatus: getDetailsStatus ?? this.getDetailsStatus,
       payments: payments ?? this.payments,
       selectedPayment: selectedPayment ?? this.selectedPayment,
@@ -54,7 +61,11 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   PaymentNotifier(this._repository) : super(PaymentState());
 
   Future<void> getPayments(int travelId, DateTime date) async {
-    state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
+    state = state.copyWith(
+      getStatus: Status.loading,
+      resetCreateStatus: true,
+      resetDeleteStatus: true,
+    );
     try {
       final dateString = date.toIso8601String();
       final payments = await _repository.getPayments(travelId, dateString);
@@ -64,22 +75,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     } catch (e) {
       state = state.copyWith(
         getStatus: Status.error,
-        errorMessage: e.toString(),
-      );
-    }
-  }
-
-  Future<void> getPaymentDetails(int paymentId) async {
-    state = state.copyWith(getDetailsStatus: Status.loading, resetCreateStatus: true);
-    try {
-      final paymentDetails = await _repository.getPaymentDetails(paymentId);
-      state = state.copyWith(
-        getDetailsStatus: Status.success,
-        selectedPayment: paymentDetails,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        getDetailsStatus: Status.error,
         errorMessage: e.toString(),
       );
     }
@@ -100,6 +95,44 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     } catch (e) {
       state = state.copyWith(
         createStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> getPaymentDetails(int paymentId) async {
+    state = state.copyWith(
+      getDetailsStatus: Status.loading,
+      resetCreateStatus: true,
+    );
+    try {
+      final paymentDetails = await _repository.getPaymentDetails(paymentId);
+      state = state.copyWith(
+        getDetailsStatus: Status.success,
+        selectedPayment: paymentDetails,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        getDetailsStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> deletePayment(int paymentId) async {
+    state = state.copyWith(deleteStatus: Status.loading);
+    try {
+      await _repository.deletePayment(paymentId);
+      final updatedPayments = state.payments
+          .where((payment) => payment.paymentId != paymentId)
+          .toList();
+      state = state.copyWith(
+        deleteStatus: Status.success,
+        payments: updatedPayments,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        deleteStatus: Status.error,
         errorMessage: e.toString(),
       );
     }
