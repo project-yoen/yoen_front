@@ -10,8 +10,13 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
+import 'package:yoen_front/view/travel_payment_create.dart';
+import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
+import 'package:yoen_front/view/travel_sharedfund_create.dart';
+
+import '../data/notifier/payment_notifier.dart';
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   // 파라미터 제거
@@ -43,6 +48,91 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  void _fetchPayments() {
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+    final date = ref.read(dateNotifierProvider);
+    if (travel != null && date != null) {
+      ref
+          .read(paymentNotifierProvider.notifier)
+          .getPayments(travel.travelId, date);
+    }
+  }
+
+  void _showPaymentOptions(BuildContext context, int travelId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.group_add),
+              title: const Text('공금기록'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (context) => TravelSharedfundCreateScreen(
+                          travelId: travelId,
+                          paymentType: "SHAREDFUND",
+                        ),
+                      ),
+                    )
+                    .then((value) {
+                      if (value == true) {
+                        _fetchPayments();
+                      }
+                    });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payment),
+              title: const Text('결제기록'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (context) => TravelPaymentCreateScreen(
+                          paymentType: "PAYMENT",
+                          travelId: travelId,
+                        ),
+                      ),
+                    )
+                    .then((value) {
+                      if (value == true) {
+                        _fetchPayments();
+                      }
+                    });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt),
+              title: const Text('사전사용금액기록'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (context) => TravelPrepaymentCreateScreen(
+                          paymentType: "PREPAYMENT",
+                          travelId: travelId,
+                        ),
+                      ),
+                    )
+                    .then((value) {
+                      if (value == true) {
+                        _fetchPayments();
+                      }
+                    });
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -262,27 +352,35 @@ https://your-app-link.com
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      floatingActionButton: _selectedIndex == 2
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    // 파라미터 없이 화면 이동
-                    builder: (context) => const TravelRecordCreateScreen(),
-                  ),
-                ).then((_) {
-                  final currentDate = ref.read(dateNotifierProvider);
-                  if (currentDate != null) {
-                    ref
-                        .read(recordNotifierProvider.notifier)
-                        .getRecords(travel.travelId, currentDate);
-                  }
-                });
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: () {
+        if (_selectedIndex == 2) {
+          return FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TravelRecordCreateScreen(),
+                ),
+              ).then((_) {
+                final currentDate = ref.read(dateNotifierProvider);
+                if (currentDate != null) {
+                  ref
+                      .read(recordNotifierProvider.notifier)
+                      .getRecords(travel.travelId, currentDate);
+                }
+              });
+            },
+            child: const Icon(Icons.add),
+          );
+        } else if (_selectedIndex == 1) {
+          return FloatingActionButton(
+            onPressed: () => _showPaymentOptions(context, travel.travelId),
+            child: const Icon(Icons.add),
+          );
+        } else {
+          return null;
+        }
+      }(),
     );
   }
 }
