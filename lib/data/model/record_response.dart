@@ -5,6 +5,7 @@ part 'record_response.g.dart';
 
 @JsonSerializable()
 class RecordResponse {
+  final int travelRecordId;
   final String title;
   final String content;
   final List<TravelRecordImageResponse> images;
@@ -12,6 +13,7 @@ class RecordResponse {
   final String travelNickName; //작성자
 
   RecordResponse({
+    required this.travelRecordId,
     required this.title,
     required this.content,
     required this.images,

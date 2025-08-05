@@ -121,6 +121,10 @@ abstract class ApiService {
     @Query("travelId") int travelId,
     @Query("date") String date,
   );
+
+  @DELETE('/record/delete')
+  Future<ApiResponse> deleteRecord(@Query("id") int recordId);
+
   @GET('/common/category')
   Future<ApiResponse<List<Category>>> getCategories(@Query('type') String type);
 

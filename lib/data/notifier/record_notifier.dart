@@ -10,12 +10,14 @@ enum Status { initial, loading, success, error }
 class RecordState {
   final Status getStatus;
   final Status createStatus;
+  final Status deleteStatus;
   final List<RecordResponse> records;
   final String? errorMessage;
 
   RecordState({
     this.getStatus = Status.initial,
     this.createStatus = Status.initial,
+    this.deleteStatus = Status.initial,
     this.records = const [],
     this.errorMessage,
   });
@@ -23,15 +25,20 @@ class RecordState {
   RecordState copyWith({
     Status? getStatus,
     Status? createStatus,
+    Status? deleteStatus,
     List<RecordResponse>? records,
     String? errorMessage,
     bool? resetCreateStatus,
+    bool? resetDeleteStatus,
   }) {
     return RecordState(
       getStatus: getStatus ?? this.getStatus,
       createStatus: resetCreateStatus == true
           ? Status.initial
           : (createStatus ?? this.createStatus),
+      deleteStatus: resetDeleteStatus == true
+          ? Status.initial
+          : (deleteStatus ?? this.deleteStatus),
       records: records ?? this.records,
       errorMessage: errorMessage ?? this.errorMessage,
     );
@@ -44,7 +51,11 @@ class RecordNotifier extends StateNotifier<RecordState> {
   RecordNotifier(this._repository) : super(RecordState());
 
   Future<void> getRecords(int travelId, DateTime date) async {
-    state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
+    state = state.copyWith(
+      getStatus: Status.loading,
+      resetCreateStatus: true,
+      resetDeleteStatus: true,
+    );
     try {
       final dateString = date.toIso8601String();
       final records = await _repository.getRecords(travelId, dateString);
@@ -74,6 +85,25 @@ class RecordNotifier extends StateNotifier<RecordState> {
     } catch (e) {
       state = state.copyWith(
         createStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> deleteRecord(int recordId) async {
+    state = state.copyWith(deleteStatus: Status.loading);
+    try {
+      await _repository.deleteRecord(recordId);
+      final updatedRecords = state.records
+          .where((record) => record.travelRecordId != recordId)
+          .toList();
+      state = state.copyWith(
+        deleteStatus: Status.success,
+        records: updatedRecords,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        deleteStatus: Status.error,
         errorMessage: e.toString(),
       );
     }

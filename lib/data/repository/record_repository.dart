@@ -22,4 +22,8 @@ class RecordRepository {
     final response = await _apiService.createRecord(request, images);
     return response.data!;
   }
+
+  Future<void> deleteRecord(int recordId) async {
+    await _apiService.deleteRecord(recordId);
+  }
 }

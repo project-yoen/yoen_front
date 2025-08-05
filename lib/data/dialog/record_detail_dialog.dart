@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:intl/intl.dart';
@@ -11,21 +12,22 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 import '../../main.dart';
 import '../../view/image_preview.dart';
 
-class RecordDetailDialog extends StatefulWidget {
+class RecordDetailDialog extends ConsumerStatefulWidget {
   final RecordResponse record;
 
   const RecordDetailDialog({super.key, required this.record});
 
   @override
-  State<RecordDetailDialog> createState() => _RecordDetailDialogState();
+  ConsumerState<RecordDetailDialog> createState() => _RecordDetailDialogState();
 }
 
-class _RecordDetailDialogState extends State<RecordDetailDialog> {
+class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
@@ -35,10 +37,47 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
     super.dispose();
   }
 
+  void _showDeleteConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('기록 삭제'),
+          content: Text('\'${widget.record.title}\'을(를) 삭제하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('아니오'),
+            ),
+            TextButton(
+              onPressed: () {
+                ref
+                    .read(recordNotifierProvider.notifier)
+                    .deleteRecord(widget.record.travelRecordId);
+                Navigator.of(context).pop(); // Close confirmation dialog
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final recordTime = DateTime.parse(widget.record.recordTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
+
+    ref.listen<RecordState>(recordNotifierProvider, (previous, next) {
+      if (next.deleteStatus == Status.success) {
+        Navigator.of(context).pop(); // Close detail dialog
+      } else if (next.deleteStatus == Status.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage ?? '삭제에 실패했습니다.')),
+        );
+      }
+    });
 
     return AlertDialog(
       contentPadding: EdgeInsets.zero,
@@ -49,7 +88,17 @@ class _RecordDetailDialogState extends State<RecordDetailDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(width: 40), // For spacing
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: _showDeleteConfirmDialog,
+                ),
+              ],
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(

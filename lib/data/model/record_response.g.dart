@@ -8,6 +8,7 @@ part of 'record_response.dart';
 
 RecordResponse _$RecordResponseFromJson(Map<String, dynamic> json) =>
     RecordResponse(
+      travelRecordId: (json['travelRecordId'] as num).toInt(),
       title: json['title'] as String,
       content: json['content'] as String,
       images: (json['images'] as List<dynamic>)
@@ -22,6 +23,7 @@ RecordResponse _$RecordResponseFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$RecordResponseToJson(RecordResponse instance) =>
     <String, dynamic>{
+      'travelRecordId': instance.travelRecordId,
       'title': instance.title,
       'content': instance.content,
       'images': instance.images,
