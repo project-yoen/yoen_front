@@ -761,7 +761,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<void>> createPayment(
+  Future<ApiResponse<PaymentCreateResponse>> createPayment(
     PaymentCreateRequest request,
     List<File> images,
   ) async {
@@ -789,7 +789,7 @@ class _ApiService implements ApiService {
         ),
       ),
     );
-    final _options = _setStreamType<ApiResponse<void>>(
+    final _options = _setStreamType<ApiResponse<PaymentCreateResponse>>(
       Options(
             method: 'POST',
             headers: _headers,
@@ -805,9 +805,12 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ApiResponse<void> _value;
+    late ApiResponse<PaymentCreateResponse> _value;
     try {
-      _value = ApiResponse<void>.fromJson(_result.data!, (json) => () {}());
+      _value = ApiResponse<PaymentCreateResponse>.fromJson(
+        _result.data!,
+        (json) => PaymentCreateResponse.fromJson(json as Map<String, dynamic>),
+      );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;

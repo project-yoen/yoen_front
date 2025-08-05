@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:yoen_front/data/model/payment_create_response.dart';
+
 import '../api/api_service.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart';
 import '../model/payment_response.dart';
 import '../model/record_create_request.dart';
 import '../model/record_create_response.dart';
@@ -15,11 +18,11 @@ class PaymentRepository {
     return response.data!;
   }
 
-  Future<RecordCreateResponse> createPayment(
-    RecordCreateRequest request,
+  Future<PaymentCreateResponse> createPayment(
+    PaymentCreateRequest request,
     List<File> images,
   ) async {
-    final response = await _apiService.createRecord(request, images);
+    final response = await _apiService.createPayment(request, images);
     return response.data!;
   }
 }
