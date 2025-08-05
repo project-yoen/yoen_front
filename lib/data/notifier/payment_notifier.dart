@@ -47,7 +47,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   Future<void> getPayments(int travelId, DateTime date) async {
     state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
     try {
-      final dateString = date.toIso8601String().split('T').first;
+      final dateString = date.toIso8601String();
       final payments = await _repository.getPayments(travelId, dateString);
       // payTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
       payments.sort((a, b) => a.payTime.compareTo(b.payTime));
@@ -88,6 +88,6 @@ final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
 
 final paymentNotifierProvider =
     StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
-  final repository = ref.watch(paymentRepositoryProvider);
-  return PaymentNotifier(repository);
-});
+      final repository = ref.watch(paymentRepositoryProvider);
+      return PaymentNotifier(repository);
+    });

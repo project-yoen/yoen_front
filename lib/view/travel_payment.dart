@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
@@ -37,6 +40,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
+    final paymentState = ref.watch(paymentNotifierProvider);
 
     ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
       if (previous != next) {
@@ -48,116 +52,127 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
       return const Scaffold(body: Center(child: Text("여행 정보가 없습니다.")));
     }
 
-    return Scaffold(
-      body: Consumer(
-        builder: (context, ref, child) {
-          final state = ref.watch(paymentNotifierProvider);
-          switch (state.getStatus) {
-            case Status.loading:
-              return const Center(child: CircularProgressIndicator());
-            case Status.error:
-              return Center(child: Text(state.errorMessage ?? "에러가 발생했습니다."));
-            case Status.success:
-              if (state.payments.isEmpty) {
-                return const Center(child: Text("기록이 없습니다."));
-              }
-              return ListView.builder(
-                itemCount: state.payments.length,
-                itemBuilder: (context, index) {
-                  final payment = state.payments[index];
-                  return ListTile(
-                    title: Text(payment.paymentName),
-                    subtitle: Text(
-                      '${payment.payerType} - ${payment.paymentAccount.toStringAsFixed(2)} ${payment.categoryId}',
-                    ),
-                  );
-                },
-              );
-            case Status.initial:
-            default:
-              return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showPaymentOptions(context, travel.travelId),
-        child: const Icon(Icons.add),
-      ),
-    );
+    return Scaffold(body: _buildBody(paymentState));
   }
 
-  void _showPaymentOptions(BuildContext context, int travelId) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.group_add),
-              title: const Text('공금기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelSharedfundCreateScreen(
-                          travelId: travelId,
-                          paymentType: "SHAREDFUND",
-                        ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchPayments();
-                      }
-                    });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payment),
-              title: const Text('결제기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelPaymentCreateScreen(
-                          paymentType: "PAYMENT",
-                          travelId: travelId,
-                        ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchPayments();
-                      }
-                    });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt),
-              title: const Text('사전사용금액기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelPrepaymentCreateScreen(
-                          paymentType: "PREPAYMENT",
-                          travelId: travelId,
-                        ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchPayments();
-                      }
-                    });
-              },
-            ),
-          ],
+  Widget _buildBody(PaymentState state) {
+    switch (state.getStatus) {
+      case Status.loading:
+        return const Center(child: CircularProgressIndicator());
+      case Status.error:
+        return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
+      case Status.success:
+        final travel = ref.read(travelListNotifierProvider).selectedTravel;
+        final date = ref.read(dateNotifierProvider);
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.mediumImpact();
+            if (travel != null && date != null) {
+              await ref
+                  .read(paymentNotifierProvider.notifier)
+                  .getPayments(travel.travelId, date);
+            }
+          },
+          child: state.payments.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 200),
+                    Center(child: Text('이 날짜에 작성된 금액기록이 없습니다.')),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: state.payments.length,
+                  itemBuilder: (context, index) {
+                    final payment = state.payments[index];
+                    return _buildPaymentCard(payment);
+                  },
+                ),
         );
+      default:
+        return const Center(child: Text('기록을 불러오는 중...'));
+    }
+  }
+
+  Widget _buildPaymentCard(PaymentResponse payment) {
+    final paymentTime = DateTime.parse(payment.payTime);
+    final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
+
+    return InkWell(
+      onTap: () {
+        // 상세 다이얼로그 등 원하는 동작
       },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 첫 줄: 결제이름 [카테고리]
+              Text(
+                '${payment.paymentName} [${payment.categoryName}]',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              // 두 번째 줄: 결제자 - 결제금액 - 시간
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '결제자',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        payment.payer,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 32),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '결제금액',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${payment.paymentAccount}원',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    formattedTime,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
