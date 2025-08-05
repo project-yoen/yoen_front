@@ -1,24 +1,14 @@
-import 'package:yoen_front/data/notifier/date_notifier.dart';
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yoen_front/data/dialog/payment_user_dialog.dart';
-import 'package:yoen_front/data/dialog/settlement_user_dialog.dart';
 import 'package:yoen_front/data/model/category_response.dart';
 import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:flutter/material.dart';
-import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
-import 'package:yoen_front/data/model/payment_create_request.dart';
-
-class SettlementItem {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController amountController = TextEditingController();
-  bool isPaid = false;
-  List<int> travelUserIds = [];
-  List<String> travelUserNames = [];
-}
+import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/data/notifier/payment_create_notifier.dart';
+import 'package:yoen_front/view/travel_settlement_create.dart';
+import 'dart:io';
 
 class TravelPaymentCreateScreen extends ConsumerStatefulWidget {
   final String paymentType;
@@ -37,163 +27,114 @@ class TravelPaymentCreateScreen extends ConsumerStatefulWidget {
 class _TravelPaymentCreateScreenState
     extends ConsumerState<TravelPaymentCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _payerController = TextEditingController();
   final _paymentNameController = TextEditingController();
+  final _payerController = TextEditingController();
   final _categoryController = TextEditingController();
-  final _memoController = TextEditingController();
-
-  DateTime _selectedTime = DateTime.now();
-  late DateTime _selectedDate;
-  String _paymentMethod = 'CARD';
-  String _payerType = 'INDIVIDUAL'; // INDIVIDUAL or SHAREDFUND
-  int? _selectedCategoryId;
-  int? _selectedPayerTravelUserId;
-  List<SettlementItem> _settlementItems = [SettlementItem()];
-  final List<XFile> _images = [];
-  final ImagePicker _picker = ImagePicker();
-
-  final Map<String, String> _paymentMethodMap = {
-    '카드': 'CARD',
-    '현금': 'CASH',
-    '트레블카드': 'TRAVELCARD',
-  };
-
-  Future<void> _pickImages() async {
-    final List<XFile> pickedFiles = await _picker.pickMultiImage();
-    setState(() {
-      _images.addAll(pickedFiles);
-    });
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _images.removeAt(index);
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = ref.read(dateNotifierProvider) ?? DateTime.now();
-    final now = DateTime.now();
-    _selectedTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      now.hour,
-      now.minute,
-    );
+    _paymentNameController.clear();
+    _payerController.clear();
+    _categoryController.clear();
+    final initialDate = ref.read(dateNotifierProvider) ?? DateTime.now();
+    // Use WidgetsBinding to avoid calling notifier during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(paymentCreateNotifierProvider.notifier).initialize(initialDate);
+    });
+  }
+
+  @override
+  void dispose() {
+    _paymentNameController.dispose();
+    _payerController.dispose();
+    _categoryController.dispose();
+    super.dispose();
+  }
+
+  void _goToNextStep() {
+    if (_formKey.currentState!.validate()) {
+      ref
+          .read(paymentCreateNotifierProvider.notifier)
+          .updateField(paymentName: _paymentNameController.text);
+
+      Navigator.of(context)
+          .push<bool>(
+            MaterialPageRoute(
+              builder: (context) => TravelSettlementCreateScreen(
+                travelId: widget.travelId,
+                paymentType: widget.paymentType,
+              ),
+            ),
+          )
+          .then((result) {
+            if (result == true) {
+              Navigator.of(context).pop(true);
+            }
+          });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final paymentState = ref.watch(paymentNotifierProvider);
+    final state = ref.watch(paymentCreateNotifierProvider);
+    final notifier = ref.read(paymentCreateNotifierProvider.notifier);
 
-    ref.listen<PaymentState>(paymentNotifierProvider, (previous, next) {
-      if (next.createStatus == Status.success) {
-        Navigator.of(context).pop(true);
-      } else if (next.createStatus == Status.error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(next.errorMessage ?? '오류가 발생했습니다.')));
-      }
-    });
+    // Set initial text for controllers if they are empty
+    if (_payerController.text.isEmpty && state.payerName != null) {
+      _payerController.text = state.payerName!;
+    }
+    if (_categoryController.text.isEmpty && state.categoryName != null) {
+      _categoryController.text = state.categoryName!;
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('결제 내역 추가'),
-        actions: [
-          if (paymentState.createStatus == Status.loading)
-            const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: CircularProgressIndicator(),
-            )
-          else
-            IconButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  final settlementList = _settlementItems.map((item) {
-                    return Settlement(
-                      settlementName: item.nameController.text,
-                      amount: int.parse(item.amountController.text),
-                      isPaid: item.isPaid,
-                      travelUsers: item.travelUserIds,
-                    );
-                  }).toList();
-
-                  final totalAmount = settlementList.fold<int>(
-                    0,
-                    (sum, item) => sum + item.amount,
-                  );
-
-                  final payTime = DateTime(
-                    _selectedDate.year,
-                    _selectedDate.month,
-                    _selectedDate.day,
-                    _selectedTime.hour,
-                    _selectedTime.minute,
-                  );
-
-                  final request = PaymentCreateRequest(
-                    travelId: widget.travelId,
-                    travelUserId: _payerType == 'INDIVIDUAL'
-                        ? _selectedPayerTravelUserId
-                        : null,
-                    categoryId: _selectedCategoryId!,
-                    payerType: _payerType,
-                    payTime: payTime.toIso8601String(),
-                    paymentName: _paymentNameController.text,
-                    paymentMethod: _paymentMethod,
-                    paymentType: widget.paymentType,
-                    paymentAccount: totalAmount,
-                    settlementList: settlementList,
-                  );
-
-                  final imageFiles = _images
-                      .map((image) => File(image.path))
-                      .toList();
-
-                  await ref
-                      .read(paymentNotifierProvider.notifier)
-                      .createPayment(request, imageFiles);
-                }
-              },
-              icon: const Icon(Icons.check),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('결제 내역 추가')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
             children: [
-              _buildPayerTypeSelector(),
-              const SizedBox(height: 16.0),
-              _buildTimePicker(),
-              const SizedBox(height: 16.0),
-              if (_payerType == 'INDIVIDUAL') ...[
-                _buildPayerSelector(),
-                const SizedBox(height: 16.0),
-              ],
-              _buildPaymentMethodSelector(),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _paymentNameController,
-                decoration: const InputDecoration(labelText: '결제 이름'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '결제 이름을 입력하세요.';
-                  }
-                  return null;
-                },
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildPayerTypeSelector(state, notifier),
+                    const SizedBox(height: 16.0),
+                    if (state.payTime != null)
+                      _buildTimePicker(state, notifier),
+                    const SizedBox(height: 16.0),
+                    if (state.payerType == 'INDIVIDUAL') ...[
+                      _buildPayerSelector(notifier),
+                      const SizedBox(height: 16.0),
+                    ],
+                    _buildPaymentMethodSelector(state, notifier),
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _paymentNameController,
+                      decoration: const InputDecoration(labelText: '결제 이름'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '결제 이름을 입력하세요.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    _buildCategorySelector(notifier),
+                    const SizedBox(height: 16.0),
+                    _buildImagePicker(state, notifier),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16.0),
-              _buildCategorySelector(),
-              const SizedBox(height: 16.0),
-              _buildSettlementList(),
-              const SizedBox(height: 16.0),
-              _buildImagePicker(),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _goToNextStep,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text('다음'),
+              ),
             ],
           ),
         ),
@@ -201,22 +142,31 @@ class _TravelPaymentCreateScreenState
     );
   }
 
-  Widget _buildPayerTypeSelector() {
+  Widget _buildPayerTypeSelector(
+    PaymentCreateState state,
+    PaymentCreateNotifier notifier,
+  ) {
     return SegmentedButton<String>(
       segments: const <ButtonSegment<String>>[
         ButtonSegment<String>(value: 'INDIVIDUAL', label: Text('개인')),
         ButtonSegment<String>(value: 'SHAREDFUND', label: Text('공금')),
       ],
-      selected: {_payerType},
+      selected: {state.payerType!},
       onSelectionChanged: (Set<String> newSelection) {
-        setState(() {
-          _payerType = newSelection.first;
-        });
+        final newPayerType = newSelection.first;
+        final bool shouldClearPayer = newPayerType == 'SHAREDFUND';
+        notifier.updateField(
+          payerType: newPayerType,
+          clearPayer: shouldClearPayer,
+        );
+        if (shouldClearPayer) {
+          _payerController.clear();
+        }
       },
     );
   }
 
-  Widget _buildPayerSelector() {
+  Widget _buildPayerSelector(PaymentCreateNotifier notifier) {
     return TextFormField(
       controller: _payerController,
       readOnly: true,
@@ -224,9 +174,10 @@ class _TravelPaymentCreateScreenState
         labelText: '결제자',
         suffixIcon: Icon(Icons.arrow_drop_down),
       ),
-      onTap: () => _showPayerDialog(),
+      onTap: () => _showPayerDialog(notifier),
       validator: (value) {
-        if (_payerType == 'INDIVIDUAL' && (value == null || value.isEmpty)) {
+        if (ref.read(paymentCreateNotifierProvider).payerType == 'INDIVIDUAL' &&
+            (value == null || value.isEmpty)) {
           return '결제자를 선택하세요.';
         }
         return null;
@@ -234,21 +185,25 @@ class _TravelPaymentCreateScreenState
     );
   }
 
-  void _showPayerDialog() async {
+  void _showPayerDialog(PaymentCreateNotifier notifier) async {
     final selectedUser = await showDialog<TravelUserDetailResponse>(
       context: context,
       builder: (context) => PaymentUserDialog(travelId: widget.travelId),
     );
 
     if (selectedUser != null) {
-      setState(() {
-        _payerController.text = selectedUser.travelNickName;
-        _selectedPayerTravelUserId = selectedUser.travelUserId;
-      });
+      notifier.updateField(
+        payerTravelUserId: selectedUser.travelUserId,
+        payerName: selectedUser.travelNickName,
+      );
+      _payerController.text = selectedUser.travelNickName;
     }
   }
 
-  Widget _buildTimePicker() {
+  Widget _buildTimePicker(
+    PaymentCreateState state,
+    PaymentCreateNotifier notifier,
+  ) {
     return Row(
       children: [
         const Text('시간:'),
@@ -257,51 +212,54 @@ class _TravelPaymentCreateScreenState
           onPressed: () async {
             final time = await showTimePicker(
               context: context,
-              initialTime: TimeOfDay.fromDateTime(_selectedTime),
+              initialTime: TimeOfDay.fromDateTime(state.payTime!),
             );
             if (time != null) {
-              setState(() {
-                _selectedTime = DateTime(
-                  _selectedTime.year,
-                  _selectedTime.month,
-                  _selectedTime.day,
-                  time.hour,
-                  time.minute,
-                );
-              });
+              final newTime = DateTime(
+                state.payTime!.year,
+                state.payTime!.month,
+                state.payTime!.day,
+                time.hour,
+                time.minute,
+              );
+              notifier.updateField(payTime: newTime);
             }
           },
           child: Text(
-            '${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+            '${state.payTime!.hour}:${state.payTime!.minute.toString().padLeft(2, '0')}',
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPaymentMethodSelector() {
+  Widget _buildPaymentMethodSelector(
+    PaymentCreateState state,
+    PaymentCreateNotifier notifier,
+  ) {
+    final Map<String, String> paymentMethodMap = {
+      '카드': 'CARD',
+      '현금': 'CASH',
+      '트레블카드': 'TRAVELCARD',
+    };
     return DropdownButtonFormField<String>(
-      value: _paymentMethod,
+      value: state.paymentMethod,
       decoration: const InputDecoration(labelText: '결제 방식'),
-      items: _paymentMethodMap.entries
+      items: paymentMethodMap.entries
           .map(
-            (entry) => DropdownMenuItem(
-              value: entry.value, // 내부 값 (e.g. 'CARD')
-              child: Text(entry.key), // UI에 보여질 텍스트 (e.g. '카드')
-            ),
+            (entry) =>
+                DropdownMenuItem(value: entry.value, child: Text(entry.key)),
           )
           .toList(),
       onChanged: (value) {
         if (value != null) {
-          setState(() {
-            _paymentMethod = value;
-          });
+          notifier.updateField(paymentMethod: value);
         }
       },
     );
   }
 
-  Widget _buildCategorySelector() {
+  Widget _buildCategorySelector(PaymentCreateNotifier notifier) {
     return TextFormField(
       controller: _categoryController,
       readOnly: true,
@@ -309,7 +267,7 @@ class _TravelPaymentCreateScreenState
         labelText: '카테고리',
         suffixIcon: Icon(Icons.arrow_drop_down),
       ),
-      onTap: () => _showCategoryDialog(),
+      onTap: () => _showCategoryDialog(notifier),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return '카테고리를 선택하세요.';
@@ -319,7 +277,7 @@ class _TravelPaymentCreateScreenState
     );
   }
 
-  void _showCategoryDialog() {
+  void _showCategoryDialog(PaymentCreateNotifier notifier) {
     showDialog(
       context: context,
       builder: (context) {
@@ -343,11 +301,11 @@ class _TravelPaymentCreateScreenState
                           return ListTile(
                             title: Text(category.categoryName),
                             onTap: () {
-                              setState(() {
-                                _categoryController.text =
-                                    category.categoryName;
-                                _selectedCategoryId = category.categoryId;
-                              });
+                              notifier.updateField(
+                                categoryId: category.categoryId,
+                                categoryName: category.categoryName,
+                              );
+                              _categoryController.text = category.categoryName;
                               Navigator.of(context).pop();
                             },
                           );
@@ -367,103 +325,21 @@ class _TravelPaymentCreateScreenState
     );
   }
 
-  Widget _buildSettlementList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _settlementItems.length,
-      itemBuilder: (context, index) {
-        return _buildSettlementItem(index);
-      },
-    );
-  }
-
-  Widget _buildSettlementItem(int index) {
-    final item = _settlementItems[index];
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            TextFormField(
-              controller: item.nameController,
-              decoration: const InputDecoration(labelText: '결제 내역 이름'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '내역 이름을 입력하세요.';
-                }
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: item.amountController,
-              decoration: const InputDecoration(labelText: '금액'),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '금액을 입력하세요.';
-                }
-                return null;
-              },
-            ),
-            CheckboxListTile(
-              title: const Text('정산 여부'),
-              value: item.isPaid,
-              onChanged: (bool? value) {
-                setState(() {
-                  item.isPaid = value ?? false;
-                });
-              },
-            ),
-            ListTile(
-              title: const Text('참여 유저'),
-              subtitle: Text(item.travelUserNames.join(', ')),
-              trailing: const Icon(Icons.arrow_drop_down),
-              onTap: () async {
-                final selectedUsers =
-                    await showDialog<List<TravelUserDetailResponse>>(
-                      context: context,
-                      builder: (context) =>
-                          SettlementUserDialog(travelId: widget.travelId),
-                    );
-                if (selectedUsers != null) {
-                  setState(() {
-                    item.travelUserIds = selectedUsers
-                        .map((e) => e.travelUserId)
-                        .toList();
-                    item.travelUserNames = selectedUsers
-                        .map((e) => e.travelNickName)
-                        .toList();
-                  });
-                }
-              },
-            ),
-            if (index > 0)
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline),
-                onPressed: () {
-                  setState(() {
-                    _settlementItems.removeAt(index);
-                  });
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImagePicker() {
+  Widget _buildImagePicker(
+    PaymentCreateState state,
+    PaymentCreateNotifier notifier,
+  ) {
+    final picker = ImagePicker();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('사진'),
         const SizedBox(height: 8.0),
         GestureDetector(
-          onTap: () {
+          onTap: () async {
             FocusScope.of(context).unfocus();
-            _pickImages();
+            final List<XFile> pickedFiles = await picker.pickMultiImage();
+            notifier.addImages(pickedFiles);
           },
           child: Container(
             height: 100,
@@ -485,12 +361,12 @@ class _TravelPaymentCreateScreenState
             crossAxisSpacing: 4.0,
             mainAxisSpacing: 4.0,
           ),
-          itemCount: _images.length,
+          itemCount: state.images.length,
           itemBuilder: (context, index) {
             return Stack(
               children: [
                 Image.file(
-                  File(_images[index].path),
+                  File(state.images[index].path),
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
@@ -499,7 +375,7 @@ class _TravelPaymentCreateScreenState
                   top: 0,
                   right: 0,
                   child: GestureDetector(
-                    onTap: () => _removeImage(index),
+                    onTap: () => notifier.removeImage(index),
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(

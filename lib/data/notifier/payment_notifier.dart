@@ -12,6 +12,7 @@ enum Status { initial, loading, success, error }
 class PaymentState {
   final Status getStatus;
   final Status createStatus;
+  final Status getDetailsStatus;
   final List<PaymentResponse> payments;
   final PaymentDetailResponse? selectedPayment;
   final String? errorMessage;
@@ -19,6 +20,7 @@ class PaymentState {
   PaymentState({
     this.getStatus = Status.initial,
     this.createStatus = Status.initial,
+    this.getDetailsStatus = Status.initial,
     this.payments = const [],
     this.selectedPayment,
     this.errorMessage,
@@ -27,6 +29,7 @@ class PaymentState {
   PaymentState copyWith({
     Status? getStatus,
     Status? createStatus,
+    Status? getDetailsStatus,
     List<PaymentResponse>? payments,
     PaymentDetailResponse? selectedPayment,
     String? errorMessage,
@@ -37,6 +40,7 @@ class PaymentState {
       createStatus: resetCreateStatus == true
           ? Status.initial
           : (createStatus ?? this.createStatus),
+      getDetailsStatus: getDetailsStatus ?? this.getDetailsStatus,
       payments: payments ?? this.payments,
       selectedPayment: selectedPayment ?? this.selectedPayment,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -66,17 +70,16 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   }
 
   Future<void> getPaymentDetails(int paymentId) async {
-    state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
+    state = state.copyWith(getDetailsStatus: Status.loading, resetCreateStatus: true);
     try {
       final paymentDetails = await _repository.getPaymentDetails(paymentId);
-      // payTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
       state = state.copyWith(
-        getStatus: Status.success,
+        getDetailsStatus: Status.success,
         selectedPayment: paymentDetails,
       );
     } catch (e) {
       state = state.copyWith(
-        getStatus: Status.error,
+        getDetailsStatus: Status.error,
         errorMessage: e.toString(),
       );
     }

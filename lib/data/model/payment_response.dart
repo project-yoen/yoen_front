@@ -7,7 +7,8 @@ class PaymentResponse {
   final int paymentId;
   final String paymentName;
   final String categoryName;
-  final String payer;
+  final String? payer;
+  final String payerType;
   final String payTime;
   final int paymentAccount;
 
@@ -16,6 +17,7 @@ class PaymentResponse {
     required this.paymentName,
     required this.categoryName,
     required this.payer,
+    required this.payerType,
     required this.payTime,
     required this.paymentAccount,
   });
