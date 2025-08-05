@@ -22,6 +22,7 @@ import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import '../model/accept_join_request.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
+import '../model/payment_detail_response.dart';
 import '../model/payment_response.dart';
 import '../model/register_request.dart';
 import '../model/user_response.dart';
@@ -137,8 +138,13 @@ abstract class ApiService {
   );
 
   @GET("/payment")
-  Future<ApiResponse<List<PaymentResponse>>> getPayment(
+  Future<ApiResponse<List<PaymentResponse>>> getPayments(
     @Query("travelId") int travelId,
     @Query("date") String date,
+  );
+
+  @GET("/payment/detail")
+  Future<ApiResponse<PaymentDetailResponse>> getPaymentDetails(
+    @Query("paymentId") int paymentId,
   );
 }

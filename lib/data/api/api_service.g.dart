@@ -849,7 +849,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<List<PaymentResponse>>> getPayment(
+  Future<ApiResponse<List<PaymentResponse>>> getPayments(
     int travelId,
     String date,
   ) async {
@@ -882,6 +882,38 @@ class _ApiService implements ApiService {
                   )
                   .toList()
             : List.empty(),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ApiResponse<PaymentDetailResponse>> getPaymentDetails(
+    int paymentId,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'paymentId': paymentId};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ApiResponse<PaymentDetailResponse>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/payment/detail',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<PaymentDetailResponse> _value;
+    try {
+      _value = ApiResponse<PaymentDetailResponse>.fromJson(
+        _result.data!,
+        (json) => PaymentDetailResponse.fromJson(json as Map<String, dynamic>),
       );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
