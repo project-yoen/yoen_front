@@ -6,9 +6,6 @@ import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
-import 'package:yoen_front/view/travel_payment_create.dart';
-import 'package:yoen_front/view/travel_prepayment_create.dart';
-import 'package:yoen_front/data/dialog/payment_detail_dialog.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -203,6 +200,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
             // 수정 로직
           } else if (result == 'delete') {
             // 삭제 로직
+            _showDeleteConfirmDialog(payment);
           }
         },
         child: Card(
@@ -286,6 +284,33 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(PaymentResponse payment) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('기록 삭제'),
+          content: Text('\'${payment.paymentName}\'을(를) 삭제하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('아니오'),
+            ),
+            TextButton(
+              onPressed: () {
+                ref
+                    .read(paymentNotifierProvider.notifier)
+                    .deletePayment(payment.paymentId);
+                Navigator.of(context).pop(); // Close confirmation dialog
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

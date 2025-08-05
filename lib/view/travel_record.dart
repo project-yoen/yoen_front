@@ -1,14 +1,12 @@
-import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
@@ -73,7 +71,7 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
                     SizedBox(height: 200),
-                    Center(child: Text('이 날짜에 작성된 기록이 없습니다.')),
+                    Center(child: Text('이 날짜에 작성된 여행기록이 없습니다.')),
                   ],
                 )
               : ListView.builder(
