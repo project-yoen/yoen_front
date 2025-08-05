@@ -90,12 +90,12 @@ class _TravelPaymentCreateScreenState
     final paymentState = ref.watch(paymentNotifierProvider);
 
     ref.listen<PaymentState>(paymentNotifierProvider, (previous, next) {
-      if (next.isSuccess) {
-        Navigator.of(context).pop();
-      } else if (next.errorMessage != null) {
+      if (next.createStatus == Status.success) {
+        Navigator.of(context).pop(true);
+      } else if (next.createStatus == Status.error) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage ?? '오류가 발생했습니다.')));
       }
     });
 
@@ -103,7 +103,7 @@ class _TravelPaymentCreateScreenState
       appBar: AppBar(
         title: const Text('결제 내역 추가'),
         actions: [
-          if (paymentState.isLoading)
+          if (paymentState.createStatus == Status.loading)
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: CircularProgressIndicator(),

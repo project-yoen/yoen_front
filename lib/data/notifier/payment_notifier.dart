@@ -2,86 +2,29 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
-import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
+import 'package:yoen_front/data/model/payment_response.dart';
+import 'package:yoen_front/data/repository/payment_repository.dart';
 
-import '../model/payment_response.dart';
-import '../repository/payment_repository.dart';
-
-class PaymentNotifier extends StateNotifier<PaymentState> {
-  final PaymentRepository _repo;
-
-  PaymentNotifier(this._repo) : super(PaymentState.initial());
-
-  Future<void> createPayment(
-    PaymentCreateRequest request,
-    List<File> images,
-  ) async {
-    state = PaymentState.loading();
-    try {
-      await _repo.createPayment(request, images);
-      state = PaymentState.success();
-    } catch (e) {
-      state = PaymentState.error(e.toString());
-    }
-  }
-
-  Future<void> getPayments(int travelId, DateTime date) async {
-    state = state.copyWith(get: Status.loading, resetCreateStatus: true);
-    try {
-      final dateString = date.toIso8601String();
-      final records = await _repo.getPayments(travelId, dateString);
-      // recordTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
-      records.sort((a, b) => a.payTime.compareTo(b.payTime));
-      state = state.copyWith(getStatus: Status.success, records: records);
-    } catch (e) {
-      state = state.copyWith(
-        getStatus: Status.error,
-        errorMessage: e.toString(),
-      );
-    }
-  }
-}
+enum Status { initial, loading, success, error }
 
 class PaymentState {
-  final bool isLoading;
-  final bool isSuccess;
-  final List<PaymentResponse> records;
-  final bool? selectedRecord;
+  final Status getStatus;
+  final Status createStatus;
+  final List<PaymentResponse> payments;
   final String? errorMessage;
 
   PaymentState({
-    this.records = const [],
-    required this.isLoading,
-    this.selectedRecord,
-    required this.isSuccess,
+    this.getStatus = Status.initial,
+    this.createStatus = Status.initial,
+    this.payments = const [],
     this.errorMessage,
   });
-
-  factory PaymentState.initial() {
-    return PaymentState(isLoading: false, isSuccess: false);
-  }
-
-  factory PaymentState.loading() {
-    return PaymentState(isLoading: true, isSuccess: false);
-  }
-
-  factory PaymentState.success() {
-    return PaymentState(isLoading: false, isSuccess: true);
-  }
-
-  factory PaymentState.error(String message) {
-    return PaymentState(
-      isLoading: false,
-      isSuccess: false,
-      errorMessage: message,
-    );
-  }
 
   PaymentState copyWith({
     Status? getStatus,
     Status? createStatus,
-    List<RecordResponse>? records,
+    List<PaymentResponse>? payments,
     String? errorMessage,
     bool? resetCreateStatus,
   }) {
@@ -90,9 +33,51 @@ class PaymentState {
       createStatus: resetCreateStatus == true
           ? Status.initial
           : (createStatus ?? this.createStatus),
-      records: records ?? this.records,
+      payments: payments ?? this.payments,
       errorMessage: errorMessage ?? this.errorMessage,
     );
+  }
+}
+
+class PaymentNotifier extends StateNotifier<PaymentState> {
+  final PaymentRepository _repository;
+
+  PaymentNotifier(this._repository) : super(PaymentState());
+
+  Future<void> getPayments(int travelId, DateTime date) async {
+    state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
+    try {
+      final dateString = date.toIso8601String().split('T').first;
+      final payments = await _repository.getPayments(travelId, dateString);
+      // payTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
+      payments.sort((a, b) => a.payTime.compareTo(b.payTime));
+      state = state.copyWith(getStatus: Status.success, payments: payments);
+    } catch (e) {
+      state = state.copyWith(
+        getStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  void resetAll() {
+    state = PaymentState();
+  }
+
+  Future<void> createPayment(
+    PaymentCreateRequest request,
+    List<File> images,
+  ) async {
+    state = state.copyWith(createStatus: Status.loading);
+    try {
+      await _repository.createPayment(request, images);
+      state = state.copyWith(createStatus: Status.success);
+    } catch (e) {
+      state = state.copyWith(
+        createStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 }
 
@@ -103,6 +88,6 @@ final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
 
 final paymentNotifierProvider =
     StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
-      final repository = ref.watch(paymentRepositoryProvider);
-      return PaymentNotifier(repository);
-    });
+  final repository = ref.watch(paymentRepositoryProvider);
+  return PaymentNotifier(repository);
+});

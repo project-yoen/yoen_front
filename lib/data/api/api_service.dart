@@ -6,6 +6,7 @@ import 'package:retrofit/retrofit.dart';
 import 'package:yoen_front/data/model/api_response.dart';
 import 'package:yoen_front/data/model/destination_response.dart';
 import 'package:yoen_front/data/model/join_code_response.dart';
+import 'package:yoen_front/data/model/payment_create_response.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
@@ -125,7 +126,7 @@ abstract class ApiService {
 
   @MultiPart()
   @POST("/payment/create")
-  Future<ApiResponse<void>> createPayment(
+  Future<ApiResponse<PaymentCreateResponse>> createPayment(
     @Part(name: 'dto', contentType: 'application/json')
     PaymentCreateRequest request,
     @Part(name: 'images') List<File> images,
