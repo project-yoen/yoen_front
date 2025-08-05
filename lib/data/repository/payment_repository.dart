@@ -15,7 +15,7 @@ class PaymentRepository {
     return response.data!;
   }
 
-  Future<RecordCreateResponse> createRecord(
+  Future<RecordCreateResponse> createPayment(
     RecordCreateRequest request,
     List<File> images,
   ) async {

@@ -816,7 +816,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<List<InvalidType>>> getPayment(
+  Future<ApiResponse<List<PaymentResponse>>> getPayment(
     int travelId,
     String date,
   ) async {
@@ -827,7 +827,7 @@ class _ApiService implements ApiService {
     };
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ApiResponse<List<InvalidType>>>(
+    final _options = _setStreamType<ApiResponse<List<PaymentResponse>>>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -838,14 +838,14 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ApiResponse<List<InvalidType>> _value;
+    late ApiResponse<List<PaymentResponse>> _value;
     try {
-      _value = ApiResponse<List<InvalidType>>.fromJson(
+      _value = ApiResponse<List<PaymentResponse>>.fromJson(
         _result.data!,
         (json) => json is List<dynamic>
             ? json
-                  .map<InvalidType>(
-                    (i) => InvalidType.fromJson(i as Map<String, dynamic>),
+                  .map<PaymentResponse>(
+                    (i) => PaymentResponse.fromJson(i as Map<String, dynamic>),
                   )
                   .toList()
             : List.empty(),
