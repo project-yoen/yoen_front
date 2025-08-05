@@ -6,21 +6,17 @@ part 'payment_response.g.dart';
 class PaymentResponse {
   final int paymentId;
   final String paymentName;
-  final int categoryId;
-  final String payerType;
+  final String categoryName;
+  final String payer;
   final String payTime;
-  final String paymentMethod;
-  final String paymentType;
   final int paymentAccount;
 
   PaymentResponse({
     required this.paymentId,
     required this.paymentName,
-    required this.categoryId,
-    required this.payerType,
+    required this.categoryName,
+    required this.payer,
     required this.payTime,
-    required this.paymentMethod,
-    required this.paymentType,
     required this.paymentAccount,
   });
 

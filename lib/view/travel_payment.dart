@@ -66,9 +66,11 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                 itemBuilder: (context, index) {
                   final payment = state.payments[index];
                   return ListTile(
-                    title: Text(payment.paymentName),
+                    title: Text(
+                      "${payment.paymentName} (${payment.categoryName})",
+                    ),
                     subtitle: Text(
-                      '${payment.payerType} - ${payment.paymentAccount.toStringAsFixed(2)} ${payment.categoryId}',
+                      '${payment.payer} - ${payment.paymentAccount.toStringAsFixed(2)} ${payment.payTime}',
                     ),
                   );
                 },
