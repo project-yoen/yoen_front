@@ -20,7 +20,6 @@ import 'package:yoen_front/view/travel_sharedfund_create.dart';
 import '../data/notifier/payment_notifier.dart';
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
-  // 파라미터 제거
   const TravelOverviewScreen({super.key});
 
   @override
@@ -29,13 +28,14 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 }
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
+  late PageController _pageController;
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 화면에 들어올 때, 현재 '선택된' 여행의 시작일로 날짜 Notifier를 초기화
       final travel = ref.read(travelListNotifierProvider).selectedTravel;
       if (travel != null) {
         ref
@@ -45,7 +45,21 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -55,7 +69,6 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
     if (travel != null && date != null) {
-      // 현재 선택된 탭에 따라 다른 데이터를 가져옴
       if (_selectedIndex == 0) {
         ref
             .read(overviewNotifierProvider.notifier)
@@ -186,11 +199,9 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 전역 Notifier에서 현재 선택된 여행 정보를 가져옴
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final currentDate = ref.watch(dateNotifierProvider);
 
-    // 여행 정보가 아직 로드되지 않았다면 로딩 인디케이터 표시
     if (travel == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -212,14 +223,13 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(travel.travelName), // Notifier에서 가져온 이름 사용
+        title: Text(travel.travelName),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: '초대 코드 공유',
             onPressed: () async {
-              // 1. 여행 코드 요청
               await ref
                   .read(travelJoinNotifierProvider.notifier)
                   .getTravelCode(travel.travelId);
@@ -235,19 +245,16 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                 return;
               }
 
-              // 2. 만료일자 파싱
               String? formattedExpireDate;
               try {
                 final expireDate = DateTime.parse(joinCode.expiredAt);
-                formattedExpireDate = DateFormat(
-                  'yyyy년 M월 d일 HH:mm까지',
-                ).format(expireDate);
+                formattedExpireDate =
+                    DateFormat('yyyy년 M월 d일 HH:mm까지').format(expireDate);
               } catch (_) {
                 formattedExpireDate = '만료일자 파싱 실패';
               }
 
               if (!mounted) return;
-              // 3. 다이얼로그 표시
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -297,20 +304,17 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                   actions: [
                     TextButton(
                       onPressed: () async {
-                        final shareText =
-                            '''
+                        final shareText = '''
 여행 초대 코드: ${joinCode.code}
 유효기간: $formattedExpireDate
 
 아래 앱에서 코드를 입력하여 여행에 참여하세요!
 https://your-app-link.com
 ''';
-
                         await Share.share(
                           shareText.trim(),
                           subject: '여행 초대 코드 공유',
                         );
-
                         Navigator.of(context).pop();
                       },
                       child: const Text('공유하기'),
@@ -383,7 +387,11 @@ https://your-app-link.com
               ),
             ),
           Expanded(
-            child: Center(child: widgetOptions.elementAt(_selectedIndex)),
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              children: widgetOptions,
+            ),
           ),
         ],
       ),
