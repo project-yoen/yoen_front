@@ -81,7 +81,7 @@ class _TravelOverviewContentScreenState
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
                     SizedBox(height: 200),
-                    Center(child: Text('작성된 기록이 없습니다.')),
+                    Center(child: Text('이 날짜에 작성된 기록이 없습니다.')),
                   ],
                 )
               : ListView.builder(
@@ -127,14 +127,17 @@ class _TravelOverviewContentScreenState
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.camera_alt,
-                          color: Colors.blueAccent, size: 20),
+                      const Icon(
+                        Icons.camera_alt,
+                        color: Colors.blueAccent,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         record.title,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -169,8 +172,9 @@ class _TravelOverviewContentScreenState
   Widget _buildPaymentCard(PaymentResponse payment) {
     final paymentTime = DateTime.parse(payment.payTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
-    final formattedAmount =
-        NumberFormat('#,###').format(payment.paymentAccount);
+    final formattedAmount = NumberFormat(
+      '#,###',
+    ).format(payment.paymentAccount);
 
     return InkWell(
       onTap: () {
@@ -186,7 +190,8 @@ class _TravelOverviewContentScreenState
                 Text('금액: $formattedAmount원'),
                 Text('카테고리: ${payment.categoryName}'),
                 Text(
-                    '시간: ${DateFormat('yyyy-MM-dd HH:mm').format(paymentTime)}'),
+                  '시간: ${DateFormat('yyyy-MM-dd HH:mm').format(paymentTime)}',
+                ),
               ],
             ),
             actions: [
@@ -214,14 +219,17 @@ class _TravelOverviewContentScreenState
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.credit_card,
-                          color: Colors.green, size: 20),
+                      const Icon(
+                        Icons.credit_card,
+                        color: Colors.green,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         payment.paymentName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -246,9 +254,9 @@ class _TravelOverviewContentScreenState
                 child: Text(
                   '$formattedAmount원',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.redAccent,
+                  ),
                 ),
               ),
             ],

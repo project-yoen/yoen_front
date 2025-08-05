@@ -88,28 +88,32 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox(width: 40), // For spacing
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: _showDeleteConfirmDialog,
-                ),
-              ],
-            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.record.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 15),
+                            child: Text(
+                              widget.record.title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: _showDeleteConfirmDialog,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
