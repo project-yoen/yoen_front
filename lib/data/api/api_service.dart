@@ -15,6 +15,7 @@ import 'package:yoen_front/data/model/travel_user_join_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/model/category_response.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart';
 
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import '../model/accept_join_request.dart';
@@ -124,7 +125,13 @@ abstract class ApiService {
     @Query("date") String date,
   );
   @GET('/common/category')
-  Future<ApiResponse<List<Category>>> getCategories(
-    @Query('type') String type,
+  Future<ApiResponse<List<Category>>> getCategories(@Query('type') String type);
+
+  @MultiPart()
+  @POST("/payment/create")
+  Future<ApiResponse<void>> createPayment(
+    @Part(name: 'dto', contentType: 'application/json')
+    PaymentCreateRequest request,
+    @Part(name: 'images') List<File> images,
   );
 }

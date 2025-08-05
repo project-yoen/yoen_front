@@ -1,11 +1,16 @@
+import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:yoen_front/data/dialog/payment_user_dialog.dart';
 import 'package:yoen_front/data/dialog/settlement_user_dialog.dart';
 import 'package:yoen_front/data/model/category_response.dart';
 import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:flutter/material.dart';
-
+import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart';
 
 class SettlementItem {
   TextEditingController nameController = TextEditingController();
@@ -38,31 +43,119 @@ class _TravelPaymentCreateScreenState
   final _memoController = TextEditingController();
 
   DateTime _selectedTime = DateTime.now();
+  late DateTime _selectedDate;
   String _paymentMethod = 'CARD';
   String _payerType = 'INDIVIDUAL'; // INDIVIDUAL or SHAREDFUND
   int? _selectedCategoryId;
   int? _selectedPayerTravelUserId;
   List<SettlementItem> _settlementItems = [SettlementItem()];
+  final List<XFile> _images = [];
+  final ImagePicker _picker = ImagePicker();
 
   final Map<String, String> _paymentMethodMap = {
     '카드': 'CARD',
     '현금': 'CASH',
     '트레블카드': 'TRAVELCARD',
   };
+
+  Future<void> _pickImages() async {
+    final List<XFile> pickedFiles = await _picker.pickMultiImage();
+    setState(() {
+      _images.addAll(pickedFiles);
+    });
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = ref.read(dateNotifierProvider) ?? DateTime.now();
+    final now = DateTime.now();
+    _selectedTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      now.hour,
+      now.minute,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final paymentState = ref.watch(paymentNotifierProvider);
+
+    ref.listen<PaymentState>(paymentNotifierProvider, (previous, next) {
+      if (next.isSuccess) {
+        Navigator.of(context).pop();
+      } else if (next.errorMessage != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('결제 내역 추가'),
         actions: [
-          IconButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                // TODO: API 연동
-              }
-            },
-            icon: const Icon(Icons.check),
-          ),
+          if (paymentState.isLoading)
+            const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: CircularProgressIndicator(),
+            )
+          else
+            IconButton(
+              onPressed: () async {
+                if (_formKey.currentState!.validate()) {
+                  final settlementList = _settlementItems.map((item) {
+                    return Settlement(
+                      settlementName: item.nameController.text,
+                      amount: int.parse(item.amountController.text),
+                      isPaid: item.isPaid,
+                      travelUsers: item.travelUserIds,
+                    );
+                  }).toList();
+
+                  final totalAmount = settlementList.fold<int>(
+                      0, (sum, item) => sum + item.amount);
+
+                  final payTime = DateTime(
+                    _selectedDate.year,
+                    _selectedDate.month,
+                    _selectedDate.day,
+                    _selectedTime.hour,
+                    _selectedTime.minute,
+                  );
+
+                  final request = PaymentCreateRequest(
+                    travelId: widget.travelId,
+                    travelUserId: _payerType == 'INDIVIDUAL'
+                        ? _selectedPayerTravelUserId
+                        : null,
+                    categoryId: _selectedCategoryId!,
+                    payerType: _payerType,
+                    payTime: payTime.toIso8601String(),
+                    paymentMethod: _paymentMethod,
+                    paymentType: widget.paymentType,
+                    paymentAccount: totalAmount,
+                    settlementList: settlementList,
+                  );
+
+                  final imageFiles =
+                      _images.map((image) => File(image.path)).toList();
+
+                  await ref
+                      .read(paymentNotifierProvider.notifier)
+                      .createPayment(request, imageFiles);
+                }
+              },
+              icon: const Icon(Icons.check),
+            ),
         ],
       ),
       body: Padding(
@@ -369,11 +462,67 @@ class _TravelPaymentCreateScreenState
       children: [
         const Text('사진'),
         const SizedBox(height: 8.0),
-        ElevatedButton(
-          onPressed: () {
-            // TODO: 이미지 선택 기능 구현
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            _pickImages();
           },
-          child: const Text('사진 선택'),
+          child: Container(
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.add_a_photo,
+                size: 50,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 4.0,
+            mainAxisSpacing: 4.0,
+          ),
+          itemCount: _images.length,
+          itemBuilder: (context, index) {
+            return Stack(
+              children: [
+                Image.file(
+                  File(_images[index].path),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

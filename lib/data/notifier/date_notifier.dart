@@ -20,6 +20,8 @@ class DateNotifier extends StateNotifier<DateTime?> {
   }
 }
 
-final dateNotifierProvider = StateNotifierProvider<DateNotifier, DateTime?>((ref) {
+final dateNotifierProvider = StateNotifierProvider<DateNotifier, DateTime?>((
+  ref,
+) {
   return DateNotifier();
 });

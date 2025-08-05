@@ -760,6 +760,61 @@ class _ApiService implements ApiService {
     return _value;
   }
 
+  @override
+  Future<ApiResponse<void>> createPayment(
+    PaymentCreateRequest request,
+    List<File> images,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = FormData();
+    _data.files.add(
+      MapEntry(
+        'dto',
+        MultipartFile.fromString(
+          jsonEncode(request),
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    _data.files.addAll(
+      images.map(
+        (i) => MapEntry(
+          'images',
+          MultipartFile.fromFileSync(
+            i.path,
+            filename: i.path.split(Platform.pathSeparator).last,
+          ),
+        ),
+      ),
+    );
+    final _options = _setStreamType<ApiResponse<void>>(
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
+          .compose(
+            _dio.options,
+            '/payment/create',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<void> _value;
+    try {
+      _value = ApiResponse<void>.fromJson(_result.data!, (json) => () {}());
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||
