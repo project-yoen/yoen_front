@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
+import 'package:yoen_front/data/model/payment_detail_response.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/repository/payment_repository.dart';
 
@@ -12,12 +13,14 @@ class PaymentState {
   final Status getStatus;
   final Status createStatus;
   final List<PaymentResponse> payments;
+  final PaymentDetailResponse? selectedPayment;
   final String? errorMessage;
 
   PaymentState({
     this.getStatus = Status.initial,
     this.createStatus = Status.initial,
     this.payments = const [],
+    this.selectedPayment,
     this.errorMessage,
   });
 
@@ -25,6 +28,7 @@ class PaymentState {
     Status? getStatus,
     Status? createStatus,
     List<PaymentResponse>? payments,
+    PaymentDetailResponse? selectedPayment,
     String? errorMessage,
     bool? resetCreateStatus,
   }) {
@@ -34,6 +38,7 @@ class PaymentState {
           ? Status.initial
           : (createStatus ?? this.createStatus),
       payments: payments ?? this.payments,
+      selectedPayment: selectedPayment ?? this.selectedPayment,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -52,6 +57,23 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       // payTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
       payments.sort((a, b) => a.payTime.compareTo(b.payTime));
       state = state.copyWith(getStatus: Status.success, payments: payments);
+    } catch (e) {
+      state = state.copyWith(
+        getStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> getPaymentDetails(int paymentId) async {
+    state = state.copyWith(getStatus: Status.loading, resetCreateStatus: true);
+    try {
+      final paymentDetails = await _repository.getPaymentDetails(paymentId);
+      // payTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
+      state = state.copyWith(
+        getStatus: Status.success,
+        selectedPayment: paymentDetails,
+      );
     } catch (e) {
       state = state.copyWith(
         getStatus: Status.error,

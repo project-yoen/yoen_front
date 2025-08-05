@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:yoen_front/data/model/payment_create_response.dart';
+import 'package:yoen_front/data/model/payment_detail_response.dart';
 
 import '../api/api_service.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
@@ -14,7 +15,7 @@ class PaymentRepository {
   PaymentRepository(this._apiService);
 
   Future<List<PaymentResponse>> getPayments(int travelId, String date) async {
-    final response = await _apiService.getPayment(travelId, date);
+    final response = await _apiService.getPayments(travelId, date);
     return response.data!;
   }
 
@@ -23,6 +24,11 @@ class PaymentRepository {
     List<File> images,
   ) async {
     final response = await _apiService.createPayment(request, images);
+    return response.data!;
+  }
+
+  Future<PaymentDetailResponse> getPaymentDetails(int paymentId) async {
+    final response = await _apiService.getPaymentDetails(paymentId);
     return response.data!;
   }
 }

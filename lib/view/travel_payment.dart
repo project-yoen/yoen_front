@@ -101,8 +101,85 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
 
     return InkWell(
-      onTap: () {
-        // 상세 다이얼로그 등 원하는 동작
+      onTap: () async {
+        final notifier = ref.read(paymentNotifierProvider.notifier);
+        await notifier.getPaymentDetails(payment.paymentId);
+
+        final detail = ref.read(paymentNotifierProvider).selectedPayment;
+        if (!context.mounted) return;
+
+        showDialog(
+          context: context,
+          builder: (context) {
+            if (detail == null) {
+              return const AlertDialog(
+                title: Text('오류'),
+                content: Text('결제 상세 정보를 불러오지 못했습니다.'),
+              );
+            }
+
+            return AlertDialog(
+              title: Text(detail.paymentName ?? '결제 상세'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('결제자: ${detail.payerName?.travelNickName ?? '-'}'),
+                    Text('금액: ${detail.paymentAccount ?? '-'}원'),
+                    Text('카테고리: ${detail.categoryName ?? '-'}'),
+                    Text('결제수단: ${detail.paymentMethod ?? '-'}'),
+                    Text('결제타입: ${detail.paymentType ?? '-'}'),
+                    Text('환율: ${detail.exchangeRate ?? '-'}'),
+                    Text('시간: ${detail.payTime ?? '-'}'),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '정산 정보',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (detail.settlements != null &&
+                        detail.settlements!.isNotEmpty)
+                      ...detail.settlements!.map(
+                        (settlement) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '• ${settlement.settlementName} (${settlement.amount}원)',
+                              ),
+                              Text(
+                                '  정산 여부: ${settlement.isPaid ? '완료' : '미완료'}',
+                              ),
+                              if (settlement.travelUsers.isNotEmpty)
+                                Text(
+                                  '  대상자: ${settlement.travelUsers.map((u) => u.travelNickName).join(', ')}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      const Text(
+                        '정산 내역이 없습니다.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
+                ),
+              ],
+            );
+          },
+        );
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16.0),
