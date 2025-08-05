@@ -8,12 +8,6 @@ import 'package:yoen_front/data/model/payment_create_request.dart';
 import '../model/payment_response.dart';
 import '../repository/payment_repository.dart';
 
-final paymentNotifierProvider =
-    StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
-      final apiService = ref.watch(apiServiceProvider);
-      return PaymentNotifier(apiService);
-    });
-
 class PaymentNotifier extends StateNotifier<PaymentState> {
   final PaymentRepository _repo;
 
@@ -25,7 +19,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   ) async {
     state = PaymentState.loading();
     try {
-      await apiService.createPayment(request, images);
+      await _repo.createPayment(request, images);
       state = PaymentState.success();
     } catch (e) {
       state = PaymentState.error(e.toString());
@@ -36,9 +30,9 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(get: Status.loading, resetCreateStatus: true);
     try {
       final dateString = date.toIso8601String();
-      final records = await _repository.getRecords(travelId, dateString);
+      final records = await _repo.getPayments(travelId, dateString);
       // recordTime을 기준으로 오름차순 정렬 (오래된 것이 위로)
-      records.sort((a, b) => a.recordTime.compareTo(b.recordTime));
+      records.sort((a, b) => a.payTime.compareTo(b.payTime));
       state = state.copyWith(getStatus: Status.success, records: records);
     } catch (e) {
       state = state.copyWith(
@@ -53,12 +47,13 @@ class PaymentState {
   final bool isLoading;
   final bool isSuccess;
   final List<PaymentResponse> records;
-  final 상세페이먼트리스폰스 selectedRecord;
+  final bool? selectedRecord;
   final String? errorMessage;
 
   PaymentState({
     this.records = const [],
     required this.isLoading,
+    this.selectedRecord,
     required this.isSuccess,
     this.errorMessage,
   });
@@ -106,7 +101,7 @@ final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
   return PaymentRepository(apiService);
 });
 
-final recordNotifierProvider =
+final paymentNotifierProvider =
     StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
       final repository = ref.watch(paymentRepositoryProvider);
       return PaymentNotifier(repository);
