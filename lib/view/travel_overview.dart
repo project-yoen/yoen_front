@@ -52,11 +52,17 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   }
 
   void _onItemTapped(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (index == _selectedIndex) return;
+
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index < 3) {
+      // PageView에 포함된 탭으로 이동
+      _pageController.jumpToPage(index);
+    }
+    // index가 3일 경우, setState만으로 Offstage가 제어하여 화면이 전환됨
   }
 
   void _onPageChanged(int index) {
@@ -205,13 +211,6 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     if (travel == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
-    final List<Widget> widgetOptions = [
-      const TravelOverviewContentScreen(),
-      const TravelPaymentScreen(),
-      const TravelRecordScreen(),
-      const TravelAdditionalScreen(),
-    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -387,10 +386,25 @@ https://your-app-link.com
               ),
             ),
           Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              children: widgetOptions,
+            child: Stack(
+              children: [
+                Offstage(
+                  offstage: _selectedIndex == 3,
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: _onPageChanged,
+                    children: const [
+                      TravelOverviewContentScreen(),
+                      TravelPaymentScreen(),
+                      TravelRecordScreen(),
+                    ],
+                  ),
+                ),
+                Offstage(
+                  offstage: _selectedIndex != 3,
+                  child: const TravelAdditionalScreen(),
+                ),
+              ],
             ),
           ),
         ],
