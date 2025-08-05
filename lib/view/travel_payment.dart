@@ -115,12 +115,25 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 첫 줄: 결제이름 [카테고리]
-              Text(
-                '${payment.paymentName} [${payment.categoryName}]',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              // 첫 줄: 결제이름 + 카테고리
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      payment.paymentName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    payment.categoryName,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               // 두 번째 줄: 결제자 - 결제금액 - 시간
