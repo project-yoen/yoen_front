@@ -15,4 +15,20 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+
+    <style name="UCropActivityTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- 전체화면을 위한 설정 -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">#000000</item> <!-- 또는 transparent도 가능 -->
+
+        <!-- 배경 검정색 (필요 시) -->
+        <item name="android:windowBackground">@android:color/black</item>
+
+        <!-- 시스템 창 영역 자동 맞춤 -->
+        <item name="android:fitsSystemWindows">true</item>
+
+    </style>
+
+
 </resources>
