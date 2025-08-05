@@ -137,6 +137,9 @@ abstract class ApiService {
     @Part(name: 'images') List<File> images,
   );
 
+  @DELETE("/payment/delete")
+  Future<ApiResponse<String>> deletePayment(@Query("paymentId") int paymentId);
+
   @GET("/payment")
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
     @Query("travelId") int travelId,
