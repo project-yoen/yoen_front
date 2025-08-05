@@ -10,6 +10,7 @@ class PaymentCreateRequest {
   final String payerType;
   final String payTime;
   final String paymentMethod;
+  final String paymentName;
   final String paymentType;
   final int paymentAccount;
   final List<Settlement> settlementList;
@@ -17,6 +18,7 @@ class PaymentCreateRequest {
   PaymentCreateRequest({
     required this.travelId,
     this.travelUserId,
+    required this.paymentName,
     required this.categoryId,
     required this.payerType,
     required this.payTime,

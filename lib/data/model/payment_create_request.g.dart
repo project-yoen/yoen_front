@@ -11,6 +11,7 @@ PaymentCreateRequest _$PaymentCreateRequestFromJson(
 ) => PaymentCreateRequest(
   travelId: (json['travelId'] as num).toInt(),
   travelUserId: (json['travelUserId'] as num?)?.toInt(),
+  paymentName: json['paymentName'] as String,
   categoryId: (json['categoryId'] as num).toInt(),
   payerType: json['payerType'] as String,
   payTime: json['payTime'] as String,
@@ -31,6 +32,7 @@ Map<String, dynamic> _$PaymentCreateRequestToJson(
   'payerType': instance.payerType,
   'payTime': instance.payTime,
   'paymentMethod': instance.paymentMethod,
+  'paymentName': instance.paymentName,
   'paymentType': instance.paymentType,
   'paymentAccount': instance.paymentAccount,
   'settlementList': instance.settlementList,
