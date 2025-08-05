@@ -9,7 +9,7 @@ class ApiClient {
   static Dio createDio(Ref ref) {
     final baseUrl = Platform.isAndroid
         ? 'http://10.0.2.2:8080' // Android 에뮬레이터
-        : 'https://21379da9834e.ngrok-free.app'; // iOS 시뮬레이터
+        : 'http://localhost:8080'; // iOS 시뮬레이터
     final dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,

@@ -21,6 +21,7 @@ import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import '../model/accept_join_request.dart';
 import '../model/login_request.dart';
 import '../model/login_response.dart';
+import '../model/payment_response.dart';
 import '../model/register_request.dart';
 import '../model/user_response.dart';
 
@@ -107,11 +108,6 @@ abstract class ApiService {
     @Path("id") int travelJoinRequestId,
   );
 
-  // @POST("/record/create")
-  // Future<ApiResponse<RecordCreateResponse>> createRecord(
-  //   @Body() FormData formData,
-  // );
-
   @MultiPart()
   @POST("/record/create")
   Future<ApiResponse<RecordCreateResponse>> createRecord(
@@ -133,5 +129,11 @@ abstract class ApiService {
     @Part(name: 'dto', contentType: 'application/json')
     PaymentCreateRequest request,
     @Part(name: 'images') List<File> images,
+  );
+
+  @GET("/payment")
+  Future<ApiResponse<List<PaymentResponse>>> getPayment(
+    @Query("travelId") int travelId,
+    @Query("date") String date,
   );
 }
