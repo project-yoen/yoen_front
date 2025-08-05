@@ -95,34 +95,39 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('기록 추가'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(MaterialPageRoute(
-                  builder: (context) =>
-                      TravelRecordCreateScreen(travelId: travelId),
-                ))
-                    .then((value) {
-                  if (value == true) {
-                    _fetchData();
-                  }
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.credit_card),
-              title: const Text('금액 추가'),
-              onTap: () {
-                Navigator.pop(context);
-                _showPaymentOptions(context, travelId);
-              },
-            ),
-          ],
+        return SafeArea(
+          bottom: true,
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('기록 추가'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              TravelRecordCreateScreen(travelId: travelId),
+                        ),
+                      )
+                      .then((value) {
+                        if (value == true) {
+                          _fetchData();
+                        }
+                      });
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.credit_card),
+                title: const Text('금액 추가'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showPaymentOptions(context, travelId);
+                },
+              ),
+            ],
+          ),
         );
       },
     );
@@ -132,72 +137,54 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.group_add),
-              title: const Text('공금기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelSharedfundCreateScreen(
-                          travelId: travelId,
-                          paymentType: "SHAREDFUND",
+        return SafeArea(
+          bottom: true,
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.group_add),
+                title: const Text('공금기록'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (context) => TravelSharedfundCreateScreen(
+                            travelId: travelId,
+                            paymentType: "SHAREDFUND",
+                          ),
                         ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchData();
-                      }
-                    });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payment),
-              title: const Text('결제기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelPaymentCreateScreen(
-                          paymentType: "PAYMENT",
-                          travelId: travelId,
+                      )
+                      .then((value) {
+                        if (value == true) {
+                          _fetchData();
+                        }
+                      });
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.payment),
+                title: const Text('결제기록'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (context) => TravelPaymentCreateScreen(
+                            paymentType: "PAYMENT",
+                            travelId: travelId,
+                          ),
                         ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchData();
-                      }
-                    });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt),
-              title: const Text('사전사용금액기록'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder: (context) => TravelPrepaymentCreateScreen(
-                          paymentType: "PREPAYMENT",
-                          travelId: travelId,
-                        ),
-                      ),
-                    )
-                    .then((value) {
-                      if (value == true) {
-                        _fetchData();
-                      }
-                    });
-              },
-            ),
-          ],
+                      )
+                      .then((value) {
+                        if (value == true) {
+                          _fetchData();
+                        }
+                      });
+                },
+              ),
+            ],
+          ),
         );
       },
     );
@@ -247,8 +234,9 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
               String? formattedExpireDate;
               try {
                 final expireDate = DateTime.parse(joinCode.expiredAt);
-                formattedExpireDate =
-                    DateFormat('yyyy년 M월 d일 HH:mm까지').format(expireDate);
+                formattedExpireDate = DateFormat(
+                  'yyyy년 M월 d일 HH:mm까지',
+                ).format(expireDate);
               } catch (_) {
                 formattedExpireDate = '만료일자 파싱 실패';
               }
@@ -303,7 +291,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                   actions: [
                     TextButton(
                       onPressed: () async {
-                        final shareText = '''
+                        final shareText =
+                            '''
 여행 초대 코드: ${joinCode.code}
 유효기간: $formattedExpireDate
 
