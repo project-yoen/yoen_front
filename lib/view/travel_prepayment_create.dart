@@ -8,12 +8,7 @@ import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 
 class TravelPrepaymentCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
-  final String paymentType;
-  const TravelPrepaymentCreateScreen({
-    super.key,
-    required this.travelId,
-    required this.paymentType,
-  });
+  const TravelPrepaymentCreateScreen({super.key, required this.travelId});
 
   @override
   ConsumerState<TravelPrepaymentCreateScreen> createState() =>
@@ -105,7 +100,7 @@ class _TravelPrepaymentCreateScreenState
             height: 400,
             child: Consumer(
               builder: (context, ref, child) {
-                final state = ref.watch(categoryProvider(widget.paymentType));
+                final state = ref.watch(categoryProvider("PREPAYMENT"));
                 return state.when(
                   data: (categories) {
                     return SizedBox(
