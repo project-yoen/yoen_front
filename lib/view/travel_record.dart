@@ -94,60 +94,122 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
     final recordTime = DateTime.parse(record.recordTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
 
-    return InkWell(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => RecordDetailDialog(record: record),
-        );
+    Offset? tapPosition;
+
+    return GestureDetector(
+      onTapDown: (TapDownDetails details) {
+        tapPosition = details.globalPosition;
       },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16.0),
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      record.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => RecordDetailDialog(record: record),
+          );
+        },
+        onLongPress: () async {
+          if (tapPosition == null) return;
+          final overlay =
+              Overlay.of(context).context.findRenderObject() as RenderBox;
+
+          final result = await showMenu<String>(
+            context: context,
+            position: RelativeRect.fromLTRB(
+              tapPosition!.dx,
+              tapPosition!.dy,
+              overlay.size.width - tapPosition!.dx,
+              overlay.size.height - tapPosition!.dy,
+            ),
+            items: const [
+              PopupMenuItem<String>(value: 'edit', child: Text('수정')),
+              PopupMenuItem<String>(value: 'delete', child: Text('삭제')),
+            ],
+          );
+
+          if (result == 'edit') {
+            // TODO: 수정 로직
+          } else if (result == 'delete') {
+            // TODO: 삭제 로직
+            _showDeleteConfirmDialog(record);
+          }
+        },
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 제목 + 시간
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        record.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    formattedTime,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                    Text(
+                      formattedTime,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8.0),
+                // 작성자
+                Text(
+                  '작성자: ${record.travelNickName}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                ),
+                if (record.images.isNotEmpty) ...[
+                  const SizedBox(height: 16.0),
+                  _buildImageGallery(
+                    record.images.map((e) => e.imageUrl).toList(),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                '작성자: ${record.travelNickName}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
-              ),
-              if (record.images.isNotEmpty) ...[
-                const SizedBox(height: 16.0),
-                _buildImageGallery(
-                  record.images.map((e) => e.imageUrl).toList(),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(RecordResponse record) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('기록 삭제'),
+          content: Text('\'${record.title}\'을(를) 삭제하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('아니오'),
+            ),
+            TextButton(
+              onPressed: () {
+                ref
+                    .read(recordNotifierProvider.notifier)
+                    .deleteRecord(record.travelRecordId);
+                Navigator.of(context).pop(); // Close confirmation dialog
+              },
+              child: const Text('예'),
+            ),
+          ],
+        );
+      },
     );
   }
 

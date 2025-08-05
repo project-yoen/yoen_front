@@ -100,93 +100,189 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final paymentTime = DateTime.parse(payment.payTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
 
-    return InkWell(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) =>
-              PaymentDetailDialog(paymentId: payment.paymentId),
-        );
+    Offset? tapPosition;
+
+    return GestureDetector(
+      onTapDown: (TapDownDetails details) {
+        // 탭 위치 기억
+        tapPosition = details.globalPosition;
       },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16.0),
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 첫 줄: 결제이름 + 카테고리
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Text(
-                      payment.paymentName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () async {
+          final notifier = ref.read(paymentNotifierProvider.notifier);
+          await notifier.getPaymentDetails(payment.paymentId);
+          final detail = ref.read(paymentNotifierProvider).selectedPayment;
+          if (!context.mounted) return;
+
+          showDialog(
+            context: context,
+            builder: (context) {
+              if (detail == null) {
+                return const AlertDialog(
+                  title: Text('오류'),
+                  content: Text('결제 상세 정보를 불러오지 못했습니다.'),
+                );
+              }
+
+              return AlertDialog(
+                title: Text(detail.paymentName ?? '결제 상세'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('결제자: ${detail.payerName?.travelNickName ?? '-'}'),
+                      Text('금액: ${detail.paymentAccount ?? '-'}원'),
+                      Text('카테고리: ${detail.categoryName ?? '-'}'),
+                      Text('결제수단: ${detail.paymentMethod ?? '-'}'),
+                      Text('결제타입: ${detail.paymentType ?? '-'}'),
+                      Text('환율: ${detail.exchangeRate ?? '-'}'),
+                      Text('시간: ${detail.payTime ?? '-'}'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '정산 정보',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      if (detail.settlements != null &&
+                          detail.settlements!.isNotEmpty)
+                        ...detail.settlements!.map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('• ${s.settlementName} (${s.amount}원)'),
+                                Text('  정산 여부: ${s.isPaid ? '완료' : '미완료'}'),
+                                if (s.travelUsers.isNotEmpty)
+                                  Text(
+                                    '  대상자: ${s.travelUsers.map((u) => u.travelNickName).join(', ')}',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        const Text(
+                          '정산 내역이 없습니다.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('닫기'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        onLongPress: () async {
+          if (tapPosition == null) return;
+          final overlay =
+              Overlay.of(context).context.findRenderObject() as RenderBox;
+
+          final result = await showMenu<String>(
+            context: context,
+            position: RelativeRect.fromLTRB(
+              tapPosition!.dx,
+              tapPosition!.dy,
+              overlay.size.width - tapPosition!.dx,
+              overlay.size.height - tapPosition!.dy,
+            ),
+            items: const [
+              PopupMenuItem<String>(value: 'edit', child: Text('수정')),
+              PopupMenuItem<String>(value: 'delete', child: Text('삭제')),
+            ],
+          );
+
+          if (result == 'edit') {
+            // 수정 로직
+          } else if (result == 'delete') {
+            // 삭제 로직
+          }
+        },
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 결제이름 + 카테고리
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        payment.paymentName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  Text(
-                    payment.categoryName,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // 두 번째 줄: 결제자 - 결제금액 - 시간
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '결제자',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        payment.payerType == 'SHAREDFUND' ? '<공금>' : payment.payer ?? '-',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 32),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '결제금액',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${payment.paymentAccount}원',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    formattedTime,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ],
+                    Text(
+                      payment.categoryName,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '결제자',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          payment.payer,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 32),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '결제금액',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${payment.paymentAccount}원',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      formattedTime,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
