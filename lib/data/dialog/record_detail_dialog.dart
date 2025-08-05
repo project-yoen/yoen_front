@@ -192,6 +192,14 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                                                   }
 
                                                   try {
+                                                    snackbarKey.currentState
+                                                        ?.showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              '이미지를 저장하는 중입니다 ..',
+                                                            ),
+                                                          ),
+                                                        );
                                                     final response = await http
                                                         .get(
                                                           Uri.parse(imageUrl),
@@ -244,6 +252,15 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                                                 ); // BottomSheet 닫기
 
                                                 try {
+                                                  snackbarKey.currentState
+                                                      ?.showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            '공유 준비 중입니다 ..',
+                                                          ),
+                                                        ),
+                                                      );
+
                                                   final uri = Uri.parse(
                                                     imageUrl,
                                                   );
