@@ -250,7 +250,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          payment.payer,
+                          payment.payer!,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],
