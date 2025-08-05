@@ -122,7 +122,9 @@ class _TravelPaymentCreateScreenState
                   }).toList();
 
                   final totalAmount = settlementList.fold<int>(
-                      0, (sum, item) => sum + item.amount);
+                    0,
+                    (sum, item) => sum + item.amount,
+                  );
 
                   final payTime = DateTime(
                     _selectedDate.year,
@@ -140,14 +142,16 @@ class _TravelPaymentCreateScreenState
                     categoryId: _selectedCategoryId!,
                     payerType: _payerType,
                     payTime: payTime.toIso8601String(),
+                    paymentName: _paymentNameController.text,
                     paymentMethod: _paymentMethod,
                     paymentType: widget.paymentType,
                     paymentAccount: totalAmount,
                     settlementList: settlementList,
                   );
 
-                  final imageFiles =
-                      _images.map((image) => File(image.path)).toList();
+                  final imageFiles = _images
+                      .map((image) => File(image.path))
+                      .toList();
 
                   await ref
                       .read(paymentNotifierProvider.notifier)
@@ -188,12 +192,6 @@ class _TravelPaymentCreateScreenState
               _buildCategorySelector(),
               const SizedBox(height: 16.0),
               _buildSettlementList(),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _memoController,
-                decoration: const InputDecoration(labelText: '메모'),
-                maxLines: 3,
-              ),
               const SizedBox(height: 16.0),
               _buildImagePicker(),
             ],
@@ -474,11 +472,7 @@ class _TravelPaymentCreateScreenState
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
-              child: Icon(
-                Icons.add_a_photo,
-                size: 50,
-                color: Colors.grey,
-              ),
+              child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
             ),
           ),
         ),

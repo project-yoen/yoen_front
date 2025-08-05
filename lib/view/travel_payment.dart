@@ -1,16 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_payment_create.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
-class TravelPaymentScreen extends ConsumerWidget {
+class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TravelPaymentScreen> createState() =>
+      _TravelPaymentScreenState();
+}
+
+class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final travel = ref.read(travelListNotifierProvider).selectedTravel;
+      final date = ref.read(dateNotifierProvider);
+      if (travel != null && date != null) {
+        ref
+            .read(paymentNotifierProvider.notifier)
+            .getPayments(travel.travelId, date);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final currentDate = ref.watch(dateNotifierProvider);
 
