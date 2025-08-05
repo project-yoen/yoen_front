@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
+import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/model/timeline_item.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
-import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/overview_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
@@ -23,28 +25,30 @@ class _TravelOverviewContentScreenState
   void initState() {
     super.initState();
     Future.microtask(() {
-      final travel = ref.read(travelListNotifierProvider).selectedTravel;
-      final date = ref.read(dateNotifierProvider);
-      if (travel != null) {
-        ref
-            .read(recordNotifierProvider.notifier)
-            .getRecords(travel.travelId, date!);
-        // Todo: date가 datetime? 인데 !로 처리해도 괜찮은가?
-      }
+      _fetchData();
     });
+  }
+
+  void _fetchData() {
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+    final date = ref.read(dateNotifierProvider);
+    if (travel != null && date != null) {
+      ref
+          .read(overviewNotifierProvider.notifier)
+          .fetchTimeline(travel.travelId, date);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final recordState = ref.watch(recordNotifierProvider);
+    final overviewState = ref.watch(overviewNotifierProvider);
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
 
     ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
-      if (travel != null && previous != next) {
+      if (travel != null && previous != next && next != null) {
         ref
-            .read(recordNotifierProvider.notifier)
-            .getRecords(travel.travelId, next!);
-        // Todo: next가 datetime? 인데 !로 처리해도 괜찮은가?
+            .read(overviewNotifierProvider.notifier)
+            .fetchTimeline(travel.travelId, next);
       }
     });
 
@@ -52,25 +56,27 @@ class _TravelOverviewContentScreenState
       return const Center(child: Text("여행 정보가 없습니다."));
     }
     final date = ref.watch(dateNotifierProvider);
-    return Scaffold(body: _buildBody(recordState, travel.travelId, date));
+    return _buildBody(overviewState, travel.travelId, date);
   }
 
-  Widget _buildBody(RecordState state, int travelId, DateTime? date) {
-    switch (state.getStatus) {
-      case Status.loading:
+  Widget _buildBody(OverviewState state, int travelId, DateTime? date) {
+    switch (state.status) {
+      case OverviewStatus.initial:
+      case OverviewStatus.loading:
         return const Center(child: CircularProgressIndicator());
-      case Status.error:
+      case OverviewStatus.error:
         return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
-      case Status.success:
+      case OverviewStatus.success:
         return RefreshIndicator(
           onRefresh: () async {
             HapticFeedback.mediumImpact();
-            await ref
-                .read(recordNotifierProvider.notifier)
-                .getRecords(travelId, date!);
-            // Todo: date가 datetime? 인데 !로 처리해도 괜찮은가?
+            if (date != null) {
+              await ref
+                  .read(overviewNotifierProvider.notifier)
+                  .fetchTimeline(travelId, date);
+            }
           },
-          child: state.records.isEmpty
+          child: state.items.isEmpty
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
@@ -80,15 +86,17 @@ class _TravelOverviewContentScreenState
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: state.records.length,
+                  itemCount: state.items.length,
                   itemBuilder: (context, index) {
-                    final record = state.records[index];
-                    return _buildRecordCard(record);
+                    final item = state.items[index];
+                    if (item.type == TimelineItemType.record) {
+                      return _buildRecordCard(item.record);
+                    } else {
+                      return _buildPaymentCard(item.payment);
+                    }
                   },
                 ),
         );
-      default:
-        return const Center(child: Text('기록을 불러오는 중...'));
     }
   }
 
@@ -101,7 +109,7 @@ class _TravelOverviewContentScreenState
         showDialog(
           context: context,
           builder: (context) => RecordDetailDialog(record: record),
-        );
+        ).then((_) => _fetchData());
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16.0),
@@ -117,13 +125,18 @@ class _TravelOverviewContentScreenState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Text(
-                      record.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      const Icon(Icons.camera_alt,
+                          color: Colors.blueAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        record.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
-                    ),
+                    ],
                   ),
                   Text(
                     formattedTime,
@@ -146,6 +159,98 @@ class _TravelOverviewContentScreenState
                   record.images.map((e) => e.imageUrl).toList(),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentCard(PaymentResponse payment) {
+    final paymentTime = DateTime.parse(payment.payTime);
+    final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
+    final formattedAmount =
+        NumberFormat('#,###').format(payment.paymentAccount);
+
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(payment.paymentName),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('결제자: ${payment.payer}'),
+                Text('금액: $formattedAmount원'),
+                Text('카테고리: ${payment.categoryName}'),
+                Text(
+                    '시간: ${DateFormat('yyyy-MM-dd HH:mm').format(paymentTime)}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.credit_card,
+                          color: Colors.green, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        payment.paymentName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    formattedTime,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                '결제자: ${payment.payer}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 8.0),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '$formattedAmount원',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                ),
+              ),
             ],
           ),
         ),

@@ -8,10 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
-import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 class TravelRecordCreateScreen extends ConsumerStatefulWidget {
-  const TravelRecordCreateScreen({super.key});
+  final int travelId;
+  const TravelRecordCreateScreen({super.key, required this.travelId});
 
   @override
   ConsumerState<TravelRecordCreateScreen> createState() =>
@@ -82,10 +82,9 @@ class _TravelRecordCreateScreenState
   }
 
   Future<void> _saveRecord() async {
-    final travel = ref.read(travelListNotifierProvider).selectedTravel;
-    if (_formKey.currentState!.validate() && travel != null) {
+    if (_formKey.currentState!.validate()) {
       final request = RecordCreateRequest(
-        travelId: travel.travelId,
+        travelId: widget.travelId,
         title: _titleController.text,
         content: _contentController.text,
         recordTime: _selectedDateTime.toIso8601String(),
@@ -107,7 +106,7 @@ class _TravelRecordCreateScreenState
           SnackBar(content: Text(next.errorMessage ?? '기록 저장에 실패했습니다.')),
         );
       } else if (next.createStatus == Status.success) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     });
 

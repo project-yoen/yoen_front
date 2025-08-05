@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
+import 'package:yoen_front/data/notifier/overview_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_join_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
@@ -50,14 +51,62 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     });
   }
 
-  void _fetchPayments() {
+  void _fetchData() {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
     if (travel != null && date != null) {
-      ref
-          .read(paymentNotifierProvider.notifier)
-          .getPayments(travel.travelId, date);
+      // 현재 선택된 탭에 따라 다른 데이터를 가져옴
+      if (_selectedIndex == 0) {
+        ref
+            .read(overviewNotifierProvider.notifier)
+            .fetchTimeline(travel.travelId, date);
+      } else if (_selectedIndex == 1) {
+        ref
+            .read(paymentNotifierProvider.notifier)
+            .getPayments(travel.travelId, date);
+      } else if (_selectedIndex == 2) {
+        ref
+            .read(recordNotifierProvider.notifier)
+            .getRecords(travel.travelId, date);
+      }
     }
+  }
+
+  void _showAddOptions(BuildContext context, int travelId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('기록 추가'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context)
+                    .push(MaterialPageRoute(
+                  builder: (context) =>
+                      TravelRecordCreateScreen(travelId: travelId),
+                ))
+                    .then((value) {
+                  if (value == true) {
+                    _fetchData();
+                  }
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.credit_card),
+              title: const Text('금액 추가'),
+              onTap: () {
+                Navigator.pop(context);
+                _showPaymentOptions(context, travelId);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showPaymentOptions(BuildContext context, int travelId) {
@@ -82,7 +131,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     )
                     .then((value) {
                       if (value == true) {
-                        _fetchPayments();
+                        _fetchData();
                       }
                     });
               },
@@ -103,7 +152,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     )
                     .then((value) {
                       if (value == true) {
-                        _fetchPayments();
+                        _fetchData();
                       }
                     });
               },
@@ -124,7 +173,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                     )
                     .then((value) {
                       if (value == true) {
-                        _fetchPayments();
+                        _fetchData();
                       }
                     });
               },
@@ -275,7 +324,6 @@ https://your-app-link.com
               );
             },
           ),
-
           IconButton(
             icon: const Icon(Icons.notifications),
             tooltip: '알림',
@@ -353,33 +401,30 @@ https://your-app-link.com
         type: BottomNavigationBarType.fixed,
       ),
       floatingActionButton: () {
-        if (_selectedIndex == 2) {
-          return FloatingActionButton(
-            onPressed: () {
+        if (_selectedIndex == 3) return null; // 부가기능 탭에서는 숨김
+
+        return FloatingActionButton(
+          onPressed: () {
+            if (_selectedIndex == 0) {
+              _showAddOptions(context, travel.travelId);
+            } else if (_selectedIndex == 1) {
+              _showPaymentOptions(context, travel.travelId);
+            } else if (_selectedIndex == 2) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const TravelRecordCreateScreen(),
+                  builder: (context) =>
+                      TravelRecordCreateScreen(travelId: travel.travelId),
                 ),
-              ).then((_) {
-                final currentDate = ref.read(dateNotifierProvider);
-                if (currentDate != null) {
-                  ref
-                      .read(recordNotifierProvider.notifier)
-                      .getRecords(travel.travelId, currentDate);
+              ).then((value) {
+                if (value == true) {
+                  _fetchData();
                 }
               });
-            },
-            child: const Icon(Icons.add),
-          );
-        } else if (_selectedIndex == 1) {
-          return FloatingActionButton(
-            onPressed: () => _showPaymentOptions(context, travel.travelId),
-            child: const Icon(Icons.add),
-          );
-        } else {
-          return null;
-        }
+            }
+          },
+          child: const Icon(Icons.add),
+        );
       }(),
     );
   }
