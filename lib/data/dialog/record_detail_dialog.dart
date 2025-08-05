@@ -37,13 +37,13 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
     super.dispose();
   }
 
-  void _showDeleteConfirmDialog() {
+  void _showDeleteConfirmDialog(RecordResponse record) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('기록 삭제'),
-          content: Text('\'${widget.record.title}\'을(를) 삭제하시겠습니까?'),
+          content: Text('\'${record.title}\'을(를) 삭제하시겠습니까?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -53,7 +53,7 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
               onPressed: () {
                 ref
                     .read(recordNotifierProvider.notifier)
-                    .deleteRecord(widget.record.travelRecordId);
+                    .deleteRecord(record.travelRecordId);
                 Navigator.of(context).pop(); // Close confirmation dialog
               },
               child: const Text('예'),
@@ -111,7 +111,8 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
-                          onPressed: _showDeleteConfirmDialog,
+                          onPressed: () =>
+                              _showDeleteConfirmDialog(widget.record),
                         ),
                       ],
                     ),
