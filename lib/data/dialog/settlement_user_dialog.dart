@@ -6,8 +6,12 @@ import 'package:yoen_front/data/api/api_provider.dart';
 
 class SettlementUserDialog extends ConsumerStatefulWidget {
   final int travelId;
+  final List<int> initialSelectedUserIds;
 
-  const SettlementUserDialog({super.key, required this.travelId});
+  const SettlementUserDialog(
+      {super.key,
+      required this.travelId,
+      this.initialSelectedUserIds = const []});
 
   @override
   ConsumerState<SettlementUserDialog> createState() =>
@@ -15,8 +19,9 @@ class SettlementUserDialog extends ConsumerStatefulWidget {
 }
 
 class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
-  late final Future<List<TravelUserDetailResponse>> _usersFuture;
+  late Future<List<TravelUserDetailResponse>> _usersFuture;
   final List<TravelUserDetailResponse> _selectedUsers = [];
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -28,6 +33,17 @@ class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
     final api = ref.read(apiServiceProvider);
     final response = await api.getTravelUsers(widget.travelId);
     return response.data!;
+  }
+
+  void _initializeSelection(List<TravelUserDetailResponse> users) {
+    if (!_isInitialized) {
+      for (var user in users) {
+        if (widget.initialSelectedUserIds.contains(user.travelUserId)) {
+          _selectedUsers.add(user);
+        }
+      }
+      _isInitialized = true;
+    }
   }
 
   String _getGenderString(String? gender) {
@@ -62,6 +78,7 @@ class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
             }
 
             final users = snapshot.data!;
+            _initializeSelection(users);
             return StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
                 return ListView.builder(
