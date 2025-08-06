@@ -254,28 +254,52 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
                         style: TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 24),
-                      Center(
-                        child: GestureDetector(
-                          onTap: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: joinCode.code),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('초대 코드가 복사되었습니다.'),
-                                ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: joinCode.code),
                               );
-                            }
-                          },
-                          child: Text(
-                            joinCode.code,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('초대 코드가 복사되었습니다.'),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              joinCode.code,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                icon: const Icon(Icons.copy),
+                                onPressed: () async {
+                                  await Clipboard.setData(
+                                    ClipboardData(text: joinCode.code),
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('초대 코드가 복사되었습니다.'),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       if (formattedExpireDate != null)
