@@ -15,6 +15,7 @@ import 'package:yoen_front/view/travel_payment_create.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
+import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
 import '../data/notifier/payment_notifier.dart';
@@ -209,7 +210,17 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(travel.travelName),
+        title: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TravelDetailPage(travelId: travel.travelId),
+              ),
+            );
+          },
+          child: Text(travel.travelName),
+        ),
         centerTitle: true,
         actions: [
           IconButton(

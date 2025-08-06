@@ -25,6 +25,7 @@ import '../model/login_response.dart';
 import '../model/payment_detail_response.dart';
 import '../model/payment_response.dart';
 import '../model/register_request.dart';
+import 'package:yoen_front/data/model/travel_detail_response.dart';
 import '../model/user_response.dart';
 
 part 'api_service.g.dart';
@@ -73,6 +74,11 @@ abstract class ApiService {
 
   @GET("/travel")
   Future<ApiResponse<List<TravelResponse>>> getTravels();
+
+  @GET("/travel/detail")
+  Future<ApiResponse<TravelDetailResponse>> getTravelDetail(
+    @Query("travelId") int travelId,
+  );
 
   @POST("/travel/leave/{travelId}")
   Future<ApiResponse<String>> leaveTravel(@Path("travelId") int travelId);

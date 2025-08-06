@@ -3,6 +3,7 @@ import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
+import 'package:yoen_front/data/model/travel_detail_response.dart';
 import '../api/api_provider.dart';
 
 final travelRepositoryProvider = Provider<TravelRepository>((ref) {
@@ -30,6 +31,15 @@ class TravelRepository {
       return apiResponse.data!;
     } else {
       throw Exception(apiResponse.error ?? 'Failed to get travels');
+    }
+  }
+
+  Future<TravelDetailResponse> getTravelDetail(int travelId) async {
+    final apiResponse = await _apiService.getTravelDetail(travelId);
+    if (apiResponse.data != null) {
+      return apiResponse.data!;
+    } else {
+      throw Exception(apiResponse.error ?? 'Failed to get travel detail');
     }
   }
 
