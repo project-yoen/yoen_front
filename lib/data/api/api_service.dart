@@ -11,6 +11,7 @@ import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
+import 'package:yoen_front/data/model/travel_nickname_update.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/model/travel_user_join_response.dart';
 import 'package:yoen_front/data/model/user_travel_join_response.dart';
@@ -56,14 +57,19 @@ abstract class ApiService {
     @Part(name: "profileImage") File image,
   );
 
+  @GET("/common/destination/all")
+  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
+    @Query("nation") String nation,
+  );
+
   @GET("/travel/userdetail")
   Future<ApiResponse<List<TravelUserDetailResponse>>> getTravelUsers(
     @Query("travelId") int travelId,
   );
 
-  @GET("/common/destination/all")
-  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
-    @Query("nation") String nation,
+  @POST("/travel/traveluser/nickname")
+  Future<ApiResponse<String>> updateTravelNickname(
+    @Body() TravelNicknameUpdate request,
   );
 
   @POST("/travel/create")
