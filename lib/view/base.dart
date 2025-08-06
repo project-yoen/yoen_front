@@ -9,6 +9,7 @@ import 'package:yoen_front/view/user_settings.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 
 import '../data/dialog/travel_code_dialog.dart';
+import '../data/notifier/common_provider.dart';
 import '../data/notifier/record_notifier.dart';
 import '../main.dart';
 import 'login.dart';
@@ -21,7 +22,7 @@ class BaseScreen extends ConsumerStatefulWidget {
   ConsumerState<BaseScreen> createState() => _BaseScreenState();
 }
 
-class _BaseScreenState extends ConsumerState<BaseScreen> {
+class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
@@ -34,6 +35,30 @@ class _BaseScreenState extends ConsumerState<BaseScreen> {
       ref.read(recordNotifierProvider.notifier).resetAll();
       ref.read(paymentNotifierProvider.notifier).resetAll();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    final isDialogOpen = ref.read(dialogOpenProvider);
+    if (isDialogOpen) {
+      return;
+    }
+    // 다른 페이지에서 다시 돌아왔을 때
+    ref.read(travelListNotifierProvider.notifier).fetchTravels();
+    ref.read(recordNotifierProvider.notifier).resetAll();
+    ref.read(paymentNotifierProvider.notifier).resetAll();
   }
 
   @override
