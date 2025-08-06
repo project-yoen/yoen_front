@@ -97,10 +97,6 @@ class TravelAdditionalScreen extends ConsumerWidget {
                           .read(travelNotifierProvider.notifier)
                           .leaveTravel(travelId);
 
-                      await ref
-                          .read(travelListNotifierProvider.notifier)
-                          .fetchTravels();
-
                       // 3. BaseScreen으로 이동
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(

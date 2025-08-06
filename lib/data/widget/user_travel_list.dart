@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 import '../../view/travel_overview.dart';
+import '../notifier/common_provider.dart';
 import '../notifier/travel_list_notifier.dart';
 
 class UserTravelList extends ConsumerStatefulWidget {
@@ -117,12 +118,23 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                   right: 8,
                                   child: GestureDetector(
                                     onTap: () {
+                                      ref
+                                              .read(dialogOpenProvider.notifier)
+                                              .state =
+                                          true;
                                       showDialog(
                                         context: context,
                                         builder: (_) => TravelUserDialog(
                                           travelId: travel.travelId,
                                         ),
-                                      );
+                                      ).then((_) {
+                                        ref
+                                                .read(
+                                                  dialogOpenProvider.notifier,
+                                                )
+                                                .state =
+                                            false;
+                                      });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
