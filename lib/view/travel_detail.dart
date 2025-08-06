@@ -467,9 +467,19 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: travelState.status == TravelStatus.loading
+                onPressed: (travelState.status == TravelStatus.loading)
                     ? null
-                    : _createTravel,
+                    : () {
+                        final travelListNotifier = ref.read(
+                          travelListNotifierProvider.notifier,
+                        );
+                        int index = travelListNotifier.setCreatedIndex(
+                          _selectedStartDate!,
+                        );
+                        print("디버깅 $index");
+                        _createTravel();
+                        travelListNotifier.setSelectedIndex(index);
+                      },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
