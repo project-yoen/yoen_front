@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/dialog/payment_user_dialog.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
-import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
@@ -53,7 +53,23 @@ class _TravelSharedfundCreateScreenState
   }
 
   Future<void> _saveSharedFund() async {
-    if (_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final response = await api.getTravelUsers(widget.travelId);
+      final users = response.data;
+
+      if (users == null || users.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('여행 참여자 정보를 불러올 수 없습니다.')));
+        return;
+      }
+      final travelUserIds = users.map((user) => user.travelUserId).toList();
+
       final request = PaymentCreateRequest(
         travelId: widget.travelId,
         travelUserId: _selectedPayerTravelUserId,
@@ -64,12 +80,24 @@ class _TravelSharedfundCreateScreenState
         paymentName: '공금 입금 [${_payerController.text}]', // 이름 기본값
         paymentType: widget.paymentType, // "SHAREDFUND"
         paymentAccount: int.parse(_amountController.text),
-        settlementList: [], // 공금 입금은 정산 내역 없음
+        settlementList: [
+          Settlement(
+            paymentId: null, // paymentId는 백엔드에서 생성되므로 null
+            settlementName: "",
+            amount: int.parse(_amountController.text),
+            isPaid: false,
+            travelUsers: travelUserIds,
+          ),
+        ],
       );
 
       await ref
           .read(paymentNotifierProvider.notifier)
           .createPayment(request, []);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('저장 중 오류가 발생했습니다: $e')));
     }
   }
 

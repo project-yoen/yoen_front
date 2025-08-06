@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/model/payment_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
+import 'package:intl/intl.dart';
 
 class PaymentDetailDialog extends ConsumerStatefulWidget {
   final int paymentId;
@@ -60,10 +61,11 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('결제자: ${detail.payerName?.travelNickName ?? '-'}'),
-              Text('금액: ${detail.paymentAccount ?? '-'}원'),
+              Text(
+                '금액: ${NumberFormat('#,###').format(detail.paymentAccount)}원',
+              ),
               Text('카테고리: ${detail.categoryName ?? '-'}'),
               Text('결제수단: ${detail.paymentMethod ?? '-'}'),
-              Text('결제타입: ${detail.paymentType ?? '-'}'),
               Text('환율: ${detail.exchangeRate ?? '-'}'),
               Text('시간: ${detail.payTime ?? '-'}'),
               const SizedBox(height: 16),
@@ -80,7 +82,7 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '• ${settlement.settlementName} (${settlement.amount}원)',
+                          '• ${settlement.settlementName} (${NumberFormat('#,###').format(settlement.amount)}원)',
                         ),
                         Text('  정산 여부: ${settlement.isPaid ? '완료' : '미완료'}'),
                         if (settlement.travelUsers.isNotEmpty)

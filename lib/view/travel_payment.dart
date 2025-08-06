@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:yoen_front/data/dialog/payment_detail_dialog.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
@@ -96,6 +97,9 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   Widget _buildPaymentCard(PaymentResponse payment) {
     final paymentTime = DateTime.parse(payment.payTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
+    final formattedAmount = NumberFormat(
+      '#,###',
+    ).format(payment.paymentAccount);
 
     Offset? tapPosition;
 
@@ -105,76 +109,11 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
         tapPosition = details.globalPosition;
       },
       child: InkWell(
-        onTap: () async {
-          final notifier = ref.read(paymentNotifierProvider.notifier);
-          await notifier.getPaymentDetails(payment.paymentId);
-          final detail = ref.read(paymentNotifierProvider).selectedPayment;
-          if (!context.mounted) return;
-
+        onTap: () {
           showDialog(
             context: context,
-            builder: (context) {
-              if (detail == null) {
-                return const AlertDialog(
-                  title: Text('오류'),
-                  content: Text('결제 상세 정보를 불러오지 못했습니다.'),
-                );
-              }
-
-              return AlertDialog(
-                title: Text(detail.paymentName ?? '결제 상세'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('결제자: ${detail.payerName?.travelNickName ?? '-'}'),
-                      Text('금액: ${detail.paymentAccount ?? '-'}원'),
-                      Text('카테고리: ${detail.categoryName ?? '-'}'),
-                      Text('결제수단: ${detail.paymentMethod ?? '-'}'),
-                      Text('결제타입: ${detail.paymentType ?? '-'}'),
-                      Text('환율: ${detail.exchangeRate ?? '-'}'),
-                      Text('시간: ${detail.payTime ?? '-'}'),
-                      const SizedBox(height: 16),
-                      const Text(
-                        '정산 정보',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      if (detail.settlements != null &&
-                          detail.settlements!.isNotEmpty)
-                        ...detail.settlements!.map(
-                          (s) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('• ${s.settlementName} (${s.amount}원)'),
-                                Text('  정산 여부: ${s.isPaid ? '완료' : '미완료'}'),
-                                if (s.travelUsers.isNotEmpty)
-                                  Text(
-                                    '  대상자: ${s.travelUsers.map((u) => u.travelNickName).join(', ')}',
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        const Text(
-                          '정산 내역이 없습니다.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('닫기'),
-                  ),
-                ],
-              );
-            },
+            builder: (context) =>
+                PaymentDetailDialog(paymentId: payment.paymentId),
           );
         },
         onLongPress: () async {
@@ -265,7 +204,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${payment.paymentAccount}원',
+                          '$formattedAmount원',
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],

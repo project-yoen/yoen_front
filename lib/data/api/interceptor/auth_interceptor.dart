@@ -73,8 +73,12 @@ class AuthInterceptor extends Interceptor {
 
           return handler.resolve(clonedResponse);
         } catch (_) {
+          // 리프레시 토큰 만료 등으로 재발급 실패 시, 로그아웃 처리
           await storage.deleteAll();
-          return handler.reject(err); // 재발급 실패 → 그대로 에러 처리
+          // await ref.read(loginNotifierProvider.notifier).logout();
+          // 에러를 다시 던지는 대신, 여기서 인터셉터 체인을 중단하여
+          // 앱이 멈추는 것을 방지하고 로그인 화면으로 이동하도록 합니다.
+          return;
         }
       }
     }

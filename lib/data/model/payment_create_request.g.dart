@@ -39,6 +39,7 @@ Map<String, dynamic> _$PaymentCreateRequestToJson(
 };
 
 Settlement _$SettlementFromJson(Map<String, dynamic> json) => Settlement(
+  paymentId: (json['paymentId'] as num?)?.toInt(),
   settlementName: json['settlementName'] as String,
   amount: (json['amount'] as num).toInt(),
   isPaid: json['isPaid'] as bool,
@@ -49,6 +50,7 @@ Settlement _$SettlementFromJson(Map<String, dynamic> json) => Settlement(
 
 Map<String, dynamic> _$SettlementToJson(Settlement instance) =>
     <String, dynamic>{
+      'paymentId': instance.paymentId,
       'settlementName': instance.settlementName,
       'amount': instance.amount,
       'isPaid': instance.isPaid,
