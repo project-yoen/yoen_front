@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/user_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
@@ -20,7 +21,7 @@ class BaseScreen extends ConsumerStatefulWidget {
   ConsumerState<BaseScreen> createState() => _BaseScreenState();
 }
 
-class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
+class _BaseScreenState extends ConsumerState<BaseScreen> {
   @override
   void initState() {
     super.initState();
@@ -31,34 +32,12 @@ class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
       // TODO: 여행기록 리셋함수, 나중에 금액기록이나 해당 여행에서 상태관리하는 것들은 전부 초기화 해주고 다른 여행 들어가야함
       // TODO: 그렇지 않으면 다른 여행에서 상태관리하던게 뜬금없이 남아있을때가 있음
       ref.read(recordNotifierProvider.notifier).resetAll();
+      ref.read(paymentNotifierProvider.notifier).resetAll();
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
-  }
-
-  @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    super.dispose();
-  }
-
-  @override
-  void didPopNext() {
-    // 다른 페이지에서 다시 돌아왔을 때
-    ref.read(travelListNotifierProvider.notifier).fetchTravels();
-    ref.read(recordNotifierProvider.notifier).resetAll();
   }
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(travelListNotifierProvider.notifier).fetchTravels();
-      ref.read(recordNotifierProvider.notifier).resetAll();
-    });
     final userAsync = ref.watch(userNotifierProvider);
 
     return Scaffold(
