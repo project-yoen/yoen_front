@@ -6,6 +6,7 @@ import '../../notifier/login_notifier.dart';
 class AuthInterceptor extends Interceptor {
   final Ref ref;
   final Dio dio;
+  int _failCount = 0;
 
   AuthInterceptor(this.ref, this.dio);
 
@@ -27,10 +28,18 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     // access token이 만료되었을 경우
+
     if (err.response?.statusCode == 403 && !_isRetry(err.requestOptions)) {
       final storage = ref.read(secureStorageProvider);
       final accessToken = await storage.read(key: 'accessToken');
       final refreshToken = await storage.read(key: 'refreshToken');
+      // 여기서 실패 카운트 누적
+
+      _failCount++;
+      if (_failCount >= 5) {
+        await storage.deleteAll();
+        _failCount = 0; // 초기화
+      }
 
       if (refreshToken != null) {
         try {
