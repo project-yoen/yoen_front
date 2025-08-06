@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
+import 'package:yoen_front/main.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_user_join.dart';
+import 'package:yoen_front/view/travel_user_list.dart';
 
 import 'base.dart';
 
@@ -61,6 +63,25 @@ class TravelAdditionalScreen extends ConsumerWidget {
               ),
               SizedBox(height: 20),
               ElevatedButton(
+                onPressed: () {
+                  //여행 생성하기 버튼 누를 시 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TravelUserListScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('유저 리스트', style: TextStyle(fontSize: 18)),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
                 onPressed: () async {
                   showTravelOutDialog(context, () async {
                     try {
@@ -69,9 +90,16 @@ class TravelAdditionalScreen extends ConsumerWidget {
                           .read(travelListNotifierProvider)
                           .selectedTravel!
                           .travelId;
+                      snackbarKey.currentState?.showSnackBar(
+                        SnackBar(content: Text("방 나가는 중 ..")),
+                      );
                       await ref
                           .read(travelNotifierProvider.notifier)
                           .leaveTravel(travelId);
+
+                      await ref
+                          .read(travelListNotifierProvider.notifier)
+                          .fetchTravels();
 
                       // 3. BaseScreen으로 이동
                       if (context.mounted) {
