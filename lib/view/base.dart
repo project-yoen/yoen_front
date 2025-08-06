@@ -84,7 +84,7 @@ class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
               },
               child: Text(
                 user.nickname ?? '이름 없음',
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   decoration: TextDecoration.underline,
                 ),

@@ -61,7 +61,7 @@ class _TravelSharedfundCreateScreenState
         payerType: 'INDIVIDUAL', // 입금자는 개인이므로
         payTime: _selectedDateTime.toIso8601String(),
         paymentMethod: _paymentMethod,
-        paymentName: '${_payerController.text} 공금 입금', // 이름 기본값
+        paymentName: '공금 입금 [${_payerController.text}]', // 이름 기본값
         paymentType: widget.paymentType, // "SHAREDFUND"
         paymentAccount: int.parse(_amountController.text),
         settlementList: [], // 공금 입금은 정산 내역 없음
