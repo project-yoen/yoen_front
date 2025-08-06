@@ -14,6 +14,7 @@ import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_payment_create.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
+import 'package:yoen_front/data/dialog/travel_detail_dialog.dart';
 import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
@@ -220,11 +221,9 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
         ),
         title: GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TravelDetailPage(travelId: travel.travelId),
-              ),
+            showDialog(
+              context: context,
+              builder: (context) => TravelDetailDialog(travelId: travel.travelId),
             );
           },
           child: Text(travel.travelName),
