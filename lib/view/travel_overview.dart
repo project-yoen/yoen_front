@@ -12,7 +12,6 @@ import 'package:yoen_front/view/travel_additional.dart';
 import 'package:yoen_front/view/travel_overview_content.dart';
 import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_payment_create.dart';
-import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
 import 'package:yoen_front/view/travel_detail_page.dart';
@@ -39,9 +38,18 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final travel = ref.read(travelListNotifierProvider).selectedTravel;
       if (travel != null) {
-        ref
-            .read(dateNotifierProvider.notifier)
-            .setDate(DateTime.parse(travel.startDate));
+        final start = DateTime.parse(travel.startDate);
+        final end = DateTime.parse(travel.endDate);
+        final today = DateTime.now();
+
+        // 오늘 날짜가 여행 기간 안에 있으면 오늘, 아니면 startDate
+        final defaultDate =
+            (today.isAfter(start.subtract(const Duration(days: 1))) &&
+                today.isBefore(end.add(const Duration(days: 1))))
+            ? today
+            : start;
+
+        ref.read(dateNotifierProvider.notifier).setDate(defaultDate);
       }
     });
   }

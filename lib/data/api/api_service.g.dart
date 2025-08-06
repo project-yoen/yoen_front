@@ -217,6 +217,45 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
+    String nation,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'nation': nation};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ApiResponse<List<DestinationResponse>>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/common/destination/all',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<List<DestinationResponse>> _value;
+    try {
+      _value = ApiResponse<List<DestinationResponse>>.fromJson(
+        _result.data!,
+        (json) => json is List<dynamic>
+            ? json
+                  .map<DestinationResponse>(
+                    (i) =>
+                        DestinationResponse.fromJson(i as Map<String, dynamic>),
+                  )
+                  .toList()
+            : List.empty(),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<ApiResponse<List<TravelUserDetailResponse>>> getTravelUsers(
     int travelId,
   ) async {
@@ -260,36 +299,30 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ApiResponse<List<DestinationResponse>>> getDestinations(
-    String nation,
+  Future<ApiResponse<String>> updateTravelNickname(
+    TravelNicknameUpdate request,
   ) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'nation': nation};
+    final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ApiResponse<List<DestinationResponse>>>(
-      Options(method: 'GET', headers: _headers, extra: _extra)
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<ApiResponse<String>>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/common/destination/all',
+            '/travel/traveluser/nickname',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ApiResponse<List<DestinationResponse>> _value;
+    late ApiResponse<String> _value;
     try {
-      _value = ApiResponse<List<DestinationResponse>>.fromJson(
+      _value = ApiResponse<String>.fromJson(
         _result.data!,
-        (json) => json is List<dynamic>
-            ? json
-                  .map<DestinationResponse>(
-                    (i) =>
-                        DestinationResponse.fromJson(i as Map<String, dynamic>),
-                  )
-                  .toList()
-            : List.empty(),
+        (json) => json as String,
       );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
