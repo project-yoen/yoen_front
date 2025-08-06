@@ -12,7 +12,7 @@ PaymentCreateRequest _$PaymentCreateRequestFromJson(
   travelId: (json['travelId'] as num).toInt(),
   travelUserId: (json['travelUserId'] as num?)?.toInt(),
   paymentName: json['paymentName'] as String,
-  categoryId: (json['categoryId'] as num).toInt(),
+  categoryId: (json['categoryId'] as num?)?.toInt(),
   payerType: json['payerType'] as String,
   payTime: json['payTime'] as String,
   paymentMethod: json['paymentMethod'] as String,

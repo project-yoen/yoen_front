@@ -6,6 +6,6 @@ final categoryProvider = FutureProvider.family<List<Category>, String>((
   ref,
   type,
 ) async {
-  final repository = ref.watch(categoryRepositoryProvider);
+  final repository = ref.read(categoryRepositoryProvider);
   return await repository.getCategories(type);
 });

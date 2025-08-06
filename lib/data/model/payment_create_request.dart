@@ -6,7 +6,7 @@ part 'payment_create_request.g.dart';
 class PaymentCreateRequest {
   final int travelId;
   final int? travelUserId;
-  final int categoryId;
+  final int? categoryId;
   final String payerType;
   final String payTime;
   final String paymentMethod;
