@@ -158,11 +158,15 @@ class _BaseScreenState extends ConsumerState<BaseScreen> with RouteAware {
                 child: ElevatedButton(
                   onPressed: () {
                     // 여행 참여하기 버튼 클릭 시 동작
+                    ref.read(dialogOpenProvider.notifier).state = true;
+
                     showDialog(
                       context: context,
                       // 주변 배경 누르면 꺼지는 설정
                       builder: (context) => const TravelCodeDialog(),
-                    );
+                    ).then((_) {
+                      ref.read(dialogOpenProvider.notifier).state = false;
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
