@@ -296,10 +296,6 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
           content: Text('\'${payment.paymentName}\'을(를) 삭제하시겠습니까?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('아니오'),
-            ),
-            TextButton(
               onPressed: () {
                 ref
                     .read(paymentNotifierProvider.notifier)
@@ -307,6 +303,10 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                 Navigator.of(context).pop(); // Close confirmation dialog
               },
               child: const Text('예'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('아니오'),
             ),
           ],
         );

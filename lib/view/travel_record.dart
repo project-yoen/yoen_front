@@ -193,10 +193,6 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
           content: Text('\'${record.title}\'을(를) 삭제하시겠습니까?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('아니오'),
-            ),
-            TextButton(
               onPressed: () {
                 ref
                     .read(recordNotifierProvider.notifier)
@@ -204,6 +200,10 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                 Navigator.of(context).pop(); // Close confirmation dialog
               },
               child: const Text('예'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('아니오'),
             ),
           ],
         );
