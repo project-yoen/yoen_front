@@ -35,12 +35,14 @@ class PaymentCreateRequest {
 
 @JsonSerializable()
 class Settlement {
+  final int? paymentId;
   final String settlementName;
   final int amount;
   final bool isPaid;
   final List<int> travelUsers;
 
   Settlement({
+    this.paymentId,
     required this.settlementName,
     required this.amount,
     required this.isPaid,
