@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: snackbarKey,
-      // navigatorObservers: [routeObserver], // 추후 추가 할일있으면 추가
+      navigatorObservers: [routeObserver],
       debugShowCheckedModeBanner: false,
       title: 'Yoen',
       theme: ThemeData(
@@ -51,6 +51,9 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 final GlobalKey<ScaffoldMessengerState> snackbarKey =
     GlobalKey<ScaffoldMessengerState>();
