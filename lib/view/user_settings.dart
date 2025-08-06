@@ -164,7 +164,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        user!.name!,
+                        user.name!,
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
