@@ -9,6 +9,7 @@ class TravelResponse {
   final String travelName;
   final String startDate;
   final String endDate;
+  final String nation;
   final String? travelImageUrl;
 
   TravelResponse({
@@ -17,6 +18,7 @@ class TravelResponse {
     required this.travelName,
     required this.startDate,
     required this.endDate,
+    required this.nation,
     this.travelImageUrl,
   });
 
