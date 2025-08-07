@@ -13,6 +13,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 import '../../main.dart';
@@ -288,6 +290,53 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                                                         SnackBar(
                                                           content: Text(
                                                             '공유 중 오류 발생: $e',
+                                                          ),
+                                                        ),
+                                                      );
+                                                }
+                                              },
+                                            ),
+                                            ListTile(
+                                              leading: const Icon(Icons.image),
+                                              title: const Text('여행 기본사진으로 등록'),
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  context,
+                                                ); // BottomSheet 닫기
+
+                                                try {
+                                                  snackbarKey.currentState
+                                                      ?.showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            '기본 배경 설정 중입니다 ..',
+                                                          ),
+                                                        ),
+                                                      );
+                                                  int travelId = ref
+                                                      .read(
+                                                        travelListNotifierProvider,
+                                                      )
+                                                      .selectedTravel!
+                                                      .travelId;
+                                                  await ref
+                                                      .read(
+                                                        travelNotifierProvider
+                                                            .notifier,
+                                                      )
+                                                      .updateImage(
+                                                        travelId,
+                                                        widget
+                                                            .record
+                                                            .images[index]
+                                                            .travelRecordImageId,
+                                                      );
+                                                } catch (e) {
+                                                  snackbarKey.currentState
+                                                      ?.showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            '오류 발생: $e',
                                                           ),
                                                         ),
                                                       );

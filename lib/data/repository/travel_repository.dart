@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
+import 'package:yoen_front/data/model/travel_profile_image.dart';
 import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/model/travel_detail_response.dart';
 import '../api/api_provider.dart';
@@ -49,6 +50,20 @@ class TravelRepository {
       return apiResponse.data!;
     } else {
       throw Exception(apiResponse.error ?? 'Failed to get travels');
+    }
+  }
+
+  Future<String> updateImage(int travelId, int recordImageId) async {
+    final request = TravelProfileImage(
+      travelId: travelId,
+      recordImageId: recordImageId,
+    );
+
+    final apiResponse = await _apiService.updateTravelProfileImage(request);
+    if (apiResponse.data != null) {
+      return apiResponse.data!;
+    } else {
+      throw Exception(apiResponse.error ?? 'Failed to update travel image');
     }
   }
 }

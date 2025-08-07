@@ -59,6 +59,19 @@ class TravelNotifier extends StateNotifier<TravelState> {
       );
     }
   }
+
+  Future<void> updateImage(int travelId, int recordImageId) async {
+    state = state.copyWith(status: TravelStatus.loading);
+    try {
+      final response = await _repository.updateImage(travelId, recordImageId);
+      state = state.copyWith(status: TravelStatus.success);
+    } catch (e) {
+      state = state.copyWith(
+        status: TravelStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
 }
 
 final travelRepositoryProvider = Provider<TravelRepository>((ref) {
