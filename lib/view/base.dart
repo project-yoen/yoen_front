@@ -5,6 +5,7 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/user_notifier.dart';
 import 'package:yoen_front/data/widget/user_travel_list.dart';
+import 'package:yoen_front/view/travel_list_all_screen.dart';
 import 'package:yoen_front/view/user_settings.dart';
 import 'package:yoen_front/view/user_travel_join.dart';
 

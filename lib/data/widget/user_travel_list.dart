@@ -5,7 +5,9 @@ import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 import '../../view/travel_overview.dart';
 import '../notifier/common_provider.dart';
 import '../notifier/travel_list_notifier.dart';
+import 'package:yoen_front/view/travel_list_all_screen.dart';
 
+// Todo: 여행 이름 길이에 따라서 처리 필요
 class UserTravelList extends ConsumerStatefulWidget {
   const UserTravelList({super.key});
 
@@ -55,12 +57,28 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
 
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            '여행 일정',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                '여행 일정',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TravelListAllScreen(),
+                    ),
+                  );
+                },
+                child: const Text('전체 보기'),
+              ),
+            ],
           ),
         ),
         SizedBox(
