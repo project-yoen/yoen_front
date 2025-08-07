@@ -281,7 +281,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     return '$adjective $noun';
   }
 
-  Future<void> _createTravel() async {
+  Future<void> _handleCreateTravel() async {
     if (_selectedStartDate == null || _selectedEndDate == null) {
       ScaffoldMessenger.of(
         context,
@@ -307,48 +307,29 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
       destinationIds: destinationIds,
     );
 
-    await ref.read(travelNotifierProvider.notifier).createTravel(request);
+    final newTravel = await ref
+        .read(travelListNotifierProvider.notifier)
+        .createAndSelectTravel(request);
+
+    if (newTravel != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const TravelOverviewScreen()),
+        (route) => route.isFirst,
+      );
+    } else {
+      // 에러가 발생한 경우 (Notifier에서 상태 처리를 하므로 UI에서는 간단한 피드백만)
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('여행 생성에 실패했습니다.')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<TravelState>(travelNotifierProvider, (previous, next) {
-      if (next.status == TravelStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage ?? '여행 생성에 실패했습니다.')),
-        );
-      } else if (next.status == TravelStatus.success && next.travel != null) {
-        final newTravel = next.travel!;
-        // TravelCreateResponse를 TravelResponse로 변환
-        final selectedTravel = TravelResponse(
-          travelId: newTravel.travelId,
-          numOfPeople: newTravel.numOfPeople,
-          travelName: newTravel.travelName,
-          startDate: newTravel.startDate,
-          endDate: newTravel.endDate,
-        );
-
-        // 1. 생성된 여행을 travelListNotifier의 selectedTravel로 설정
-        ref
-            .read(travelListNotifierProvider.notifier)
-            .selectTravel(selectedTravel);
-
-        // 2. 전체 여행 목록을 다시 불러옴
-        ref.read(travelListNotifierProvider.notifier).fetchTravels();
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('여행이 성공적으로 생성되었습니다!')));
-
-        // 3. 파라미터 없이 화면 이동
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const TravelOverviewScreen()),
-          (route) => route.isFirst,
-        );
-      }
-    });
-
-    final travelState = ref.watch(travelNotifierProvider);
+    final travelListState = ref.watch(travelListNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -467,19 +448,9 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: (travelState.status == TravelStatus.loading)
+                onPressed: (travelListState.status == TravelListStatus.loading)
                     ? null
-                    : () {
-                        final travelListNotifier = ref.read(
-                          travelListNotifierProvider.notifier,
-                        );
-                        int index = travelListNotifier.setCreatedIndex(
-                          _selectedStartDate!,
-                        );
-                        print("디버깅 $index");
-                        _createTravel();
-                        travelListNotifier.setSelectedIndex(index);
-                      },
+                    : _handleCreateTravel,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
@@ -487,7 +458,7 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
                   backgroundColor: const Color(0xFF6A4FF9),
                   foregroundColor: Colors.white,
                 ),
-                child: travelState.status == TravelStatus.loading
+                child: travelListState.status == TravelListStatus.loading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
                         '여행 생성하기',
