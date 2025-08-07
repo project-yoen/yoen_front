@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/travel_detail_notifier.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
+import 'package:yoen_front/view/travel_user_join.dart';
+import 'package:yoen_front/view/travel_user_list.dart';
 
 class TravelDetailPage extends ConsumerStatefulWidget {
   final int travelId;
@@ -16,18 +18,18 @@ class _TravelDetailPageState extends ConsumerState<TravelDetailPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref
-        .read(travelDetailNotifierProvider.notifier)
-        .getTravelDetail(widget.travelId));
+    Future.microtask(
+      () => ref
+          .read(travelDetailNotifierProvider.notifier)
+          .getTravelDetail(widget.travelId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(travelDetailNotifierProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('여행 상세 정보'),
-      ),
+      appBar: AppBar(title: const Text('여행 상세 정보')),
       body: _buildBody(state),
     );
   }
@@ -46,7 +48,7 @@ class _TravelDetailPageState extends ConsumerState<TravelDetailPage> {
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (detail.travelImageUrl != null &&
                   detail.travelImageUrl!.isNotEmpty)
@@ -65,8 +67,52 @@ class _TravelDetailPageState extends ConsumerState<TravelDetailPage> {
                 '기간',
                 '${DateFormat('yyyy.MM.dd').format(DateTime.parse(detail.startDate))} - ${DateFormat('yyyy.MM.dd').format(DateTime.parse(detail.endDate))}',
               ),
-              _buildInfoRow('인원', '${detail.numOfJoinedPeople} / ${detail.numOfPeople}'),
-              _buildInfoRow('공금 잔액', '${NumberFormat('#,###').format(detail.sharedFund)}원'),
+              _buildInfoRow(
+                '인원',
+                '${detail.numOfJoinedPeople} / ${detail.numOfPeople}',
+              ),
+              _buildInfoRow(
+                '공금 잔액',
+                '${NumberFormat('#,###').format(detail.sharedFund)}원',
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  //여행 생성하기 버튼 누를 시 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TravelUserJoinScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('신청자 리스트', style: TextStyle(fontSize: 18)),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  //여행 생성하기 버튼 누를 시 동작
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TravelUserListScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('유저 리스트', style: TextStyle(fontSize: 18)),
+              ),
             ],
           ),
         );

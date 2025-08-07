@@ -91,6 +91,7 @@ class TravelListNotifier extends StateNotifier<TravelListState> {
         startDate: newTravelResponse.startDate,
         endDate: newTravelResponse.endDate,
         numOfPeople: newTravelResponse.numOfPeople,
+        nation: newTravelResponse.nation,
         travelImageUrl: '',
       );
 

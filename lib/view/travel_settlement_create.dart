@@ -9,6 +9,8 @@ import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_create_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
+import '../data/notifier/travel_list_notifier.dart';
+
 class TravelSettlementCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
   final String paymentType;
@@ -87,6 +89,13 @@ class _TravelSettlementCreateScreenState
           SnackBar(content: Text(next.errorMessage ?? '오류가 발생했습니다.')),
         );
       }
+    });
+
+    final currencyProvider = StateProvider<String>((ref) {
+      final selectedNation =
+          ref.read(travelListNotifierProvider).selectedTravel?.nation ??
+          'KOREA';
+      return selectedNation == 'JAPAN' ? '엔' : '원';
     });
 
     final paymentCreateState = ref.watch(paymentCreateNotifierProvider);
@@ -202,7 +211,30 @@ class _TravelSettlementCreateScreenState
             ),
             TextFormField(
               controller: item.amountController,
-              decoration: const InputDecoration(labelText: '금액'),
+              decoration: InputDecoration(
+                labelText: '금액',
+                suffix: Container(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      // value: selectedCurrency,
+                      icon: const Icon(Icons.arrow_drop_down),
+                      style: const TextStyle(color: Colors.black, fontSize: 14),
+                      items: ['원', '엔'].map((currency) {
+                        return DropdownMenuItem<String>(
+                          value: currency,
+                          child: Text(currency),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          // ref.read(currencyProvider.notifier).state = value;
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {

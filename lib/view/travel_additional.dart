@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/main.dart';
-import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/settlement.dart';
+import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
-import 'package:yoen_front/view/travel_user_join.dart';
-import 'package:yoen_front/view/travel_user_list.dart';
 
 import 'base.dart';
 
@@ -42,25 +40,6 @@ class TravelAdditionalScreen extends ConsumerWidget {
                 ),
                 child: const Text('여행 정보', style: TextStyle(fontSize: 18)),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  //여행 생성하기 버튼 누를 시 동작
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TravelUserJoinScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('신청자 리스트', style: TextStyle(fontSize: 18)),
-              ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
@@ -82,25 +61,7 @@ class TravelAdditionalScreen extends ConsumerWidget {
                 ),
                 child: const Text('사전 사용금액 등록', style: TextStyle(fontSize: 18)),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  //여행 생성하기 버튼 누를 시 동작
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TravelUserListScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('유저 리스트', style: TextStyle(fontSize: 18)),
-              ),
+
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
