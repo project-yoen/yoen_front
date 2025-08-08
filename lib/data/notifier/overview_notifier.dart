@@ -38,15 +38,17 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
   final PaymentRepository _paymentRepository;
 
   OverviewNotifier(this._recordRepository, this._paymentRepository)
-      : super(OverviewState());
+    : super(OverviewState());
 
   Future<void> fetchTimeline(int travelId, DateTime date) async {
     state = state.copyWith(status: OverviewStatus.loading);
     try {
       final dateString = date.toIso8601String();
       final recordsFuture = _recordRepository.getRecords(travelId, dateString);
-      final paymentsFuture =
-          _paymentRepository.getPayments(travelId, dateString);
+      final paymentsFuture = _paymentRepository.getPayments(
+        travelId,
+        dateString,
+      );
 
       final List<RecordResponse> records = await recordsFuture;
       final List<PaymentResponse> payments = await paymentsFuture;
@@ -54,35 +56,65 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
       final List<TimelineItem> timelineItems = [];
 
       for (var record in records) {
-        timelineItems.add(TimelineItem(
-          type: TimelineItemType.record,
-          timestamp: DateTime.parse(record.recordTime),
-          data: record,
-        ));
+        timelineItems.add(
+          TimelineItem(
+            type: TimelineItemType.record,
+            timestamp: DateTime.parse(record.recordTime),
+            data: record,
+          ),
+        );
       }
 
       for (var payment in payments) {
-        timelineItems.add(TimelineItem(
-          type: TimelineItemType.payment,
-          timestamp: DateTime.parse(payment.payTime),
-          data: payment,
-        ));
+        timelineItems.add(
+          TimelineItem(
+            type: TimelineItemType.payment,
+            timestamp: DateTime.parse(payment.payTime),
+            data: payment,
+          ),
+        );
       }
 
       timelineItems.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-      state =
-          state.copyWith(status: OverviewStatus.success, items: timelineItems);
+      state = state.copyWith(
+        status: OverviewStatus.success,
+        items: timelineItems,
+      );
     } catch (e) {
-      state =
-          state.copyWith(status: OverviewStatus.error, errorMessage: e.toString());
+      state = state.copyWith(
+        status: OverviewStatus.error,
+        errorMessage: e.toString(),
+      );
     }
+  }
+
+  void removePayment(int paymentId) {
+    final filtered = state.items
+        .where(
+          (it) =>
+              it.type != TimelineItemType.payment ||
+              it.payment.paymentId != paymentId,
+        )
+        .toList();
+    state = state.copyWith(items: filtered);
+  }
+
+  void removeRecord(int recordId) {
+    final filtered = state.items
+        .where(
+          (it) =>
+              it.type != TimelineItemType.record ||
+              it.record.travelRecordId != recordId,
+        )
+        .toList();
+    state = state.copyWith(items: filtered);
   }
 }
 
 final overviewNotifierProvider =
     StateNotifierProvider<OverviewNotifier, OverviewState>((ref) {
-  final recordRepository = ref.watch(recordRepositoryProvider);
-  final paymentRepository = ref.watch(paymentRepositoryProvider);
-  return OverviewNotifier(recordRepository, paymentRepository);
-});
+      final recordRepository = ref.watch(recordRepositoryProvider);
+      final paymentRepository = ref.watch(paymentRepositoryProvider);
+      return OverviewNotifier(recordRepository, paymentRepository);
+    });

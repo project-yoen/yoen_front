@@ -90,9 +90,17 @@ abstract class ApiService {
   @POST("/travel/leave/{travelId}")
   Future<ApiResponse<String>> leaveTravel(@Path("travelId") int travelId);
 
+  @MultiPart()
   @POST("/travel/image/update")
-  Future<ApiResponse<String>> updateTravelProfileImage(
-    @Body() TravelProfileImage request,
+  Future<ApiResponse<String>> updateTravelProfileImageExist(
+    @Part(name: 'dto', contentType: 'application/json') TravelProfileImage dto,
+  );
+
+  @MultiPart()
+  @POST("/travel/image/update")
+  Future<ApiResponse<String>> updateTravelProfileImageNew(
+    @Part(name: 'dto', contentType: 'application/json') TravelProfileImage dto,
+    @Part(name: 'image') File image,
   );
 
   @GET("/join/userlist")
