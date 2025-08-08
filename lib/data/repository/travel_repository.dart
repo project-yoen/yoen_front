@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
@@ -53,13 +55,29 @@ class TravelRepository {
     }
   }
 
-  Future<String> updateImage(int travelId, int recordImageId) async {
+  Future<String> updateImageExists(int travelId, int recordImageId) async {
     final request = TravelProfileImage(
       travelId: travelId,
       recordImageId: recordImageId,
     );
 
-    final apiResponse = await _apiService.updateTravelProfileImage(request);
+    final apiResponse = await _apiService.updateTravelProfileImageExist(
+      request,
+    );
+    if (apiResponse.data != null) {
+      return apiResponse.data!;
+    } else {
+      throw Exception(apiResponse.error ?? 'Failed to update travel image');
+    }
+  }
+
+  Future<String> updateImageNew(int travelId, File image) async {
+    final request = TravelProfileImage(travelId: travelId, recordImageId: -1);
+
+    final apiResponse = await _apiService.updateTravelProfileImageNew(
+      request,
+      image,
+    );
     if (apiResponse.data != null) {
       return apiResponse.data!;
     } else {

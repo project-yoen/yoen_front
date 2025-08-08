@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
@@ -60,10 +62,26 @@ class TravelNotifier extends StateNotifier<TravelState> {
     }
   }
 
-  Future<void> updateImage(int travelId, int recordImageId) async {
+  Future<void> updateImageExists(int travelId, int recordImageId) async {
     state = state.copyWith(status: TravelStatus.loading);
     try {
-      final response = await _repository.updateImage(travelId, recordImageId);
+      final response = await _repository.updateImageExists(
+        travelId,
+        recordImageId,
+      );
+      state = state.copyWith(status: TravelStatus.success);
+    } catch (e) {
+      state = state.copyWith(
+        status: TravelStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> updateImageNew(int travelId, File image) async {
+    state = state.copyWith(status: TravelStatus.loading);
+    try {
+      final response = await _repository.updateImageNew(travelId, image);
       state = state.copyWith(status: TravelStatus.success);
     } catch (e) {
       state = state.copyWith(
