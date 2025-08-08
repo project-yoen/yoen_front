@@ -6,6 +6,7 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 
 import '../data/notifier/join_notifier.dart';
 import '../data/widget/travel_join_check_tile.dart';
+import '../data/widget/progress_badge.dart'; // ← ProgressBadge 추가
 
 class TravelUserJoinScreen extends ConsumerStatefulWidget {
   const TravelUserJoinScreen({super.key});
@@ -21,24 +22,17 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
   @override
   void initState() {
     super.initState();
-
-    // 화면 첫 진입 시 API 호출
     Future.microtask(() {
       ref.read(travelJoinNotifierProvider.notifier).reset();
-      int travelId = ref
+      final travelId = ref
           .read(travelListNotifierProvider)
           .selectedTravel!
           .travelId;
-      setState(() {
-        _travelId = travelId;
-      });
-
+      setState(() => _travelId = travelId);
       ref
           .read(travelJoinNotifierProvider.notifier)
           .getTravelJoinList(_travelId);
     });
-
-    // TODO: 에러 감시 구현
   }
 
   @override
@@ -58,13 +52,13 @@ class _TravelUserJoinScreenState extends ConsumerState<TravelUserJoinScreen> {
           },
         ),
       ),
-
       body: Builder(
         builder: (_) {
           switch (state.status) {
             case TravelJoinStatus.initial:
             case TravelJoinStatus.loading:
-              return const Center(child: CircularProgressIndicator());
+              // ⬇⬇⬇ 여기 ProgressBadge로 변경
+              return const Center(child: ProgressBadge(label: '불러오는 중'));
 
             case TravelJoinStatus.success:
               return RefreshIndicator(

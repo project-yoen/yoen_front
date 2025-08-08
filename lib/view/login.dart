@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/login_notifier.dart';
+import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/view/register_email.dart';
 import 'package:yoen_front/view/base.dart';
 
@@ -190,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 child: loginState.status == LoginStatus.loading
-                    ? const CircularProgressIndicator()
+                    ? const ProgressBadge(label: "로그인 중")
                     : const Text('Login', style: TextStyle(fontSize: 18)),
               ),
               const Spacer(flex: 2),

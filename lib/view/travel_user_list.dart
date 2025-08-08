@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_user_notifier.dart';
+import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/main.dart';
 
 class TravelUserListScreen extends ConsumerWidget {
@@ -70,7 +71,7 @@ class TravelUserListScreen extends ConsumerWidget {
 
                       const Divider(height: 1),
 
-                      // 별칭 표시 줄: 탭하면 수정 다이얼로그
+                      // 별칭 표시 줄
                       InkWell(
                         onTap: () => _editAliasDialog(
                           context,
@@ -120,7 +121,11 @@ class TravelUserListScreen extends ConsumerWidget {
             },
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+
+        // 로딩: ProgressBadge로 교체
+        loading: () =>
+            const Center(child: ProgressBadge(label: '여행 멤버 불러오는 중')),
+
         error: (e, _) => Center(child: Text('에러: $e')),
       ),
     );
@@ -163,7 +168,7 @@ class TravelUserListScreen extends ConsumerWidget {
       },
     );
 
-    if (result == null) return; // 취소
+    if (result == null) return;
     await ref
         .read(travelUserNotifierProvider(travelId).notifier)
         .updateTravelNickname(travelUserId, result);
@@ -184,8 +189,9 @@ class _MetaInline extends StatelessWidget {
       final b = DateTime.parse(birth);
       final now = DateTime.now();
       var age = now.year - b.year;
-      if (now.month < b.month || (now.month == b.month && now.day < b.day))
+      if (now.month < b.month || (now.month == b.month && now.day < b.day)) {
         age--;
+      }
       return '$age';
     } catch (_) {
       return '-';
@@ -212,7 +218,6 @@ class _MetaInline extends StatelessWidget {
   }
 }
 
-/// 프로필 아바타(캐시 + 플레이스홀더 + 에러 핸들)
 class _ProfileAvatar extends StatelessWidget {
   final String imageUrl;
   final String fallbackText;
@@ -231,15 +236,7 @@ class _ProfileAvatar extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  color: bg,
-                  alignment: Alignment.center,
-                  child: const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
+                placeholder: (_, __) => Container(color: bg),
                 errorWidget: (_, __, ___) => _InitialsBox(fallbackText, bg),
               )
             : _InitialsBox(fallbackText, bg),

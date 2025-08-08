@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/travel_detail_notifier.dart';
 import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
+import 'package:yoen_front/data/widget/progress_badge.dart'; // 추가
 
 class TravelDetailDialog extends ConsumerStatefulWidget {
   final int travelId;
@@ -16,9 +17,11 @@ class _TravelDetailDialogState extends ConsumerState<TravelDetailDialog> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref
-        .read(travelDetailNotifierProvider.notifier)
-        .getTravelDetail(widget.travelId));
+    Future.microtask(
+      () => ref
+          .read(travelDetailNotifierProvider.notifier)
+          .getTravelDetail(widget.travelId),
+    );
   }
 
   @override
@@ -26,7 +29,7 @@ class _TravelDetailDialogState extends ConsumerState<TravelDetailDialog> {
     final state = ref.watch(travelDetailNotifierProvider);
     return AlertDialog(
       title: const Text('여행 상세 정보'),
-      content: _buildBody(state),
+      content: _buildBody(state, context),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -36,15 +39,29 @@ class _TravelDetailDialogState extends ConsumerState<TravelDetailDialog> {
     );
   }
 
-  Widget _buildBody(TravelDetailState state) {
+  Widget _buildBody(TravelDetailState state, BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+
     switch (state.status) {
       case TravelDetailStatus.loading:
-        return const SizedBox(
+        // ProgressBadge로 교체
+        return SizedBox(
           height: 100,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: c.primary),
+                const SizedBox(height: 8),
+                const ProgressBadge(label: "불러오는 중"),
+              ],
+            ),
+          ),
         );
+
       case TravelDetailStatus.error:
         return Text('오류: ${state.errorMessage}');
+
       case TravelDetailStatus.success:
         final detail = state.travelDetail;
         if (detail == null) {
@@ -72,11 +89,18 @@ class _TravelDetailDialogState extends ConsumerState<TravelDetailDialog> {
                 '기간',
                 '${DateFormat('yy.MM.dd').format(DateTime.parse(detail.startDate))} - ${DateFormat('yy.MM.dd').format(DateTime.parse(detail.endDate))}',
               ),
-              _buildInfoRow('인원', '${detail.numOfJoinedPeople} / ${detail.numOfPeople}'),
-              _buildInfoRow('공금 잔액', '${NumberFormat('#,###').format(detail.sharedFund)}원'),
+              _buildInfoRow(
+                '인원',
+                '${detail.numOfJoinedPeople} / ${detail.numOfPeople}',
+              ),
+              _buildInfoRow(
+                '공금 잔액',
+                '${NumberFormat('#,###').format(detail.sharedFund)}원',
+              ),
             ],
           ),
         );
+
       default:
         return const SizedBox();
     }
