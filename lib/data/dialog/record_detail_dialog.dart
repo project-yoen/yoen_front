@@ -324,7 +324,7 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                                                         travelNotifierProvider
                                                             .notifier,
                                                       )
-                                                      .updateImage(
+                                                      .updateImageExists(
                                                         travelId,
                                                         widget
                                                             .record

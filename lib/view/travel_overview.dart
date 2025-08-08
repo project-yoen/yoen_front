@@ -223,7 +223,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
           onTap: () {
             showDialog(
               context: context,
-              builder: (context) => TravelDetailDialog(travelId: travel.travelId),
+              builder: (context) =>
+                  TravelDetailDialog(travelId: travel.travelId),
             );
           },
           child: Text(travel.travelName),
@@ -456,27 +457,52 @@ https://your-app-link.com
       floatingActionButton: () {
         if (_selectedIndex == 3) return null; // 부가기능 탭에서는 숨김
 
-        return FloatingActionButton(
+        String label;
+        IconData icon;
+        VoidCallback onPressed;
+
+        if (_selectedIndex == 0) {
+          label = '기록 추가';
+          icon = Icons.camera_alt;
+          onPressed = () => _showAddOptions(context, travel.travelId);
+        } else if (_selectedIndex == 1) {
+          label = '금액 추가';
+          icon = Icons.credit_card;
+          onPressed = () => _showPaymentOptions(context, travel.travelId);
+        } else {
+          label = '여행 기록';
+          icon = Icons.book;
+          onPressed = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    TravelRecordCreateScreen(travelId: travel.travelId),
+              ),
+            ).then((value) {
+              if (value == true) _fetchData();
+            });
+          };
+        }
+
+        return FloatingActionButton.extended(
+          heroTag: 'travelOverviewFab',
           onPressed: () {
-            if (_selectedIndex == 0) {
-              _showAddOptions(context, travel.travelId);
-            } else if (_selectedIndex == 1) {
-              _showPaymentOptions(context, travel.travelId);
-            } else if (_selectedIndex == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      TravelRecordCreateScreen(travelId: travel.travelId),
-                ),
-              ).then((value) {
-                if (value == true) {
-                  _fetchData();
-                }
-              });
-            }
+            HapticFeedback.lightImpact(); // 진동
+            onPressed();
           },
-          child: const Icon(Icons.add),
+          label: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          icon: Icon(icon),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
         );
       }(),
     );

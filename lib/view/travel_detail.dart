@@ -1,19 +1,17 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
-import 'package:yoen_front/data/model/travel_response.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
-import 'package:yoen_front/data/notifier/travel_notifier.dart';
+import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/view/travel_overview.dart';
-
 import '../data/dialog/travel_date_picker_dialog.dart';
 
 class TravelDetailScreen extends ConsumerStatefulWidget {
   final String nation;
   final List<int> destinationIds;
+
   const TravelDetailScreen({
     super.key,
     required this.nation,
@@ -25,16 +23,15 @@ class TravelDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
-  final TextEditingController _travelNameController = TextEditingController();
-  final TextEditingController _travelDurationController =
-      TextEditingController();
-  final TextEditingController _numberOfPeopleController =
-      TextEditingController();
+  final _travelNameController = TextEditingController();
+  final _travelDurationController = TextEditingController();
+  final _numberOfPeopleController = TextEditingController();
 
   String? _currentHintTravelName;
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
 
+  // 이름 추천용 단어들
   final List<String> _adjectives = [
     "우당탕탕",
     "좌충우돌",
@@ -89,7 +86,6 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     "혼돈의",
     "잔잔한",
     "도전적인",
-    "자유로운",
     "즉흥적인",
     "아름다운",
     "행운의",
@@ -137,7 +133,6 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     "느긋한",
     "알 수 없는",
   ];
-
   final List<String> _nouns = [
     "이쁜이들",
     "남성들",
@@ -256,29 +251,52 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     super.dispose();
   }
 
+  String _generateRandomTravelName() {
+    final r = Random();
+    return '${_adjectives[r.nextInt(_adjectives.length)]} ${_nouns[r.nextInt(_nouns.length)]}';
+  }
+
   void _incrementPeople() {
-    int currentCount = int.tryParse(_numberOfPeopleController.text) ?? 0;
-    if (currentCount < 9) {
-      setState(() {
-        _numberOfPeopleController.text = (currentCount + 1).toString();
-      });
-    }
+    final cur = int.tryParse(_numberOfPeopleController.text) ?? 1;
+    if (cur < 9) _numberOfPeopleController.text = '${cur + 1}';
+    setState(() {});
   }
 
   void _decrementPeople() {
-    int currentCount = int.tryParse(_numberOfPeopleController.text) ?? 0;
-    if (currentCount > 1) {
-      setState(() {
-        _numberOfPeopleController.text = (currentCount - 1).toString();
-      });
-    }
+    final cur = int.tryParse(_numberOfPeopleController.text) ?? 1;
+    if (cur > 1) _numberOfPeopleController.text = '${cur - 1}';
+    setState(() {});
   }
 
-  String _generateRandomTravelName() {
-    final random = Random();
-    final adjective = _adjectives[random.nextInt(_adjectives.length)];
-    final noun = _nouns[random.nextInt(_nouns.length)];
-    return '$adjective $noun';
+  int? _diffDays() {
+    if (_selectedStartDate == null || _selectedEndDate == null) return null;
+    return _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
+  }
+
+  Future<void> _pickDates() async {
+    final result = await showDialog<Map<String, DateTime?>>(
+      context: context,
+      builder: (_) => TravelDatePickerDialog(
+        initialStartDate: _selectedStartDate,
+        initialEndDate: _selectedEndDate,
+      ),
+    );
+    if (result == null) return;
+
+    setState(() {
+      _selectedStartDate = result['start'];
+      _selectedEndDate = result['end'];
+      if (_selectedStartDate != null && _selectedEndDate != null) {
+        _travelDurationController.text =
+            '${DateFormat('yyyy.MM.dd').format(_selectedStartDate!)} - ${DateFormat('yyyy.MM.dd').format(_selectedEndDate!)}';
+      } else if (_selectedStartDate != null) {
+        _travelDurationController.text = DateFormat(
+          'yyyy.MM.dd',
+        ).format(_selectedStartDate!);
+      } else {
+        _travelDurationController.clear();
+      }
+    });
   }
 
   Future<void> _handleCreateTravel() async {
@@ -292,24 +310,21 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
     final travelName = _travelNameController.text.isEmpty
         ? _currentHintTravelName!
         : _travelNameController.text;
-    final numOfPeople = int.parse(_numberOfPeopleController.text);
-    final nation = widget.nation;
-    final startDate = DateFormat('yyyy-MM-dd').format(_selectedStartDate!);
-    final endDate = DateFormat('yyyy-MM-dd').format(_selectedEndDate!);
-    final destinationIds = widget.destinationIds;
 
     final request = TravelCreateRequest(
       travelName: travelName,
-      numOfPeople: numOfPeople,
-      nation: nation,
-      startDate: startDate,
-      endDate: endDate,
-      destinationIds: destinationIds,
+      numOfPeople: int.parse(_numberOfPeopleController.text),
+      nation: widget.nation,
+      startDate: DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
+      endDate: DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
+      destinationIds: widget.destinationIds,
     );
 
     final newTravel = await ref
         .read(travelListNotifierProvider.notifier)
         .createAndSelectTravel(request);
+
+    if (!mounted) return;
 
     if (newTravel != null) {
       ScaffoldMessenger.of(
@@ -320,7 +335,6 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
         (route) => route.isFirst,
       );
     } else {
-      // 에러가 발생한 경우 (Notifier에서 상태 처리를 하므로 UI에서는 간단한 피드백만)
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('여행 생성에 실패했습니다.')));
@@ -329,148 +343,321 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final travelListState = ref.watch(travelListNotifierProvider);
+    final listState = ref.watch(travelListNotifierProvider);
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+
+    final days = _diffDays();
+    final canSubmit = (_selectedStartDate != null && _selectedEndDate != null);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         forceMaterialTransparency: true,
-        scrolledUnderElevation: 0.0,
+        scrolledUnderElevation: 0,
+        title: const Text('여행 만들기'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // TODO: 알림 확인 기능
-            },
+            tooltip: '이름 추천 새로고침',
+            onPressed: () => setState(
+              () => _currentHintTravelName = _generateRandomTravelName(),
+            ),
+            icon: const Icon(Icons.casino_outlined),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            const Text(
-              '여행 이름',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _travelNameController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                hintText: _currentHintTravelName,
-              ),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              '여행 기간',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _travelDurationController,
-              readOnly: true,
-              onTap: () async {
-                final result = await showDialog<Map<String, DateTime?>>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return TravelDatePickerDialog(
-                      initialStartDate: _selectedStartDate,
-                      initialEndDate: _selectedEndDate,
-                    );
-                  },
-                );
 
-                if (result != null) {
-                  setState(() {
-                    _selectedStartDate = result['start'];
-                    _selectedEndDate = result['end'];
-                    if (_selectedStartDate != null &&
-                        _selectedEndDate != null) {
-                      _travelDurationController.text =
-                          '${DateFormat('yyyy.MM.dd').format(_selectedStartDate!)} - ${DateFormat('yyyy.MM.dd').format(_selectedEndDate!)}';
-                    } else if (_selectedStartDate != null) {
-                      _travelDurationController.text = DateFormat(
-                        'yyyy.MM.dd',
-                      ).format(_selectedStartDate!);
-                    } else {
-                      _travelDurationController.text = '';
-                    }
-                  });
-                }
-              },
-              decoration: const InputDecoration(
-                labelText: '여행 기간',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              '인원 수',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
-                  onPressed: _decrementPeople,
-                ),
-                SizedBox(
-                  width: 100.0,
-                  child: TextFormField(
-                    readOnly: true,
-                    controller: _numberOfPeopleController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      labelText: '인원 수',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: _incrementPeople,
-                ),
-              ],
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: (travelListState.status == TravelListStatus.loading)
-                    ? null
-                    : _handleCreateTravel,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  backgroundColor: const Color(0xFF6A4FF9),
-                  foregroundColor: Colors.white,
-                ),
-                child: travelListState.status == TravelListStatus.loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        '여행 생성하기',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 요약 배너
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: c.primary.withOpacity(.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: c.primary.withOpacity(.18)),
+                      ),
+                      child: DefaultTextStyle(
+                        style: t.bodyMedium!.copyWith(color: c.onSurface),
+                        child: Row(
+                          children: [
+                            Icon(Icons.public, color: c.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              '나라: ',
+                              style: t.bodyMedium!.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(widget.nation == 'JAPAN' ? '일본' : '한국'),
+                            const SizedBox(width: 16),
+                            Icon(Icons.place_outlined, color: c.primary),
+                            const SizedBox(width: 6),
+                            Text(
+                              '목적지: ',
+                              style: t.bodyMedium!.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text('${widget.destinationIds.length}곳'),
+                          ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 여행 이름
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: c.outlineVariant),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '여행 이름',
+                              style: t.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _travelNameController,
+                              decoration: InputDecoration(
+                                hintText: _currentHintTravelName,
+                                prefixIcon: const Icon(Icons.edit_outlined),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_travelNameController.text.isNotEmpty)
+                                      IconButton(
+                                        tooltip: '지우기',
+                                        onPressed: () {
+                                          _travelNameController.clear();
+                                          setState(() {});
+                                        },
+                                        icon: const Icon(Icons.clear),
+                                      ),
+                                    IconButton(
+                                      tooltip: '이름 추천 새로고침',
+                                      onPressed: () => setState(
+                                        () => _currentHintTravelName =
+                                            _generateRandomTravelName(),
+                                      ),
+                                      icon: const Icon(Icons.casino_outlined),
+                                    ),
+                                  ],
+                                ),
+                                filled: true,
+                                fillColor: c.surfaceContainerHighest,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '입력하지 않으면 추천 이름이 자동으로 사용돼요.',
+                              style: t.bodySmall?.copyWith(
+                                color: c.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 여행 기간
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: c.outlineVariant),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '여행 기간',
+                              style: t.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _travelDurationController,
+                              readOnly: true,
+                              onTap: _pickDates,
+                              decoration: InputDecoration(
+                                hintText: '기간을 선택하세요',
+                                prefixIcon: const Icon(
+                                  Icons.calendar_month_outlined,
+                                ),
+                                suffixIcon: IconButton(
+                                  tooltip: '기간 선택',
+                                  onPressed: _pickDates,
+                                  icon: const Icon(
+                                    Icons.edit_calendar_outlined,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: c.surfaceContainerHighest,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                            if (days != null) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  Chip(
+                                    label: Text('$days일 일정'),
+                                    backgroundColor: c.secondaryContainer
+                                        .withOpacity(.6),
+                                    labelStyle: t.bodySmall?.copyWith(
+                                      color: c.onSecondaryContainer,
+                                    ),
+                                  ),
+                                  Chip(
+                                    label: Text(
+                                      '${DateFormat('M월 d일').format(_selectedStartDate!)} ~ ${DateFormat('M월 d일').format(_selectedEndDate!)}',
+                                    ),
+                                    backgroundColor: c.surfaceVariant
+                                        .withOpacity(.6),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 인원 수
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: c.outlineVariant),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '인원 수',
+                              style: t.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                IconButton.filledTonal(
+                                  tooltip: '감소',
+                                  onPressed: _decrementPeople,
+                                  icon: const Icon(Icons.remove),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 90,
+                                  child: TextField(
+                                    controller: _numberOfPeopleController,
+                                    readOnly: true,
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: c.surfaceContainerHighest,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton.filled(
+                                  tooltip: '증가',
+                                  onPressed: _incrementPeople,
+                                  icon: const Icon(Icons.add),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '최소 1명 · 최대 9명',
+                                  style: t.bodySmall?.copyWith(
+                                    color: c.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // 생성 버튼
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        onPressed:
+                            (listState.status == TravelListStatus.loading ||
+                                !canSubmit)
+                            ? null
+                            : _handleCreateTravel,
+                        child: (listState.status == TravelListStatus.loading)
+                            ? const ProgressBadge(label: "여행 생성 중")
+                            : const Text(
+                                '여행 생성하기',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+            );
+          },
         ),
       ),
     );

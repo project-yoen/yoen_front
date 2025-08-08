@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
-import 'package:yoen_front/data/model/record_response.dart';
+// 공용 다이얼로그 & 타일
+import 'package:yoen_front/data/dialog/confirm.dart';
+import 'package:yoen_front/data/dialog/openers.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
-import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
+import 'package:yoen_front/data/widget/record_tile.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
   const TravelRecordScreen({super.key});
@@ -21,15 +21,17 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      final travel = ref.read(travelListNotifierProvider).selectedTravel;
-      final date = ref.read(dateNotifierProvider);
-      if (travel != null && date != null) {
-        ref
-            .read(recordNotifierProvider.notifier)
-            .getRecords(travel.travelId, date);
-      }
-    });
+    Future.microtask(_fetchRecords);
+  }
+
+  void _fetchRecords() {
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+    final date = ref.read(dateNotifierProvider);
+    if (travel != null && date != null) {
+      ref
+          .read(recordNotifierProvider.notifier)
+          .getRecords(travel.travelId, date);
+    }
   }
 
   @override
@@ -51,11 +53,11 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   Widget _buildBody(RecordState state) {
     switch (state.getStatus) {
       case Status.loading:
-        // 로딩을 스켈레톤 리스트로 대체
+        // 스켈레톤 리스트
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
-          itemBuilder: (context, index) => const _RecordCardSkeleton(),
+          itemBuilder: (_, __) => const _RecordCardSkeleton(),
         );
 
       case Status.error:
@@ -85,166 +87,49 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
                   itemCount: state.records.length,
-                  itemBuilder: (context, index) =>
-                      _buildRecordCard(state.records[index]),
+                  itemBuilder: (context, index) {
+                    final record = state.records[index];
+                    return RecordTile(
+                      record: record,
+                      // 상세 보기 후에는 리패치 안 함
+                      onTap: () async {
+                        await openRecordDetailDialog(context, record);
+                      },
+                      // 삭제 등 상태 변경시에만 리패치
+                      onMenuAction: (action) async {
+                        if (action == 'delete') {
+                          final ok = await showConfirmDialog(
+                            context,
+                            title: '기록 삭제',
+                            content: '\'${record.title}\'을(를) 삭제하시겠습니까?',
+                          );
+                          if (ok) {
+                            await ref
+                                .read(recordNotifierProvider.notifier)
+                                .deleteRecord(record.travelRecordId);
+                            _fetchRecords();
+                          }
+                        } else if (action == 'edit') {
+                          // TODO: 수정 다이얼로그 연결 시 변경 발생하면 _fetchRecords();
+                        }
+                      },
+                    );
+                  },
                 ),
         );
 
       default:
-        // 초기 등 기타 상태도 스켈레톤로 통일
+        // 초기 등 기타 상태도 스켈레톤
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
-          itemBuilder: (context, index) => const _RecordCardSkeleton(),
+          itemBuilder: (_, __) => const _RecordCardSkeleton(),
         );
     }
-  }
-
-  Widget _buildRecordCard(RecordResponse record) {
-    final recordTime = DateTime.parse(record.recordTime);
-    final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
-
-    Offset? tapPosition;
-
-    return GestureDetector(
-      onTapDown: (TapDownDetails details) =>
-          tapPosition = details.globalPosition,
-      child: InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => RecordDetailDialog(record: record),
-          );
-        },
-        onLongPress: () async {
-          if (tapPosition == null) return;
-          final overlay =
-              Overlay.of(context).context.findRenderObject() as RenderBox;
-
-          final result = await showMenu<String>(
-            context: context,
-            position: RelativeRect.fromLTRB(
-              tapPosition!.dx,
-              tapPosition!.dy,
-              overlay.size.width - tapPosition!.dx,
-              overlay.size.height - tapPosition!.dy,
-            ),
-            items: const [
-              PopupMenuItem<String>(value: 'edit', child: Text('수정')),
-              PopupMenuItem<String>(value: 'delete', child: Text('삭제')),
-            ],
-          );
-
-          if (result == 'edit') {
-            // TODO: 수정 로직
-          } else if (result == 'delete') {
-            _showDeleteConfirmDialog(record);
-          }
-        },
-        child: Card(
-          margin: const EdgeInsets.only(bottom: 16.0),
-          elevation: 4.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 제목 + 시간
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        record.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      formattedTime,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
-                // 작성자
-                Text(
-                  '작성자: ${record.travelNickName}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
-                ),
-                if (record.images.isNotEmpty) ...[
-                  const SizedBox(height: 16.0),
-                  _buildImageGallery(
-                    record.images.map((e) => e.imageUrl).toList(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmDialog(RecordResponse record) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('기록 삭제'),
-          content: Text('\'${record.title}\'을(를) 삭제하시겠습니까?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                ref
-                    .read(recordNotifierProvider.notifier)
-                    .deleteRecord(record.travelRecordId);
-                Navigator.of(context).pop();
-              },
-              child: const Text('예'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('아니오'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildImageGallery(List<String> images) {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: ResponsiveShimmerImage(imageUrl: images[index]),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
 // ───────────────────────── 스켈레톤 ─────────────────────────
-
 class _RecordCardSkeleton extends StatelessWidget {
   const _RecordCardSkeleton();
 

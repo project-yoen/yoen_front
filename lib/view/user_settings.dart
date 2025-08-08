@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -20,7 +19,10 @@ class UserSettingsScreen extends ConsumerStatefulWidget {
 
 class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
   final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
+
+  File? _selectedImage; // 로컬 프리뷰 (끝까지 유지)
+  bool _uploading = false; // 업로드 오버레이 표시
+  double? _progress; // 진행률(선택)
 
   Future<void> _showImageSourceSelector(WidgetRef ref) async {
     showModalBottomSheet(
@@ -75,13 +77,33 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
       ],
     );
 
-    if (cropped != null) {
+    if (cropped == null) return;
+
+    setState(() {
+      _selectedImage = File(cropped.path); // 내 화면은 즉시 변경
+      _uploading = true;
+      _progress = null;
+    });
+
+    try {
+      await ref
+          .read(userNotifierProvider.notifier)
+          .updateImage(_selectedImage!);
+
+      if (!mounted) return;
       setState(() {
-        _selectedImage = File(cropped.path);
+        _uploading = false;
       });
 
-      // TODO: 서버 업로드 로직 추가 (8/2일에 마저 하기)
-      ref.read(userNotifierProvider.notifier).updateImage(_selectedImage!);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('프로필 이미지가 업데이트되었습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('업로드 실패: $e')));
     }
   }
 
@@ -102,9 +124,9 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 60),
-              const Text(
+            children: const [
+              SizedBox(height: 60),
+              Text(
                 "사용자 정보를 불러오는 중...",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center,
@@ -112,7 +134,6 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
             ],
           ),
         ),
-
         error: (error, stack) => Center(child: Text('오류 발생: $error')),
         data: (user) {
           final initials = (user.name ?? 'U').isNotEmpty ? user.name![0] : 'U';
@@ -127,23 +148,60 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Stack(
-                        alignment: Alignment.bottomRight,
+                        alignment: Alignment.center,
                         children: [
-                          GestureDetector(
-                            onTap: () => _showImageSourceSelector(ref),
-                            child: EditableAvatar(
-                              size: avatarRadius * 2, // 기존과 동일 크기
-                              imageUrl: user.imageUrl, // 서버 이미지
-                              localFile: _selectedImage, // 선택/크롭 후 로컬 파일
-                              fallbackText: initials, // 이니셜
-                              onTap: () => _showImageSourceSelector(ref),
-                            ),
+                          EditableAvatar(
+                            size: avatarRadius * 2,
+                            imageUrl: user.imageUrl,
+                            localFile: _selectedImage, // 로컬 프리뷰 유지
+                            fallbackText: initials,
+                            onTap: null, // 전체 영역 탭 비활성
                           ),
+                          if (_uploading)
+                            Positioned.fill(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  avatarRadius,
+                                ),
+                                child: Container(
+                                  color: Colors.black87,
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          valueColor: AlwaysStoppedAnimation(
+                                            Colors.white,
+                                          ),
+                                          backgroundColor: Colors.white24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        _progress == null
+                                            ? '업로드 중...'
+                                            : '업로드 중 ${(_progress! * 100).toStringAsFixed(0)}%',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           Positioned(
                             bottom: 4,
                             right: 4,
                             child: GestureDetector(
-                              onTap: () => _showImageSourceSelector(ref),
+                              onTap: _uploading
+                                  ? null
+                                  : () => _showImageSourceSelector(ref),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.blueAccent,
@@ -152,10 +210,17 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                                     color: Colors.white,
                                     width: 2,
                                   ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 padding: const EdgeInsets.all(6),
                                 child: const Icon(
-                                  Icons.add,
+                                  Icons.edit,
                                   size: 16,
                                   color: Colors.white,
                                 ),
@@ -166,14 +231,13 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        user.name!,
+                        user.name ?? 'User',
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
