@@ -10,6 +10,7 @@ import 'package:yoen_front/data/notifier/payment_create_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
 import '../data/notifier/travel_list_notifier.dart';
+import '../data/widget/saving_badge.dart';
 
 class TravelSettlementCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
@@ -105,14 +106,12 @@ class _TravelSettlementCreateScreenState
     final paymentState = ref.watch(paymentNotifierProvider);
 
     return Scaffold(
+      // ── AppBar actions 교체 ──
       appBar: AppBar(
         title: const Text('정산 내역 추가'),
         actions: [
           if (paymentState.createStatus == Status.loading)
-            const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: CircularProgressIndicator(),
-            )
+            ProgressBadge(label: "저장 중") // <- 원형 로딩바 대신 가벼운 배지
           else
             IconButton(
               onPressed: () =>

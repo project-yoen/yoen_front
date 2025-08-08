@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
@@ -63,9 +64,18 @@ class _TravelOverviewContentScreenState
     switch (state.status) {
       case OverviewStatus.initial:
       case OverviewStatus.loading:
-        return const Center(child: CircularProgressIndicator());
+        // 스켈레톤 리스트로 대체
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: 6,
+          itemBuilder: (context, i) => i.isEven
+              ? const _RecordCardSkeleton()
+              : const _PaymentCardSkeleton(),
+        );
+
       case OverviewStatus.error:
         return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
+
       case OverviewStatus.success:
         return RefreshIndicator(
           onRefresh: () async {
@@ -122,25 +132,34 @@ class _TravelOverviewContentScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 헤더
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.camera_alt,
-                        color: Colors.blueAccent,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        record.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    // ← 왼쪽 블록을 확장시켜 공간 관리
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.camera_alt,
+                          color: Colors.blueAccent,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          // ← 텍스트에 가변 폭 부여
+                          child: Text(
+                            record.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis, // ← 말줄임
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     formattedTime,
                     style: Theme.of(
@@ -214,25 +233,32 @@ class _TravelOverviewContentScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 헤더
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.credit_card,
-                        color: Colors.green,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        payment.paymentName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.credit_card,
+                          color: Colors.green,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            payment.paymentName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     formattedTime,
                     style: Theme.of(
@@ -281,6 +307,178 @@ class _TravelOverviewContentScreenState
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ───────────────────────── 스켈레톤들 ─────────────────────────
+
+class _RecordCardSkeleton extends StatelessWidget {
+  const _RecordCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(.6);
+    final highlight = Theme.of(
+      context,
+    ).colorScheme.surfaceVariant.withOpacity(.85);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Shimmer.fromColors(
+          baseColor: base,
+          highlightColor: highlight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 제목 라인
+              Row(
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 160,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 50,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: 120,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: base,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 썸네일 3개 자리
+              Row(
+                children: List.generate(
+                  3,
+                  (i) => Padding(
+                    padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                    child: Container(
+                      width: 100,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: base,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentCardSkeleton extends StatelessWidget {
+  const _PaymentCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(.6);
+    final highlight = Theme.of(
+      context,
+    ).colorScheme.surfaceVariant.withOpacity(.85);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Shimmer.fromColors(
+          baseColor: base,
+          highlightColor: highlight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 제목 라인
+              Row(
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 140,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 50,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: 100,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: base,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  width: 80,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: base,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

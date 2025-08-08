@@ -9,6 +9,7 @@ import 'package:yoen_front/data/notifier/login_notifier.dart';
 import 'package:yoen_front/view/user_edit.dart';
 
 import '../data/notifier/user_notifier.dart';
+import '../data/widget/editable_avatar.dart';
 
 class UserSettingsScreen extends ConsumerStatefulWidget {
   const UserSettingsScreen({super.key});
@@ -97,9 +98,25 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
         scrolledUnderElevation: 0,
       ),
       body: userAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 60),
+              const Text(
+                "사용자 정보를 불러오는 중...",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+
         error: (error, stack) => Center(child: Text('오류 발생: $error')),
         data: (user) {
+          final initials = (user.name ?? 'U').isNotEmpty ? user.name![0] : 'U';
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -114,27 +131,12 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                         children: [
                           GestureDetector(
                             onTap: () => _showImageSourceSelector(ref),
-                            child: Container(
-                              width: avatarRadius * 2,
-                              height: avatarRadius * 2,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey,
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: _selectedImage != null
-                                  ? Image.file(
-                                      _selectedImage!,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : user.imageUrl!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: user.imageUrl!,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const Center(
-                                      child: Icon(Icons.person, size: 32),
-                                    ),
+                            child: EditableAvatar(
+                              size: avatarRadius * 2, // 기존과 동일 크기
+                              imageUrl: user.imageUrl, // 서버 이미지
+                              localFile: _selectedImage, // 선택/크롭 후 로컬 파일
+                              fallbackText: initials, // 이니셜
+                              onTap: () => _showImageSourceSelector(ref),
                             ),
                           ),
                           Positioned(

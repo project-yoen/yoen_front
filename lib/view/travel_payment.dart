@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/dialog/payment_detail_dialog.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
@@ -20,9 +21,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      _fetchPayments();
-    });
+    Future.microtask(_fetchPayments);
   }
 
   void _fetchPayments() {
@@ -40,10 +39,8 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final paymentState = ref.watch(paymentNotifierProvider);
 
-    ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
-      if (previous != next) {
-        _fetchPayments();
-      }
+    ref.listen<DateTime?>(dateNotifierProvider, (prev, next) {
+      if (prev != next) _fetchPayments();
     });
 
     if (travel == null) {
@@ -56,9 +53,16 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   Widget _buildBody(PaymentState state) {
     switch (state.getStatus) {
       case Status.loading:
-        return const Center(child: CircularProgressIndicator());
+        // 로딩 상태: 스켈레톤 리스트
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: 6,
+          itemBuilder: (_, __) => const _PaymentCardSkeleton(),
+        );
+
       case Status.error:
         return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
+
       case Status.success:
         final travel = ref.read(travelListNotifierProvider).selectedTravel;
         final date = ref.read(dateNotifierProvider);
@@ -83,14 +87,18 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
                   itemCount: state.payments.length,
-                  itemBuilder: (context, index) {
-                    final payment = state.payments[index];
-                    return _buildPaymentCard(payment);
-                  },
+                  itemBuilder: (context, index) =>
+                      _buildPaymentCard(state.payments[index]),
                 ),
         );
+
       default:
-        return const Center(child: Text('기록을 불러오는 중...'));
+        // 초기 등 기타 상태도 스켈레톤으로 통일
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: 6,
+          itemBuilder: (_, __) => const _PaymentCardSkeleton(),
+        );
     }
   }
 
@@ -104,16 +112,12 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     Offset? tapPosition;
 
     return GestureDetector(
-      onTapDown: (TapDownDetails details) {
-        // 탭 위치 기억
-        tapPosition = details.globalPosition;
-      },
+      onTapDown: (d) => tapPosition = d.globalPosition,
       child: InkWell(
         onTap: () {
           showDialog(
             context: context,
-            builder: (context) =>
-                PaymentDetailDialog(paymentId: payment.paymentId),
+            builder: (_) => PaymentDetailDialog(paymentId: payment.paymentId),
           );
         },
         onLongPress: () async {
@@ -136,9 +140,8 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
           );
 
           if (result == 'edit') {
-            // 수정 로직
+            // TODO: 수정 로직
           } else if (result == 'delete') {
-            // 삭제 로직
             _showDeleteConfirmDialog(payment);
           }
         },
@@ -187,7 +190,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          payment.payer!,
+                          payment.payer ?? '',
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],
@@ -229,7 +232,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   void _showDeleteConfirmDialog(PaymentResponse payment) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return AlertDialog(
           title: const Text('기록 삭제'),
           content: Text('\'${payment.paymentName}\'을(를) 삭제하시겠습니까?'),
@@ -239,7 +242,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                 ref
                     .read(paymentNotifierProvider.notifier)
                     .deletePayment(payment.paymentId);
-                Navigator.of(context).pop(); // Close confirmation dialog
+                Navigator.of(context).pop();
               },
               child: const Text('예'),
             ),
@@ -250,6 +253,93 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+// ───────────────────────── 스켈레톤 ─────────────────────────
+class _PaymentCardSkeleton extends StatelessWidget {
+  const _PaymentCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(.6);
+    final highlight = Theme.of(
+      context,
+    ).colorScheme.surfaceVariant.withOpacity(.85);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+
+            double vw(double x) => x.clamp(0, w); // 안전장치
+            // 상단 제목/카테고리: 제목은 60~70% 범위, 카테고리는 18~22% 범위
+            final titleW = vw(w * 0.64);
+            final catW = vw(w * 0.20);
+
+            // 하단 라인: 라벨/값 쌍 2개 + 시간
+            final labelW = vw(w * 0.16); // "결제자", "결제금액" 등
+            final valueW = vw(w * 0.26);
+            final timeW = vw(w * 0.18);
+
+            Widget bar(double width, double height) => Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: base,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+
+            return Shimmer.fromColors(
+              baseColor: base,
+              highlightColor: highlight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── 제목 + 카테고리
+                  Row(
+                    children: [bar(titleW, 18), const Spacer(), bar(catW, 14)],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── 결제자 / 금액 / 시간 (작은 화면에서 자동 줄바꿈 허용)
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          bar(labelW * .6, 10), // 라벨은 더 짧게
+                          const SizedBox(width: 8),
+                          bar(valueW, 16),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          bar(labelW * .6, 10),
+                          const SizedBox(width: 8),
+                          bar(valueW, 16),
+                        ],
+                      ),
+                      bar(timeW, 12),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

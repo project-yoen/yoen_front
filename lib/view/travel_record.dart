@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/dialog/record_detail_dialog.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
@@ -50,9 +51,16 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   Widget _buildBody(RecordState state) {
     switch (state.getStatus) {
       case Status.loading:
-        return const Center(child: CircularProgressIndicator());
+        // 로딩을 스켈레톤 리스트로 대체
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: 6,
+          itemBuilder: (context, index) => const _RecordCardSkeleton(),
+        );
+
       case Status.error:
         return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
+
       case Status.success:
         final travel = ref.read(travelListNotifierProvider).selectedTravel;
         final date = ref.read(dateNotifierProvider);
@@ -77,14 +85,18 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
                   itemCount: state.records.length,
-                  itemBuilder: (context, index) {
-                    final record = state.records[index];
-                    return _buildRecordCard(record);
-                  },
+                  itemBuilder: (context, index) =>
+                      _buildRecordCard(state.records[index]),
                 ),
         );
+
       default:
-        return const Center(child: Text('기록을 불러오는 중...'));
+        // 초기 등 기타 상태도 스켈레톤로 통일
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: 6,
+          itemBuilder: (context, index) => const _RecordCardSkeleton(),
+        );
     }
   }
 
@@ -95,9 +107,8 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
     Offset? tapPosition;
 
     return GestureDetector(
-      onTapDown: (TapDownDetails details) {
-        tapPosition = details.globalPosition;
-      },
+      onTapDown: (TapDownDetails details) =>
+          tapPosition = details.globalPosition,
       child: InkWell(
         onTap: () {
           showDialog(
@@ -127,7 +138,6 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
           if (result == 'edit') {
             // TODO: 수정 로직
           } else if (result == 'delete') {
-            // TODO: 삭제 로직
             _showDeleteConfirmDialog(record);
           }
         },
@@ -152,6 +162,8 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
@@ -197,7 +209,7 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                 ref
                     .read(recordNotifierProvider.notifier)
                     .deleteRecord(record.travelRecordId);
-                Navigator.of(context).pop(); // Close confirmation dialog
+                Navigator.of(context).pop();
               },
               child: const Text('예'),
             ),
@@ -226,6 +238,88 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ───────────────────────── 스켈레톤 ─────────────────────────
+
+class _RecordCardSkeleton extends StatelessWidget {
+  const _RecordCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(.6);
+    final highlight = Theme.of(
+      context,
+    ).colorScheme.surfaceVariant.withOpacity(.85);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Shimmer.fromColors(
+          baseColor: base,
+          highlightColor: highlight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 제목 + 시간 자리
+              Row(
+                children: [
+                  Container(
+                    width: 180,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 60,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: base,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // 작성자 라인 자리
+              Container(
+                width: 140,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: base,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 썸네일 3개 자리
+              Row(
+                children: List.generate(
+                  3,
+                  (i) => Padding(
+                    padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                    child: Container(
+                      width: 100,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: base,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

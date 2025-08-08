@@ -4,6 +4,8 @@ import 'package:yoen_front/data/model/payment_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:intl/intl.dart';
 
+import '../widget/saving_badge.dart';
+
 class PaymentDetailDialog extends ConsumerStatefulWidget {
   final int paymentId;
 
@@ -44,9 +46,25 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
   Widget _buildContent(PaymentState state) {
     switch (state.getDetailsStatus) {
       case Status.loading:
-        return const SizedBox(
+        return SizedBox(
           height: 100,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ProgressBadge(label: "불러오는 중"),
+              ],
+            ),
+          ),
         );
       case Status.error:
         return Text('오류: ${state.errorMessage}');
