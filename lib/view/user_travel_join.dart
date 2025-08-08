@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../data/model/user_response.dart';
 import '../data/notifier/join_notifier.dart';
 import '../data/widget/user_travel_check_tile.dart';
+import '../data/widget/progress_badge.dart'; // 추가
 
 class UserTravelJoinScreen extends ConsumerStatefulWidget {
   const UserTravelJoinScreen({super.key});
@@ -18,7 +17,6 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 첫 진입 시 API 호출
     Future.microtask(() {
       ref.read(joinNotifierProvider.notifier).reset();
       ref.read(joinNotifierProvider.notifier).getUserJoinList();
@@ -33,13 +31,13 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
     switch (state.status) {
       case JoinStatus.initial:
       case JoinStatus.loading:
-        body = const Center(child: CircularProgressIndicator());
+        body = const Center(child: ProgressBadge(label: '여행 목록 불러오는 중'));
         break;
 
       case JoinStatus.success:
         body = RefreshIndicator(
           onRefresh: () async {
-            HapticFeedback.mediumImpact(); //  진동 추가
+            HapticFeedback.mediumImpact();
             ref.read(joinNotifierProvider.notifier).reset();
             ref.read(joinNotifierProvider.notifier).getUserJoinList();
           },
@@ -87,7 +85,6 @@ class _UserTravelJoinScreenState extends ConsumerState<UserTravelJoinScreen> {
           },
         ),
       ),
-
       body: body,
     );
   }

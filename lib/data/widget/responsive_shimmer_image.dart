@@ -59,19 +59,20 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 밝기 차이를 줄인 색상
-    final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6);
-    final highlight = Theme.of(
-      context,
-    ).colorScheme.surfaceVariant.withOpacity(0.85);
+    // 대비가 더 큰 회색 톤 설정
+    final base = Colors.grey.shade300;
+    final highlight = Colors.grey.shade100;
 
     return Shimmer.fromColors(
       baseColor: base,
       highlightColor: highlight,
-      child: Container(
-        decoration: BoxDecoration(
-          color: base,
-          borderRadius: BorderRadius.circular(borderRadius),
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: Container(
+          decoration: BoxDecoration(
+            color: base,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
         ),
       ),
     );
