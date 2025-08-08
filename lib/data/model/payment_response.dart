@@ -11,6 +11,8 @@ class PaymentResponse {
   final String payerType;
   final String payTime;
   final int paymentAccount;
+  final String currency;
+  final String paymentType;
 
   PaymentResponse({
     required this.paymentId,
@@ -20,6 +22,8 @@ class PaymentResponse {
     required this.payerType,
     required this.payTime,
     required this.paymentAccount,
+    required this.currency,
+    required this.paymentType,
   });
 
   factory PaymentResponse.fromJson(Map<String, dynamic> json) =>

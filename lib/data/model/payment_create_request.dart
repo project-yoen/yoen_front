@@ -13,6 +13,7 @@ class PaymentCreateRequest {
   final String paymentName;
   final String paymentType;
   final int paymentAccount;
+  final String currency;
   final List<Settlement> settlementList;
 
   PaymentCreateRequest({
@@ -25,6 +26,7 @@ class PaymentCreateRequest {
     required this.paymentMethod,
     required this.paymentType,
     required this.paymentAccount,
+    required this.currency,
     required this.settlementList,
   });
 

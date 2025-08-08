@@ -18,6 +18,7 @@ PaymentCreateRequest _$PaymentCreateRequestFromJson(
   paymentMethod: json['paymentMethod'] as String,
   paymentType: json['paymentType'] as String,
   paymentAccount: (json['paymentAccount'] as num).toInt(),
+  currency: json['currency'] as String,
   settlementList: (json['settlementList'] as List<dynamic>)
       .map((e) => Settlement.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -35,6 +36,7 @@ Map<String, dynamic> _$PaymentCreateRequestToJson(
   'paymentName': instance.paymentName,
   'paymentType': instance.paymentType,
   'paymentAccount': instance.paymentAccount,
+  'currency': instance.currency,
   'settlementList': instance.settlementList,
 };
 

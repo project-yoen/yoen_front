@@ -15,6 +15,8 @@ PaymentResponse _$PaymentResponseFromJson(Map<String, dynamic> json) =>
       payerType: json['payerType'] as String,
       payTime: json['payTime'] as String,
       paymentAccount: (json['paymentAccount'] as num).toInt(),
+      currency: json['currency'] as String,
+      paymentType: json['paymentType'] as String,
     );
 
 Map<String, dynamic> _$PaymentResponseToJson(PaymentResponse instance) =>
@@ -26,4 +28,6 @@ Map<String, dynamic> _$PaymentResponseToJson(PaymentResponse instance) =>
       'payerType': instance.payerType,
       'payTime': instance.payTime,
       'paymentAccount': instance.paymentAccount,
+      'currency': instance.currency,
+      'paymentType': instance.paymentType,
     };

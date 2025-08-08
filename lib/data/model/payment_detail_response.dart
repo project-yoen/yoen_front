@@ -23,6 +23,7 @@ class PaymentDetailResponse {
   final String? payTime;
 
   final int? paymentAccount;
+  final String? currency;
   final List<SettlementResponse>? settlements;
   final List<PaymentImageResponse>? images;
 
@@ -39,6 +40,7 @@ class PaymentDetailResponse {
     this.exchangeRate,
     this.payTime,
     this.paymentAccount,
+    this.currency,
     this.settlements,
     this.images,
   });

@@ -25,6 +25,7 @@ PaymentDetailResponse _$PaymentDetailResponseFromJson(
   exchangeRate: (json['exchangeRate'] as num?)?.toDouble(),
   payTime: json['payTime'] as String?,
   paymentAccount: (json['paymentAccount'] as num?)?.toInt(),
+  currency: json['currency'] as String?,
   settlements: (json['settlements'] as List<dynamic>?)
       ?.map((e) => SettlementResponse.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -48,6 +49,7 @@ Map<String, dynamic> _$PaymentDetailResponseToJson(
   'exchangeRate': instance.exchangeRate,
   'payTime': instance.payTime,
   'paymentAccount': instance.paymentAccount,
+  'currency': instance.currency,
   'settlements': instance.settlements?.map((e) => e.toJson()).toList(),
   'images': instance.images?.map((e) => e.toJson()).toList(),
 };

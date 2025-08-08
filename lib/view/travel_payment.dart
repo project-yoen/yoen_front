@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:yoen_front/data/dialog/payment_detail_dialog.dart';
-import 'package:yoen_front/data/model/payment_response.dart';
+// 공용 다이얼로그 & 타일
+import 'package:yoen_front/data/dialog/confirm.dart';
+import 'package:yoen_front/data/dialog/openers.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/widget/payment_tile.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -53,7 +54,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   Widget _buildBody(PaymentState state) {
     switch (state.getStatus) {
       case Status.loading:
-        // 로딩 상태: 스켈레톤 리스트
+        // 스켈레톤 리스트
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
@@ -87,173 +88,43 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
                   itemCount: state.payments.length,
-                  itemBuilder: (context, index) =>
-                      _buildPaymentCard(state.payments[index]),
+                  itemBuilder: (context, index) {
+                    final payment = state.payments[index];
+                    return PaymentTile(
+                      payment: payment,
+                      onTap: () async {
+                        await openPaymentDetailDialog(context, payment);
+                      },
+                      onMenuAction: (action) async {
+                        if (action == 'delete') {
+                          final ok = await showConfirmDialog(
+                            context,
+                            title: '기록 삭제',
+                            content: '\'${payment.paymentName}\'을(를) 삭제하시겠습니까?',
+                          );
+                          if (ok) {
+                            await ref
+                                .read(paymentNotifierProvider.notifier)
+                                .deletePayment(payment.paymentId);
+                            // _fetchPayments();
+                          }
+                        } else if (action == 'edit') {
+                          // TODO: 수정 로직 연결 시 이곳에서 처리 후 필요하면 _fetchData()
+                        }
+                      },
+                    );
+                  },
                 ),
         );
 
       default:
-        // 초기 등 기타 상태도 스켈레톤으로 통일
+        // 초기 등 기타 상태도 스켈레톤
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
           itemBuilder: (_, __) => const _PaymentCardSkeleton(),
         );
     }
-  }
-
-  Widget _buildPaymentCard(PaymentResponse payment) {
-    final paymentTime = DateTime.parse(payment.payTime);
-    final formattedTime = DateFormat('a h:mm', 'ko_KR').format(paymentTime);
-    final formattedAmount = NumberFormat(
-      '#,###',
-    ).format(payment.paymentAccount);
-
-    Offset? tapPosition;
-
-    return GestureDetector(
-      onTapDown: (d) => tapPosition = d.globalPosition,
-      child: InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (_) => PaymentDetailDialog(paymentId: payment.paymentId),
-          );
-        },
-        onLongPress: () async {
-          if (tapPosition == null) return;
-          final overlay =
-              Overlay.of(context).context.findRenderObject() as RenderBox;
-
-          final result = await showMenu<String>(
-            context: context,
-            position: RelativeRect.fromLTRB(
-              tapPosition!.dx,
-              tapPosition!.dy,
-              overlay.size.width - tapPosition!.dx,
-              overlay.size.height - tapPosition!.dy,
-            ),
-            items: const [
-              PopupMenuItem<String>(value: 'edit', child: Text('수정')),
-              PopupMenuItem<String>(value: 'delete', child: Text('삭제')),
-            ],
-          );
-
-          if (result == 'edit') {
-            // TODO: 수정 로직
-          } else if (result == 'delete') {
-            _showDeleteConfirmDialog(payment);
-          }
-        },
-        child: Card(
-          margin: const EdgeInsets.only(bottom: 16.0),
-          elevation: 4.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 결제이름 + 카테고리
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        payment.paymentName,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Text(
-                      payment.categoryName,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '결제자',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          payment.payer ?? '',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 32),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '결제금액',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$formattedAmount원',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      formattedTime,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmDialog(PaymentResponse payment) {
-    showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text('기록 삭제'),
-          content: Text('\'${payment.paymentName}\'을(를) 삭제하시겠습니까?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                ref
-                    .read(paymentNotifierProvider.notifier)
-                    .deletePayment(payment.paymentId);
-                Navigator.of(context).pop();
-              },
-              child: const Text('예'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('아니오'),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
 
@@ -277,14 +148,11 @@ class _PaymentCardSkeleton extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
+            double vw(double x) => x.clamp(0, w);
 
-            double vw(double x) => x.clamp(0, w); // 안전장치
-            // 상단 제목/카테고리: 제목은 60~70% 범위, 카테고리는 18~22% 범위
             final titleW = vw(w * 0.64);
             final catW = vw(w * 0.20);
-
-            // 하단 라인: 라벨/값 쌍 2개 + 시간
-            final labelW = vw(w * 0.16); // "결제자", "결제금액" 등
+            final labelW = vw(w * 0.16);
             final valueW = vw(w * 0.26);
             final timeW = vw(w * 0.18);
 
@@ -303,13 +171,10 @@ class _PaymentCardSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── 제목 + 카테고리
                   Row(
                     children: [bar(titleW, 18), const Spacer(), bar(catW, 14)],
                   ),
                   const SizedBox(height: 12),
-
-                  // ── 결제자 / 금액 / 시간 (작은 화면에서 자동 줄바꿈 허용)
                   Wrap(
                     spacing: 16,
                     runSpacing: 10,
@@ -318,7 +183,7 @@ class _PaymentCardSkeleton extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          bar(labelW * .6, 10), // 라벨은 더 짧게
+                          bar(labelW * .6, 10),
                           const SizedBox(width: 8),
                           bar(valueW, 16),
                         ],

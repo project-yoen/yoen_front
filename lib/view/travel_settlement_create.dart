@@ -1,25 +1,29 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:yoen_front/data/dialog/settlement_user_dialog.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/model/settlement_item.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_create_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
-
-import '../data/notifier/travel_list_notifier.dart';
-import '../data/widget/saving_badge.dart';
+import 'package:yoen_front/data/widget/progress_badge.dart';
 
 class TravelSettlementCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
   final String paymentType;
 
+  /// 상위에서 고정 통화 전달: 'YEN' 또는 'WON'
+  final String currencyCode;
+
   const TravelSettlementCreateScreen({
     super.key,
     required this.travelId,
     required this.paymentType,
+    required this.currencyCode, // 'YEN' | 'WON'
   });
 
   @override
@@ -32,52 +36,63 @@ class _TravelSettlementCreateScreenState
   final _formKey = GlobalKey<FormState>();
   final _listKey = GlobalKey<AnimatedListState>();
 
+  String get _currencyLabel => widget.currencyCode == 'YEN' ? '엔' : '원';
+
+  int _safeParseAmount(String text) {
+    if (text.trim().isEmpty) return 0;
+    return int.tryParse(text.replaceAll(',', '')) ?? 0;
+  }
+
   Future<void> _savePayment(
     PaymentCreateState state,
     PaymentCreateNotifier notifier,
   ) async {
-    if (_formKey.currentState!.validate()) {
-      for (final item in state.settlementItems) {
-        if (item.travelUserIds.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('각 정산 항목에 참여 유저를 선택해주세요.')),
-          );
-          return;
-        }
-      }
-      final settlementList = state.settlementItems.map((item) {
-        return Settlement(
-          settlementName: item.nameController.text,
-          amount: int.parse(item.amountController.text),
-          isPaid: item.isPaid,
-          travelUsers: item.travelUserIds,
+    if (!_formKey.currentState!.validate()) return;
+
+    // 각 항목 참여자 체크
+    for (final item in state.settlementItems) {
+      if (item.travelUserIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('각 정산 항목에 참여 유저를 선택해주세요.')),
         );
-      }).toList();
-
-      final totalAmount = settlementList.fold<int>(
-        0,
-        (sum, item) => sum + item.amount,
-      );
-
-      final request = PaymentCreateRequest(
-        travelId: widget.travelId,
-        travelUserId: state.payerTravelUserId,
-        categoryId: state.categoryId!,
-        payerType: state.payerType!,
-        payTime: state.payTime!.toIso8601String(),
-        paymentName: state.paymentName!,
-        paymentMethod: state.paymentMethod!,
-        paymentType: widget.paymentType,
-        paymentAccount: totalAmount,
-        settlementList: settlementList,
-      );
-
-      final imageFiles = state.images.map((image) => File(image.path)).toList();
-
-      await ref
-          .read(paymentNotifierProvider.notifier)
-          .createPayment(request, imageFiles);
+        return;
+      }
     }
+
+    // currency는 화면 파라미터(widget.currencyCode)로 고정
+    final settlementList = state.settlementItems.map((item) {
+      return Settlement(
+        settlementName: item.nameController.text,
+        amount: _safeParseAmount(item.amountController.text),
+        isPaid: item.isPaid,
+        travelUsers: item.travelUserIds,
+      );
+    }).toList();
+
+    final totalAmount = settlementList.fold<int>(
+      0,
+      (sum, item) => sum + item.amount,
+    );
+
+    final request = PaymentCreateRequest(
+      travelId: widget.travelId,
+      travelUserId: state.payerTravelUserId,
+      categoryId: state.categoryId!,
+      payerType: state.payerType!,
+      payTime: state.payTime!.toIso8601String(),
+      paymentName: state.paymentName!,
+      paymentMethod: state.paymentMethod!,
+      paymentType: widget.paymentType,
+      paymentAccount: totalAmount,
+      currency: widget.currencyCode,
+      settlementList: settlementList,
+    );
+
+    final imageFiles = state.images.map((x) => File(x.path)).toList();
+
+    await ref
+        .read(paymentNotifierProvider.notifier)
+        .createPayment(request, imageFiles);
   }
 
   @override
@@ -92,189 +107,363 @@ class _TravelSettlementCreateScreenState
       }
     });
 
-    final currencyProvider = StateProvider<String>((ref) {
-      final selectedNation =
-          ref.read(travelListNotifierProvider).selectedTravel?.nation ??
-          'KOREA';
-      return selectedNation == 'JAPAN' ? '엔' : '원';
-    });
+    final color = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
-    final paymentCreateState = ref.watch(paymentCreateNotifierProvider);
-    final paymentCreateNotifier = ref.read(
-      paymentCreateNotifierProvider.notifier,
-    );
+    final state = ref.watch(paymentCreateNotifierProvider);
+    final notifier = ref.read(paymentCreateNotifierProvider.notifier);
     final paymentState = ref.watch(paymentNotifierProvider);
 
+    // 합계 미리보기
+    final total = state.settlementItems
+        .map((e) => _safeParseAmount(e.amountController.text))
+        .fold<int>(0, (a, b) => a + b);
+
     return Scaffold(
-      // ── AppBar actions 교체 ──
       appBar: AppBar(
         title: const Text('정산 내역 추가'),
         actions: [
           if (paymentState.createStatus == Status.loading)
-            ProgressBadge(label: "저장 중") // <- 원형 로딩바 대신 가벼운 배지
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Center(child: ProgressBadge(label: "저장 중")),
+            )
           else
             IconButton(
-              onPressed: () =>
-                  _savePayment(paymentCreateState, paymentCreateNotifier),
+              tooltip: '저장',
+              onPressed: () => _savePayment(state, notifier),
               icon: const Icon(Icons.check),
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Expanded(
-                child: AnimatedList(
-                  key: _listKey,
-                  initialItemCount: paymentCreateState.settlementItems.length,
-                  itemBuilder: (context, index, animation) {
-                    return _buildAnimatedSettlementItem(
-                      paymentCreateState.settlementItems[index],
-                      animation,
-                      index,
-                    );
-                  },
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 합계 카드
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: color.outlineVariant),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color.primary.withOpacity(.1),
+                    child: Icon(Icons.summarize, color: color.primary),
+                  ),
+                  title: Text(
+                    '총 정산 금액',
+                    style: text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '입력된 항목의 합계입니다.',
+                    style: TextStyle(color: color.onSurfaceVariant),
+                  ),
+                  trailing: Text(
+                    '${_formatCurrency(total)} $_currencyLabel',
+                    style: text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: () =>
-                    paymentCreateNotifier.addSettlementItem(_listKey),
-                icon: const Icon(Icons.add),
-                label: const Text('정산 항목 추가'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 40),
+            ),
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Form(
+                  key: _formKey,
+                  child: AnimatedList(
+                    key: _listKey,
+                    initialItemCount: state.settlementItems.length,
+                    itemBuilder: (context, index, animation) {
+                      return SizeTransition(
+                        sizeFactor: animation,
+                        child: _SettlementCard(
+                          index: index,
+                          item: state.settlementItems[index],
+                          currencyLabel: _currencyLabel, // 표시에만 사용
+                          onRemove: state.settlementItems.length > 1
+                              ? () => notifier.removeSettlementItem(
+                                  index,
+                                  _listKey,
+                                  (it, anim, i) => SizeTransition(
+                                    sizeFactor: anim,
+                                    child: _SettlementCard(
+                                      index: i,
+                                      item: it,
+                                      currencyLabel: _currencyLabel,
+                                      onRemove: null,
+                                      onPickUsers: () {},
+                                    ),
+                                  ),
+                                )
+                              : null,
+                          onPickUsers: () async {
+                            final selected =
+                                await showDialog<
+                                  List<TravelUserDetailResponse>
+                                >(
+                                  context: context,
+                                  builder: (_) => SettlementUserDialog(
+                                    travelId: widget.travelId,
+                                    initialSelectedUserIds: state
+                                        .settlementItems[index]
+                                        .travelUserIds,
+                                  ),
+                                );
+                            if (selected != null) {
+                              setState(() {
+                                final ids = selected
+                                    .map((e) => e.travelUserId)
+                                    .toList();
+                                final names = selected
+                                    .map((e) => e.travelNickName)
+                                    .toList();
+                                state.settlementItems[index].travelUserIds =
+                                    ids;
+                                state.settlementItems[index].travelUserNames =
+                                    names;
+                              });
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // 항목 추가
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => notifier.addSettlementItem(_listKey),
+                      icon: const Icon(Icons.add),
+                      label: const Text('정산 항목 추가'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedSettlementItem(
-    SettlementItem item,
-    Animation<double> animation,
-    int index,
-  ) {
-    return SizeTransition(
-      sizeFactor: animation,
-      child: _buildSettlementItem(item, index),
-    );
+  String _formatCurrency(int value) {
+    final s = value.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      final idxFromEnd = s.length - i;
+      buf.write(s[i]);
+      if (idxFromEnd > 1 && idxFromEnd % 3 == 1) buf.write(',');
+    }
+    return buf.toString();
+  }
+}
+
+/// 항목 카드(통화 선택 UI 제거, 표시에만 라벨 사용)
+class _SettlementCard extends StatefulWidget {
+  final int index;
+  final SettlementItem item;
+
+  /// 화면 표시용 '엔' | '원'
+  final String currencyLabel;
+
+  final VoidCallback? onRemove;
+  final VoidCallback onPickUsers;
+
+  const _SettlementCard({
+    required this.index,
+    required this.item,
+    required this.currencyLabel,
+    required this.onRemove,
+    required this.onPickUsers,
+  });
+
+  @override
+  State<_SettlementCard> createState() => _SettlementCardState();
+}
+
+class _SettlementCardState extends State<_SettlementCard> {
+  late bool _isPaid;
+
+  @override
+  void initState() {
+    super.initState();
+    _isPaid = widget.item.isPaid;
   }
 
-  Widget _buildSettlementItem(SettlementItem item, int index) {
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: c.outlineVariant),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: Column(
           children: [
+            // 헤더
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '정산 항목 ${index + 1}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  '정산 항목 ${widget.index + 1}',
+                  style: t.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                if (ref
-                        .read(paymentCreateNotifierProvider)
-                        .settlementItems
-                        .length >
-                    1)
+                const Spacer(),
+                if (widget.onRemove != null)
                   IconButton(
+                    tooltip: '항목 제거',
+                    onPressed: widget.onRemove,
                     icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () => ref
-                        .read(paymentCreateNotifierProvider.notifier)
-                        .removeSettlementItem(
-                          index,
-                          _listKey,
-                          _buildAnimatedSettlementItem,
-                        ),
                   ),
               ],
             ),
+            const SizedBox(height: 4),
+
+            // 내역 이름
             TextFormField(
-              controller: item.nameController,
-              decoration: const InputDecoration(labelText: '결제 내역 이름'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '내역 이름을 입력하세요.';
-                }
-                return null;
-              },
+              controller: widget.item.nameController,
+              decoration: const InputDecoration(
+                labelText: '결제 내역 이름',
+                hintText: '예) 편의점, 식사, 교통 등',
+              ),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? '내역 이름을 입력하세요.' : null,
             ),
+            const SizedBox(height: 10),
+
+            // 금액 (통화 라벨만 표시)
             TextFormField(
-              controller: item.amountController,
+              controller: widget.item.amountController,
               decoration: InputDecoration(
                 labelText: '금액',
-                suffix: Container(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      // value: selectedCurrency,
-                      icon: const Icon(Icons.arrow_drop_down),
-                      style: const TextStyle(color: Colors.black, fontSize: 14),
-                      items: ['원', '엔'].map((currency) {
-                        return DropdownMenuItem<String>(
-                          value: currency,
-                          child: Text(currency),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          // ref.read(currencyProvider.notifier).state = value;
-                        }
-                      },
-                    ),
+                hintText: '숫자만 입력',
+                suffix: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Text(
+                    widget.currencyLabel, // '엔' 또는 '원'
+                    style: t.bodyMedium?.copyWith(color: c.onSurfaceVariant),
                   ),
                 ),
               ),
               keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '금액을 입력하세요.';
-                }
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: (v) {
+                if (v == null || v.isEmpty) return '금액을 입력하세요.';
+                final parsed = int.tryParse(v);
+                if (parsed == null || parsed <= 0) return '올바른 금액을 입력하세요.';
                 return null;
               },
             ),
-            CheckboxListTile(
+            const SizedBox(height: 6),
+
+            // 정산 여부
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
               title: const Text('정산 여부'),
-              value: item.isPaid,
-              onChanged: (bool? value) {
+              value: _isPaid,
+              onChanged: (val) {
                 setState(() {
-                  item.isPaid = value ?? false;
+                  _isPaid = val;
+                  widget.item.isPaid = val;
                 });
               },
+              secondary: const Icon(Icons.verified_outlined),
             ),
-            ListTile(
-              title: const Text('참여 유저'),
-              subtitle: Text(item.travelUserNames.join(', ')),
-              trailing: const Icon(Icons.arrow_drop_down),
-              onTap: () async {
-                final selectedUsers =
-                    await showDialog<List<TravelUserDetailResponse>>(
-                      context: context,
-                      builder: (context) => SettlementUserDialog(
-                        travelId: widget.travelId,
-                        initialSelectedUserIds: item.travelUserIds,
+
+            // 참여 유저
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: widget.onPickUsers,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: c.outlineVariant),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '참여 유저',
+                      style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 6),
+                    if (widget.item.travelUserNames.isEmpty)
+                      Text(
+                        '선택되지 않음',
+                        style: t.bodyMedium?.copyWith(color: c.error),
+                      )
+                    else
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: -6,
+                        children: widget.item.travelUserNames
+                            .map(
+                              (name) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: c.primary.withOpacity(.12),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: c.primary.withOpacity(.35),
+                                  ),
+                                ),
+                                child: Text(
+                                  name,
+                                  style: TextStyle(
+                                    color: c.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
-                    );
-                if (selectedUsers != null) {
-                  setState(() {
-                    item.travelUserIds = selectedUsers
-                        .map((e) => e.travelUserId)
-                        .toList();
-                    item.travelUserNames = selectedUsers
-                        .map((e) => e.travelNickName)
-                        .toList();
-                  });
-                }
-              },
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(
+                        Icons.arrow_drop_down,
+                        color: c.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

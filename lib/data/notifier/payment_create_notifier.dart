@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ class PaymentCreateState {
   final int? payerTravelUserId;
   final String? payerName;
   final DateTime? payTime;
+  final String? currency; // YEN | WON
   final List<SettlementItem> settlementItems;
   final List<XFile> images;
 
@@ -26,6 +26,7 @@ class PaymentCreateState {
     this.payerTravelUserId,
     this.payerName,
     this.payTime,
+    this.currency,
     this.settlementItems = const [],
     this.images = const [],
   });
@@ -39,6 +40,7 @@ class PaymentCreateState {
     int? payerTravelUserId,
     String? payerName,
     DateTime? payTime,
+    String? currency,
     List<SettlementItem>? settlementItems,
     List<XFile>? images,
     bool clearPayer = false,
@@ -49,10 +51,12 @@ class PaymentCreateState {
       payerType: payerType ?? this.payerType,
       categoryId: categoryId ?? this.categoryId,
       categoryName: categoryName ?? this.categoryName,
-      payerTravelUserId:
-          clearPayer ? null : (payerTravelUserId ?? this.payerTravelUserId),
+      payerTravelUserId: clearPayer
+          ? null
+          : (payerTravelUserId ?? this.payerTravelUserId),
       payerName: clearPayer ? null : (payerName ?? this.payerName),
       payTime: payTime ?? this.payTime,
+      currency: currency ?? this.currency,
       settlementItems: settlementItems ?? this.settlementItems,
       images: images ?? this.images,
     );
@@ -72,6 +76,7 @@ class PaymentCreateNotifier extends StateNotifier<PaymentCreateState> {
         now.hour,
         now.minute,
       ),
+      currency: state.currency, // 화면에서 nation 기반으로 세팅해둔 값 유지
       settlementItems: [SettlementItem()],
     );
   }
@@ -85,6 +90,7 @@ class PaymentCreateNotifier extends StateNotifier<PaymentCreateState> {
     int? payerTravelUserId,
     String? payerName,
     DateTime? payTime,
+    String? currency,
     bool clearPayer = false,
   }) {
     state = state.copyWith(
@@ -96,6 +102,7 @@ class PaymentCreateNotifier extends StateNotifier<PaymentCreateState> {
       payerTravelUserId: payerTravelUserId,
       payerName: payerName,
       payTime: payTime,
+      currency: currency,
       clearPayer: clearPayer,
     );
   }
@@ -105,14 +112,17 @@ class PaymentCreateNotifier extends StateNotifier<PaymentCreateState> {
     final newItems = List<SettlementItem>.from(state.settlementItems)
       ..add(SettlementItem());
     state = state.copyWith(settlementItems: newItems);
-    listKey.currentState
-        ?.insertItem(newIndex, duration: const Duration(milliseconds: 300));
+    listKey.currentState?.insertItem(
+      newIndex,
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   void removeSettlementItem(
-      int index,
-      GlobalKey<AnimatedListState> listKey,
-      Widget Function(SettlementItem, Animation<double>, int) buildItem) {
+    int index,
+    GlobalKey<AnimatedListState> listKey,
+    Widget Function(SettlementItem, Animation<double>, int) buildItem,
+  ) {
     final removedItem = state.settlementItems[index];
     final newItems = List<SettlementItem>.from(state.settlementItems)
       ..removeAt(index);
@@ -135,6 +145,9 @@ class PaymentCreateNotifier extends StateNotifier<PaymentCreateState> {
 }
 
 final paymentCreateNotifierProvider =
-    StateNotifierProvider.autoDispose<PaymentCreateNotifier, PaymentCreateState>((ref) {
-  return PaymentCreateNotifier();
-});
+    StateNotifierProvider.autoDispose<
+      PaymentCreateNotifier,
+      PaymentCreateState
+    >((ref) {
+      return PaymentCreateNotifier();
+    });
