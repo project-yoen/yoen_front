@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:yoen_front/data/dialog/travel_detail_dialog.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/overview_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
@@ -14,8 +15,6 @@ import 'package:yoen_front/view/travel_payment.dart';
 import 'package:yoen_front/view/travel_payment_create.dart';
 import 'package:yoen_front/view/travel_record.dart';
 import 'package:yoen_front/view/travel_record_create.dart';
-import 'package:yoen_front/data/dialog/travel_detail_dialog.dart';
-import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
 import '../data/notifier/payment_notifier.dart';
