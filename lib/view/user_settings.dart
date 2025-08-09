@@ -244,7 +244,7 @@ class _UserDetailsScreenState extends ConsumerState<UserSettingsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const UserEditScreen(),
+                        builder: (context) => const UserProfileScreen(),
                       ),
                     );
                   },
