@@ -31,16 +31,10 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
   String _formatPayTime(String? iso) {
     if (iso == null || iso.isEmpty) return '-';
     try {
-      // ISO8601 문자열 파싱
       final dt = DateTime.parse(iso);
-
-      // 서버가 UTC(Z)로 내려줄 수 있으니 로컬로 변환
       final local = dt.isUtc ? dt.toLocal() : dt;
-
-      // 예: 2025.08.05 (화) 오후 3:27
       return DateFormat('yyyy.MM.dd (E) a h:mm', 'ko_KR').format(local);
     } catch (_) {
-      // 혹시 형식이 예상과 달라도 앱이 죽지 않게 안전하게 처리
       return iso;
     }
   }
@@ -97,11 +91,9 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
           return const Text('상세 정보를 불러올 수 없습니다.');
         }
 
-        // 통화코드 -> 엔/원 변환
         final currencyCode = (detail.currency ?? 'WON').toUpperCase();
         final currencyLabel = currencyCode == 'YEN' ? '엔' : '원';
 
-        // 이미지 리스트 안전하게 잡기
         final images = (detail.images ?? [])
             .where((img) => _imageUrlOf(img).isNotEmpty)
             .toList();
@@ -129,58 +121,153 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
 
               const SizedBox(height: 16),
 
-              // 정산 정보
+              // 정산 정보 (참여자별 isPaid 반영)
               _sectionTitle('정산 정보', t),
               if (detail.settlements != null && detail.settlements!.isNotEmpty)
-                ...detail.settlements!.map(
-                  (settlement) => Container(
+                ...detail.settlements!.map((settlement) {
+                  final users = settlement.travelUsers; // List<...> (isPaid 포함)
+                  final total = users.length;
+                  final paidCount = users.where(_userPaid).length;
+                  final allPaid = total > 0 && paidCount == total;
+
+                  return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: c.surfaceVariant.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          settlement.settlementName,
-                          style: t.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        // 제목 + 진행도 배지
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                settlement.settlementName,
+                                style: t.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: allPaid
+                                    ? c.primary.withOpacity(.1)
+                                    : c.error.withOpacity(.08),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: allPaid
+                                      ? c.primary.withOpacity(.3)
+                                      : c.error.withOpacity(.25),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    allPaid
+                                        ? Icons.check_circle
+                                        : Icons.error_outline,
+                                    size: 16,
+                                    color: allPaid ? c.primary : c.error,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$paidCount/$total',
+                                    style: t.labelMedium?.copyWith(
+                                      color: allPaid ? c.primary : c.error,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
+
+                        // 금액
                         Text(
                           '금액: ${NumberFormat('#,###').format(settlement.amount)}$currencyLabel',
                           style: t.bodySmall,
                         ),
-                        Text(
-                          '정산 여부: ${settlement.isPaid ? '완료' : '미완료'}',
-                          style: t.bodySmall,
-                        ),
-                        if (settlement.travelUsers.isNotEmpty)
+
+                        const SizedBox(height: 6),
+
+                        // 참여자별 정산 여부(읽기 전용)
+                        if (users.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: -6,
+                            children: users.map((u) {
+                              final paid = _userPaid(u);
+                              final name = (u.travelNickname ?? '')
+                                  .toString()
+                                  .trim();
+                              return FilterChip(
+                                label: Text(name.isEmpty ? '-' : name),
+                                selected: paid,
+                                onSelected: null, // 읽기 전용
+                                avatar: paid
+                                    ? const Icon(Icons.done, size: 18)
+                                    : null,
+                              );
+                            }).toList(),
+                          )
+                        else
                           Text(
-                            '대상자: ${settlement.travelUsers.map((u) => u.travelNickName).join(', ')}',
+                            '대상자 없음',
                             style: t.bodySmall?.copyWith(
                               color: c.onSurfaceVariant,
-                              fontSize: 12,
                             ),
                           ),
+
+                        // 미정산자 목록
+                        if (users.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Builder(
+                            builder: (_) {
+                              final unpaidNames = users
+                                  .where((u) => !_userPaid(u))
+                                  .map((u) => u.travelNickname)
+                                  .whereType<String>()
+                                  .toList();
+                              if (unpaidNames.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                '미정산: ${unpaidNames.join(', ')}',
+                                style: t.bodySmall?.copyWith(color: c.error),
+                              );
+                            },
+                          ),
+                        ],
                       ],
                     ),
-                  ),
-                )
+                  );
+                })
               else
                 Text(
                   '정산 내역이 없습니다.',
                   style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
                 ),
-              // --- 정산 정보 블록 끝난 직후에 추가 ---
+
               const SizedBox(height: 16),
+
+              // 영수증/사진
               if (images.isNotEmpty) ...[
                 _sectionTitle('영수증/사진', t),
                 const SizedBox(height: 8),
-                _imageGrid(images, context), // 맨 아래로 이동
+                _imageGrid(images, context),
               ],
             ],
           ),
@@ -191,15 +278,22 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
     }
   }
 
+  // ---- 참여자 isPaid 안전 판독 ----
+  bool _userPaid(dynamic user) {
+    try {
+      final v = (user as dynamic).isPaid;
+      if (v is bool) return v;
+      if (v is int) return v != 0;
+      if (v is String) return v.toLowerCase() == 'true';
+    } catch (_) {}
+    return false;
+  }
+
   // 이미지 썸네일 그리드
-  // 1) content 빌드 그대로 두고,
-  // 2) _imageGrid 만 교체
   Widget _imageGrid(List<dynamic> images, BuildContext context) {
     const spacing = 8.0;
-
-    // Dialog의 가용 폭 기반으로 한 줄에 몇 개 넣을지 계산
     final maxWidth = MediaQuery.of(context).size.width - 48; // 좌우 24px 여백 가정
-    const minItem = 100.0; // 최소 썸네일 폭
+    const minItem = 100.0;
     final crossAxisCount = (maxWidth / (minItem + spacing)).floor().clamp(1, 6);
     final itemSize =
         (maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
@@ -210,10 +304,8 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
       children: images.map((img) {
         final url = _imageUrlOf(img).trim();
         if (url.isEmpty) return const SizedBox.shrink();
-
         return SizedBox(
           width: itemSize,
-          // 정사각형 썸네일: aspectRatio 1.0로 맞춤
           child: InkWell(
             onTap: () => _openImageViewer(context, url),
             child: ExcludeSemantics(
@@ -229,7 +321,6 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
     );
   }
 
-  // 단일 이미지 확대 뷰어
   void _openImageViewer(BuildContext context, String url) {
     if (url.isEmpty) return;
     showDialog(
@@ -260,13 +351,10 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
     );
   }
 
-  // 이미지 URL 안전 추출 (모델 구현별 key 차이 흡수)
   String _imageUrlOf(dynamic img) {
-    // 예상 가능한 키들 우선순위로 검사
     try {
-      // e.g. PaymentImage(imageUrl), ImageResponse(url), etc.
       if (img == null) return '';
-      if (img is String) return img; // 이미 url 문자열인 경우
+      if (img is String) return img;
       if ((img as dynamic).imageUrl != null) {
         return (img as dynamic).imageUrl as String;
       }

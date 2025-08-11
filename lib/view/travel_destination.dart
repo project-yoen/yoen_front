@@ -278,9 +278,7 @@ class _TravelDestinationScreenState
                     // ---- Destination List: 고정 높이 + 카드 ----
                     Builder(
                       builder: (ctx) {
-                        // 평소엔 40% 고정(최소 260, 최대 420), 키보드 열리면 남은 공간 전부 사용
-                        final parent = ctx.findRenderObject() as RenderBox?;
-                        // 이미 바깥의 LayoutBuilder(cons.maxHeight)를 쓰고 있다면 fixed는 그대로 재사용 가능
+                        final c = Theme.of(ctx).colorScheme;
                         final fixedListHeight =
                             (MediaQuery.of(ctx).size.height * 0.40).clamp(
                               260.0,
@@ -290,9 +288,7 @@ class _TravelDestinationScreenState
                         final listCard = Card(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            side: BorderSide(
-                              color: Theme.of(ctx).colorScheme.outline,
-                            ),
+                            side: BorderSide(color: c.outline),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -300,13 +296,19 @@ class _TravelDestinationScreenState
                         );
 
                         if (keyboardOpen) {
-                          // 입력 중: 남은 세로 공간을 다 차지해 오버플로우 방지
+                          // 입력 중: 남은 공간 전부 사용 → 절대 오버플로우 없음
                           return Expanded(child: listCard);
                         } else {
-                          // 입력 아님: 보기 좋게 고정 비율/픽셀
-                          return SizedBox(
-                            height: fixedListHeight,
-                            child: listCard,
+                          // 입력 아님: 최대 fixedListHeight까지. 공간이 부족하면 자동 축소.
+                          return Flexible(
+                            fit: FlexFit.loose,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                // 필요하면 최소값도 줄 수 있음 (예: minHeight: 180)
+                                maxHeight: fixedListHeight,
+                              ),
+                              child: listCard,
+                            ),
                           );
                         }
                       },
