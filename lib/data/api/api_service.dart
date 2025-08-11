@@ -25,6 +25,7 @@ import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../model/payment_detail_response.dart';
 import '../model/payment_response.dart';
+import '../model/payment_update_request.dart';
 import '../model/register_request.dart';
 import 'package:yoen_front/data/model/travel_detail_response.dart';
 import '../model/travel_profile_image.dart';
@@ -164,6 +165,14 @@ abstract class ApiService {
 
   @DELETE("/payment/delete")
   Future<ApiResponse<String>> deletePayment(@Query("paymentId") int paymentId);
+
+  @MultiPart()
+  @POST("/payment/update")
+  Future<ApiResponse<String>> updatePayment(
+    @Part(name: 'dto', contentType: 'application/json')
+    PaymentUpdateRequest request,
+    @Part(name: 'images') List<File> images,
+  );
 
   @GET("/payment")
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
