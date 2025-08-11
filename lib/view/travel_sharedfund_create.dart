@@ -108,7 +108,7 @@ class _TravelSharedfundCreateScreenState
           Settlement(
             settlementName: '공금 입금',
             amount: amount,
-            participants: participants,
+            travelUsers: participants,
           ),
         ],
       );

@@ -69,7 +69,7 @@ class _TravelSettlementCreateScreenState
       return Settlement(
         settlementName: item.nameController.text,
         amount: _safeParseAmount(item.amountController.text),
-        participants: participants,
+        travelUsers: participants,
       );
     }).toList();
 

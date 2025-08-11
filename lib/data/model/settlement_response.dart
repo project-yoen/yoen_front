@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 
 part 'settlement_response.g.dart';
@@ -10,7 +11,7 @@ class SettlementResponse {
   final String settlementName;
   final int amount;
   final bool isPaid;
-  final List<TravelUserDetailResponse> travelUsers;
+  final List<SettlementParticipant> travelUsers;
 
   SettlementResponse({
     required this.settlementId,

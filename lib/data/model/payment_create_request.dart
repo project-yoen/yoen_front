@@ -43,12 +43,12 @@ class Settlement {
   final int amount;
 
   /// 사람 기준 정산 상태
-  final List<SettlementParticipant> participants;
+  final List<SettlementParticipant> travelUsers;
 
   Settlement({
     required this.settlementName,
     required this.amount,
-    required this.participants,
+    required this.travelUsers,
   });
 
   factory Settlement.fromJson(Map<String, dynamic> json) =>
@@ -59,9 +59,14 @@ class Settlement {
 @JsonSerializable()
 class SettlementParticipant {
   final int travelUserId;
+  final String? travelNickname;
   final bool isPaid;
 
-  SettlementParticipant({required this.travelUserId, required this.isPaid});
+  SettlementParticipant({
+    required this.travelUserId,
+    this.travelNickname,
+    required this.isPaid,
+  });
 
   factory SettlementParticipant.fromJson(Map<String, dynamic> json) =>
       _$SettlementParticipantFromJson(json);

@@ -43,7 +43,7 @@ Map<String, dynamic> _$PaymentRequestToJson(PaymentRequest instance) =>
 Settlement _$SettlementFromJson(Map<String, dynamic> json) => Settlement(
   settlementName: json['settlementName'] as String,
   amount: (json['amount'] as num).toInt(),
-  participants: (json['participants'] as List<dynamic>)
+  travelUsers: (json['travelUsers'] as List<dynamic>)
       .map((e) => SettlementParticipant.fromJson(e as Map<String, dynamic>))
       .toList(),
 );
@@ -52,13 +52,14 @@ Map<String, dynamic> _$SettlementToJson(Settlement instance) =>
     <String, dynamic>{
       'settlementName': instance.settlementName,
       'amount': instance.amount,
-      'participants': instance.participants,
+      'travelUsers': instance.travelUsers,
     };
 
 SettlementParticipant _$SettlementParticipantFromJson(
   Map<String, dynamic> json,
 ) => SettlementParticipant(
   travelUserId: (json['travelUserId'] as num).toInt(),
+  travelNickname: json['travelNickname'] as String?,
   isPaid: json['isPaid'] as bool,
 );
 
@@ -66,5 +67,6 @@ Map<String, dynamic> _$SettlementParticipantToJson(
   SettlementParticipant instance,
 ) => <String, dynamic>{
   'travelUserId': instance.travelUserId,
+  'travelNickname': instance.travelNickname,
   'isPaid': instance.isPaid,
 };
