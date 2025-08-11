@@ -10,6 +10,7 @@ class TravelCreateResponse {
   final String endDate;
   final String nation;
   final int numOfPeople;
+  final int numOfJoinedPeople;
   final int? sharedFund;
 
   TravelCreateResponse({
@@ -19,6 +20,7 @@ class TravelCreateResponse {
     required this.endDate,
     required this.nation,
     required this.numOfPeople,
+    required this.numOfJoinedPeople,
     this.sharedFund,
   });
 

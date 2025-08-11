@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/user_response.dart';
 import 'package:yoen_front/data/notifier/user_notifier.dart';
 
+import '../data/dialog/single_day_picker_dialog.dart';
+import '../data/dialog/universal_date_picker_dialog.dart';
+
 /// ===============================
 /// 0) 개인정보 조회 화면 (진입점)
 /// ===============================
@@ -261,14 +264,29 @@ class _UserEditDialogState extends ConsumerState<UserEditDialog> {
   }
 
   Future<void> _selectBirthday(BuildContext context) async {
-    final picked = await showDatePicker(
+    // 생일 범위: 1900-01-01 ~ 오늘
+    final first = DateTime(1900, 1, 1);
+    final last = DateTime.now();
+    final initial = _selectedBirthday == null
+        ? DateTime(2000, 1, 1)
+        : _selectedBirthday!.isBefore(first)
+        ? first
+        : _selectedBirthday!.isAfter(last)
+        ? last
+        : _selectedBirthday!;
+
+    final picked = await showDialog<DateTime>(
       context: context,
-      initialDate: _selectedBirthday ?? DateTime(2000, 1, 1),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      helpText: '생일 선택',
+      builder: (_) => UniversalDatePickerDialog.single(
+        minDate: DateTime(1900, 1, 1),
+        maxDate: DateTime.now(),
+        initialDate: _selectedBirthday ?? DateTime(2000, 1, 1),
+      ),
     );
-    if (picked != null) setState(() => _selectedBirthday = picked);
+
+    if (picked != null) {
+      setState(() => _selectedBirthday = picked);
+    }
   }
 
   InputDecoration _inputDecoration(

@@ -6,6 +6,7 @@ part 'travel_response.g.dart';
 class TravelResponse {
   final int travelId;
   final int numOfPeople;
+  final int numOfJoinedPeople;
   final String travelName;
   final String startDate;
   final String endDate;
@@ -15,6 +16,7 @@ class TravelResponse {
   TravelResponse({
     required this.travelId,
     required this.numOfPeople,
+    required this.numOfJoinedPeople,
     required this.travelName,
     required this.startDate,
     required this.endDate,

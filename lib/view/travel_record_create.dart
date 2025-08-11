@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -174,8 +173,7 @@ class _TravelRecordCreateScreenState
                           border: InputBorder.none,
                         ),
                         maxLines: 6,
-                        validator: (v) =>
-                            (v == null || v.isEmpty) ? '내용을 입력하세요.' : null,
+                        validator: (v) => null,
                       ),
                     ),
                   ),
