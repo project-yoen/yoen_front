@@ -41,13 +41,13 @@ class TravelAdditionalScreen extends ConsumerWidget {
               label: '사전 사용금액 등록',
               onPressed: () {
                 if (travel == null) return;
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (_) =>
-                //         // TravelPrepaymentCreateScreen(travelId: travel.travelId),
-                //   ),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        TravelPrepaymentCreateScreen(travelId: travel.travelId),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 16),

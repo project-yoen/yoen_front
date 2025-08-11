@@ -207,16 +207,35 @@ class _TravelSettlementCreateScreenState
                                 )
                               : null,
                           onPickUsers: () async {
+                            // 현재 선택된 유저들로 DTO 리스트 생성
+                            final currentParticipants = state
+                                .settlementItems[index]
+                                .travelUserIds
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                                  final id = entry.value;
+                                  final name = state
+                                      .settlementItems[index]
+                                      .travelUserNames[entry.key];
+                                  return SettlementParticipant(
+                                    travelUserId: id,
+                                    travelNickname: name,
+                                    isPaid: state
+                                        .settlementItems[index]
+                                        .settledUserIds
+                                        .contains(id),
+                                  );
+                                })
+                                .toList();
+
                             final selected =
-                                await showDialog<
-                                  List<TravelUserDetailResponse>
-                                >(
+                                await showDialog<List<SettlementParticipant>>(
                                   context: context,
                                   builder: (_) => SettlementUserDialog(
                                     travelId: widget.travelId,
-                                    initialSelectedUserIds: state
-                                        .settlementItems[index]
-                                        .travelUserIds,
+                                    initialParticipants: currentParticipants,
+                                    showPaidCheckBox: false,
                                   ),
                                 );
                             if (selected != null) {
@@ -225,7 +244,7 @@ class _TravelSettlementCreateScreenState
                                     .map((e) => e.travelUserId)
                                     .toList();
                                 final names = selected
-                                    .map((e) => e.travelNickName)
+                                    .map((e) => e.travelNickname ?? '')
                                     .toList();
 
                                 // 참여자 갱신 + 기존 정산완료 집합 정리(없는 사람 제거)

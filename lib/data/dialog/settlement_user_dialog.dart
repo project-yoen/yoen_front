@@ -1,17 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/api/api_provider.dart';
 
 class SettlementUserDialog extends ConsumerStatefulWidget {
   final int travelId;
-  final List<int> initialSelectedUserIds;
+  final List<SettlementParticipant> initialParticipants;
+  final bool showPaidCheckBox;
 
   const SettlementUserDialog({
     super.key,
     required this.travelId,
-    this.initialSelectedUserIds = const [],
+    this.initialParticipants = const [],
+    this.showPaidCheckBox = false,
   });
 
   @override
@@ -21,46 +24,56 @@ class SettlementUserDialog extends ConsumerStatefulWidget {
 
 class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
   late Future<List<TravelUserDetailResponse>> _usersFuture;
-
-  /// 선택 상태는 id 기준으로 관리(동등성 문제 방지)
-  late Set<int> _selectedIds;
+  late Map<int, SettlementParticipant> _selectedUsers;
 
   @override
   void initState() {
     super.initState();
     _usersFuture = _fetchUsers();
-    _selectedIds = widget.initialSelectedUserIds.toSet();
+    _selectedUsers = {
+      for (var p in widget.initialParticipants) p.travelUserId: p,
+    };
   }
 
   Future<List<TravelUserDetailResponse>> _fetchUsers() async {
     final api = ref.read(apiServiceProvider);
     final response = await api.getTravelUsers(widget.travelId);
-    return response.data ?? <TravelUserDetailResponse>[];
+    return response.data ?? [];
   }
 
-  String _genderLabel(String? gender) {
-    switch (gender) {
-      case 'MALE':
-        return '남성';
-      case 'FEMALE':
-        return '여성';
-      case 'OTHERS':
-        return '기타';
-      default:
-        return '';
-    }
+  void _onUserSelected(TravelUserDetailResponse user, bool isSelected) {
+    setState(() {
+      if (isSelected) {
+        _selectedUsers[user.travelUserId] = SettlementParticipant(
+          travelUserId: user.travelUserId,
+          travelNickname: user.travelNickName,
+          isPaid: _selectedUsers[user.travelUserId]?.isPaid ?? false,
+        );
+      } else {
+        _selectedUsers.remove(user.travelUserId);
+      }
+    });
+  }
+
+  void _onPaidStatusChanged(int travelUserId, bool isPaid) {
+    setState(() {
+      if (_selectedUsers.containsKey(travelUserId)) {
+        _selectedUsers[travelUserId] = SettlementParticipant(
+          travelUserId: _selectedUsers[travelUserId]!.travelUserId,
+          travelNickname: _selectedUsers[travelUserId]!.travelNickname,
+          isPaid: isPaid,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-
     return AlertDialog(
-      title: const Text('참여중인 유저'),
+      title: const Text('정산에 참여할 사람 선택'),
       content: SizedBox(
-        width: 340,
-        height: 420,
+        width: 300,
+        height: 400,
         child: FutureBuilder<List<TravelUserDetailResponse>>(
           future: _usersFuture,
           builder: (context, snapshot) {
@@ -68,105 +81,35 @@ class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return const Center(child: Text('사용자 정보를 불러오는데 실패했습니다.'));
+              return Center(child: Text('오류: ${snapshot.error}'));
             }
             final users = snapshot.data ?? [];
-            if (users.isEmpty) {
-              return const Center(child: Text('참여중인 사용자가 없습니다.'));
-            }
+            return ListView.builder(
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                final isSelected = _selectedUsers.containsKey(user.travelUserId);
+                final isPaid =
+                    isSelected ? _selectedUsers[user.travelUserId]!.isPaid : false;
 
-            return StatefulBuilder(
-              builder: (context, setStateSB) {
-                final allSelected =
-                    users.isNotEmpty && _selectedIds.length == users.length;
-                return Column(
-                  children: [
-                    // 상단 액션바: 전체 선택/해제
-                    Row(
-                      children: [
-                        Text(
-                          '선택됨 ${_selectedIds.length}/${users.length}',
-                          style: t.bodyMedium?.copyWith(
-                            color: c.onSurfaceVariant,
+                return CheckboxListTile(
+                  title: Text(user.travelNickName),
+                  value: isSelected,
+                  onChanged: (selected) =>
+                      _onUserSelected(user, selected ?? false),
+                  secondary: (isSelected && widget.showPaidCheckBox)
+                      ? Tooltip(
+                          message: '사전 정산 완료',
+                          child: Checkbox(
+                            value: isPaid,
+                            onChanged: (paid) => _onPaidStatusChanged(
+                                user.travelUserId, paid ?? false),
+                            tristate: false,
+                            side: const BorderSide(color: Colors.blue),
+                            activeColor: Colors.blue,
                           ),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: () {
-                            setStateSB(() {
-                              if (allSelected) {
-                                _selectedIds.clear();
-                              } else {
-                                _selectedIds = users
-                                    .map((u) => u.travelUserId)
-                                    .toSet();
-                              }
-                            });
-                          },
-                          icon: Icon(
-                            allSelected
-                                ? Icons.check_box
-                                : Icons.check_box_outline_blank,
-                            size: 18,
-                          ),
-                          label: Text(allSelected ? '전체해제' : '전체선택'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: users.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(height: 1, color: c.outlineVariant),
-                        itemBuilder: (context, index) {
-                          final u = users[index];
-                          final isSelected = _selectedIds.contains(
-                            u.travelUserId,
-                          );
-                          return ListTile(
-                            onTap: () {
-                              setStateSB(() {
-                                if (isSelected) {
-                                  _selectedIds.remove(u.travelUserId);
-                                } else {
-                                  _selectedIds.add(u.travelUserId);
-                                }
-                              });
-                            },
-                            leading: CircleAvatar(
-                              radius: 20,
-                              backgroundImage:
-                                  (u.imageUrl != null && u.imageUrl!.isNotEmpty)
-                                  ? CachedNetworkImageProvider(u.imageUrl!)
-                                  : null,
-                              child: (u.imageUrl == null || u.imageUrl!.isEmpty)
-                                  ? const Icon(Icons.person)
-                                  : null,
-                            ),
-                            title: Text(
-                              '${u.nickName} (${u.travelNickName})',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text(_genderLabel(u.gender)),
-                            trailing: Checkbox(
-                              value: isSelected,
-                              onChanged: (val) {
-                                setStateSB(() {
-                                  if (val == true) {
-                                    _selectedIds.add(u.travelUserId);
-                                  } else {
-                                    _selectedIds.remove(u.travelUserId);
-                                  }
-                                });
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                        )
+                      : null,
                 );
               },
             );
@@ -179,15 +122,9 @@ class _SettlementUserDialogState extends ConsumerState<SettlementUserDialog> {
           child: const Text('취소'),
         ),
         TextButton(
-          onPressed: () async {
-            // id 기반 선택을 실제 객체 리스트로 변환하여 반환
-            final users = await _usersFuture;
-            final selectedUsers = users
-                .where((u) => _selectedIds.contains(u.travelUserId))
-                .toList();
-            Navigator.of(context).pop(selectedUsers);
-          },
-          child: const Text('선택'),
+          onPressed: () =>
+              Navigator.of(context).pop(_selectedUsers.values.toList()),
+          child: const Text('확인'),
         ),
       ],
     );
