@@ -82,7 +82,10 @@ class _TravelSharedfundCreateScreenState
         return;
       }
 
-      final travelUserIds = users.map((u) => u.travelUserId).toList();
+      final travelUsers = users
+          .map((u) => SettlementParticipantRequestDto(
+              travelUserId: u.travelUserId, isPaid: false))
+          .toList();
       final amount = int.parse(_amountController.text);
 
       final request = PaymentCreateRequest(
@@ -102,7 +105,7 @@ class _TravelSharedfundCreateScreenState
             settlementName: '공금 입금',
             amount: amount,
             isPaid: false,
-            travelUsers: travelUserIds,
+            travelUsers: travelUsers,
           ),
         ],
       );

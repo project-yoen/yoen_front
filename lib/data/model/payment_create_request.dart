@@ -41,7 +41,7 @@ class Settlement {
   final String settlementName;
   final int amount;
   final bool isPaid;
-  final List<int> travelUsers;
+  final List<SettlementParticipantRequestDto> travelUsers;
 
   Settlement({
     this.paymentId,
@@ -54,4 +54,20 @@ class Settlement {
   factory Settlement.fromJson(Map<String, dynamic> json) =>
       _$SettlementFromJson(json);
   Map<String, dynamic> toJson() => _$SettlementToJson(this);
+}
+
+@JsonSerializable()
+class SettlementParticipantRequestDto {
+  final int travelUserId;
+  final bool isPaid;
+
+  SettlementParticipantRequestDto({
+    required this.travelUserId,
+    required this.isPaid,
+  });
+
+  factory SettlementParticipantRequestDto.fromJson(Map<String, dynamic> json) =>
+      _$SettlementParticipantRequestDtoFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SettlementParticipantRequestDtoToJson(this);
 }

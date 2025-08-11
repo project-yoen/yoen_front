@@ -61,11 +61,20 @@ class _TravelSettlementCreateScreenState
 
     // currency는 화면 파라미터(widget.currencyCode)로 고정
     final settlementList = state.settlementItems.map((item) {
+      final travelUsersDto = item.travelUserIds
+          .map(
+            (id) => SettlementParticipantRequestDto(
+              travelUserId: id,
+              isPaid: item.isPaid, // 각 항목의 정산 여부를 개별 유저에게 적용
+            ),
+          )
+          .toList();
+
       return Settlement(
         settlementName: item.nameController.text,
         amount: _safeParseAmount(item.amountController.text),
         isPaid: item.isPaid,
-        travelUsers: item.travelUserIds,
+        travelUsers: travelUsersDto,
       );
     }).toList();
 
@@ -205,16 +214,35 @@ class _TravelSettlementCreateScreenState
                                 )
                               : null,
                           onPickUsers: () async {
+                            // 현재 선택된 유저들로 DTO 리스트 생성
+                            final currentParticipants = state
+                                .settlementItems[index]
+                                .travelUserIds
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                                  final id = entry.value;
+                                  final name = state
+                                      .settlementItems[index]
+                                      .travelUserNames[entry.key];
+                                  return SettlementParticipantDto(
+                                    travelUserId: id,
+                                    travelNickName: name,
+                                    isPaid: state.settlementItems[index].isPaid,
+                                  );
+                                })
+                                .toList();
+
                             final selected =
                                 await showDialog<
-                                  List<TravelUserDetailResponse>
+                                  List<SettlementParticipantDto>
                                 >(
                                   context: context,
                                   builder: (_) => SettlementUserDialog(
                                     travelId: widget.travelId,
-                                    initialSelectedUserIds: state
-                                        .settlementItems[index]
-                                        .travelUserIds,
+                                    initialParticipants: currentParticipants,
+                                    showPaidCheckBox:
+                                        false, // 일반 정산에서는 사전 정산 체크박스 미표시
                                   ),
                                 );
                             if (selected != null) {
