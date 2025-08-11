@@ -959,7 +959,7 @@ class _ApiService implements ApiService {
 
   @override
   Future<ApiResponse<PaymentCreateResponse>> createPayment(
-    PaymentCreateRequest request,
+    PaymentRequest request,
     List<File> images,
   ) async {
     final _extra = <String, dynamic>{};

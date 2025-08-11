@@ -84,12 +84,10 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = PaymentState();
   }
 
-  Future<void> createPayment(
-    PaymentCreateRequest request,
-    List<File> images,
-  ) async {
+  Future<void> createPayment(PaymentRequest request, List<File> images) async {
     state = state.copyWith(createStatus: Status.loading);
     try {
+      print(request.settlementList[0].travelUsers[0].isPaid);
       await _repository.createPayment(request, images);
       state = state.copyWith(createStatus: Status.success);
     } catch (e) {

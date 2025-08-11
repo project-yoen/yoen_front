@@ -14,9 +14,7 @@ SettlementResponse _$SettlementResponseFromJson(Map<String, dynamic> json) =>
       amount: (json['amount'] as num).toInt(),
       isPaid: json['isPaid'] as bool,
       travelUsers: (json['travelUsers'] as List<dynamic>)
-          .map(
-            (e) => TravelUserDetailResponse.fromJson(e as Map<String, dynamic>),
-          )
+          .map((e) => SettlementParticipant.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 

@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:yoen_front/data/dialog/settlement_user_dialog.dart';
-import 'package:yoen_front/data/model/payment_create_request.dart';
+import 'package:yoen_front/data/model/payment_create_request.dart'; // PaymentRequest/Settlement/SettlementParticipant
 import 'package:yoen_front/data/model/settlement_item.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_create_notifier.dart';
@@ -59,31 +59,24 @@ class _TravelSettlementCreateScreenState
       }
     }
 
-    // currency는 화면 파라미터(widget.currencyCode)로 고정
+    // ✅ 사람 기준 participants 생성
     final settlementList = state.settlementItems.map((item) {
-      final travelUsersDto = item.travelUserIds
-          .map(
-            (id) => SettlementParticipantRequestDto(
-              travelUserId: id,
-              isPaid: item.isPaid, // 각 항목의 정산 여부를 개별 유저에게 적용
-            ),
-          )
-          .toList();
+      final participants = item.travelUserIds.map((uid) {
+        final paid = item.settledUserIds.contains(uid);
+        return SettlementParticipant(travelUserId: uid, isPaid: paid);
+      }).toList();
 
       return Settlement(
         settlementName: item.nameController.text,
         amount: _safeParseAmount(item.amountController.text),
-        isPaid: item.isPaid,
-        travelUsers: travelUsersDto,
+        travelUsers: participants,
       );
     }).toList();
 
-    final totalAmount = settlementList.fold<int>(
-      0,
-      (sum, item) => sum + item.amount,
-    );
+    final totalAmount = settlementList.fold<int>(0, (sum, s) => sum + s.amount);
 
-    final request = PaymentCreateRequest(
+    final request = PaymentRequest(
+      paymentId: null, // 수정 모드면 여기에 기존 paymentId 세팅
       travelId: widget.travelId,
       travelUserId: state.payerTravelUserId,
       categoryId: state.categoryId!,
@@ -253,10 +246,13 @@ class _TravelSettlementCreateScreenState
                                 final names = selected
                                     .map((e) => e.travelNickName)
                                     .toList();
-                                state.settlementItems[index].travelUserIds =
-                                    ids;
-                                state.settlementItems[index].travelUserNames =
-                                    names;
+
+                                // 참여자 갱신 + 기존 정산완료 집합 정리(없는 사람 제거)
+                                final item = state.settlementItems[index];
+                                item.travelUserIds = ids;
+                                item.travelUserNames = names;
+                                item.settledUserIds = item.settledUserIds
+                                    .intersection(ids.toSet());
                               });
                             }
                           },
@@ -307,7 +303,7 @@ class _TravelSettlementCreateScreenState
   }
 }
 
-/// 항목 카드(통화 선택 UI 제거, 표시에만 라벨 사용)
+/// 항목 카드(통화 선택 UI 제거, 표시에만 라벨 사용 + 사람별 정산 토글)
 class _SettlementCard extends StatefulWidget {
   final int index;
   final SettlementItem item;
@@ -331,18 +327,13 @@ class _SettlementCard extends StatefulWidget {
 }
 
 class _SettlementCardState extends State<_SettlementCard> {
-  late bool _isPaid;
-
-  @override
-  void initState() {
-    super.initState();
-    _isPaid = widget.item.isPaid;
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
+
+    final total = widget.item.travelUserIds.length;
+    final done = widget.item.settledCount;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -363,6 +354,25 @@ class _SettlementCardState extends State<_SettlementCard> {
                   style: t.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
+                // 진행도 배지
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.primary.withOpacity(.08),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: c.primary.withOpacity(.3)),
+                  ),
+                  child: Text(
+                    '$done/$total',
+                    style: t.labelMedium?.copyWith(
+                      color: c.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
                 if (widget.onRemove != null)
                   IconButton(
                     tooltip: '항목 제거',
@@ -408,89 +418,71 @@ class _SettlementCardState extends State<_SettlementCard> {
                 return null;
               },
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
 
-            // 정산 여부
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('정산 여부'),
-              value: _isPaid,
-              onChanged: (val) {
-                setState(() {
-                  _isPaid = val;
-                  widget.item.isPaid = val;
-                });
-              },
-              secondary: const Icon(Icons.verified_outlined),
+            // ✅ 사람 기준 정산 현황
+            Row(
+              children: [
+                const Icon(Icons.verified_outlined, size: 20),
+                const SizedBox(width: 6),
+                Text(
+                  '정산 현황  ${widget.item.settledCount}/${widget.item.travelUserIds.length}',
+                  style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                if (widget.item.allSettled)
+                  Icon(Icons.check_circle, color: c.primary),
+              ],
             ),
+            const SizedBox(height: 8),
 
-            // 참여 유저
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: widget.onPickUsers,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
+            // 참여자별 완료 토글(FilterChip)
+            if (widget.item.travelUserIds.isEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '참여 유저를 먼저 선택하세요.',
+                  style: t.bodyMedium?.copyWith(color: c.error),
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: c.outlineVariant),
+              )
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: -6,
+                  children: List.generate(widget.item.travelUserIds.length, (
+                    i,
+                  ) {
+                    final uid = widget.item.travelUserIds[i];
+                    final name = widget.item.travelUserNames[i];
+                    final selected = widget.item.settledUserIds.contains(uid);
+                    return FilterChip(
+                      label: Text(name),
+                      selected: selected,
+                      onSelected: (val) {
+                        setState(() {
+                          if (val) {
+                            widget.item.settledUserIds.add(uid);
+                          } else {
+                            widget.item.settledUserIds.remove(uid);
+                          }
+                        });
+                      },
+                      avatar: selected ? const Icon(Icons.done) : null,
+                    );
+                  }),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '참여 유저',
-                      style: t.bodySmall?.copyWith(color: c.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 6),
-                    if (widget.item.travelUserNames.isEmpty)
-                      Text(
-                        '선택되지 않음',
-                        style: t.bodyMedium?.copyWith(color: c.error),
-                      )
-                    else
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: -6,
-                        children: widget.item.travelUserNames
-                            .map(
-                              (name) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: c.primary.withOpacity(.12),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: c.primary.withOpacity(.35),
-                                  ),
-                                ),
-                                child: Text(
-                                  name,
-                                  style: TextStyle(
-                                    color: c.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    const SizedBox(height: 6),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Icon(
-                        Icons.arrow_drop_down,
-                        color: c.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+              ),
+            const SizedBox(height: 12),
+
+            // 참여 유저 선택 버튼
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: widget.onPickUsers,
+                icon: const Icon(Icons.group_add_outlined),
+                label: const Text('참여 유저 선택/변경'),
               ),
             ),
           ],
