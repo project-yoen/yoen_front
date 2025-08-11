@@ -235,7 +235,6 @@ class _TravelSettlementCreateScreenState
                                   builder: (_) => SettlementUserDialog(
                                     travelId: widget.travelId,
                                     initialParticipants: currentParticipants,
-                                    showPaidCheckBox: false,
                                   ),
                                 );
                             if (selected != null) {
@@ -244,7 +243,7 @@ class _TravelSettlementCreateScreenState
                                     .map((e) => e.travelUserId)
                                     .toList();
                                 final names = selected
-                                    .map((e) => e.travelNickname ?? '')
+                                    .map((e) => e.travelNickname ?? "")
                                     .toList();
 
                                 // 참여자 갱신 + 기존 정산완료 집합 정리(없는 사람 제거)

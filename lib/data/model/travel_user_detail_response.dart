@@ -6,7 +6,7 @@ part 'travel_user_detail_response.g.dart';
 class TravelUserDetailResponse {
   final int travelUserId;
   final String nickName;
-  final String travelNickName;
+  final String travelNickname;
   final String gender;
   final String birthDay;
   final String? imageUrl;
@@ -14,7 +14,7 @@ class TravelUserDetailResponse {
   TravelUserDetailResponse({
     required this.travelUserId,
     required this.nickName,
-    required this.travelNickName,
+    required this.travelNickname,
     required this.gender,
     required this.birthDay,
     this.imageUrl,

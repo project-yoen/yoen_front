@@ -271,7 +271,7 @@ class _TravelSharedfundCreateScreenState
 
     if (selectedUser != null) {
       setState(() {
-        _payerController.text = selectedUser.travelNickName;
+        _payerController.text = selectedUser.travelNickname;
         _selectedPayerTravelUserId = selectedUser.travelUserId;
       });
     }

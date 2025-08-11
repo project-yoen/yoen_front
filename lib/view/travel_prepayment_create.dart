@@ -97,7 +97,7 @@ class _TravelPrepaymentCreateScreenState
                 (u) => SettlementParticipant(
                   travelUserId: u.travelUserId,
                   isPaid: true,
-                  travelNickname: u.travelNickName,
+                  travelNickname: u.travelNickname,
                 ),
               )
               .toList(),
@@ -351,7 +351,7 @@ class _TravelPrepaymentCreateScreenState
 
     if (selectedUser != null) {
       setState(() {
-        _payerController.text = selectedUser.travelNickName;
+        _payerController.text = selectedUser.travelNickname;
         _selectedPayerTravelUserId = selectedUser.travelUserId;
       });
     }

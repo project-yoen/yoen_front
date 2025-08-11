@@ -11,7 +11,7 @@ TravelUserDetailResponse _$TravelUserDetailResponseFromJson(
 ) => TravelUserDetailResponse(
   travelUserId: (json['travelUserId'] as num).toInt(),
   nickName: json['nickName'] as String,
-  travelNickName: json['travelNickName'] as String,
+  travelNickname: json['travelNickname'] as String,
   gender: json['gender'] as String,
   birthDay: json['birthDay'] as String,
   imageUrl: json['imageUrl'] as String?,
@@ -22,7 +22,7 @@ Map<String, dynamic> _$TravelUserDetailResponseToJson(
 ) => <String, dynamic>{
   'travelUserId': instance.travelUserId,
   'nickName': instance.nickName,
-  'travelNickName': instance.travelNickName,
+  'travelNickname': instance.travelNickname,
   'gender': instance.gender,
   'birthDay': instance.birthDay,
   'imageUrl': instance.imageUrl,

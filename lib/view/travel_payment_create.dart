@@ -393,9 +393,9 @@ class _TravelPaymentCreateScreenState
     if (selectedUser != null) {
       notifier.updateField(
         payerTravelUserId: selectedUser.travelUserId,
-        payerName: selectedUser.travelNickName,
+        payerName: selectedUser.travelNickname,
       );
-      _payerController.text = selectedUser.travelNickName;
+      _payerController.text = selectedUser.travelNickname;
       // 선택 직후 해당 필드만 재검증
       _payerKey.currentState?.validate();
     }

@@ -86,7 +86,7 @@ class _PaymentUserDialogState extends ConsumerState<PaymentUserDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${user.nickName} (${user.travelNickName})',
+                                '${user.nickName} (${user.travelNickname})',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,

@@ -78,7 +78,7 @@ class TravelUserListScreen extends ConsumerWidget {
                           ref,
                           travelId,
                           u.travelUserId,
-                          u.travelNickName ?? '',
+                          u.travelNickname ?? '',
                         ),
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
@@ -92,8 +92,8 @@ class TravelUserListScreen extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  (u.travelNickName?.isNotEmpty == true)
-                                      ? u.travelNickName!
+                                  (u.travelNickname?.isNotEmpty == true)
+                                      ? u.travelNickname!
                                       : '설정되지 않음',
                                   style: Theme.of(context).textTheme.bodyLarge,
                                   overflow: TextOverflow.ellipsis,
@@ -107,7 +107,7 @@ class TravelUserListScreen extends ConsumerWidget {
                                   ref,
                                   travelId,
                                   u.travelUserId,
-                                  u.travelNickName ?? '',
+                                  u.travelNickname ?? '',
                                 ),
                               ),
                             ],
