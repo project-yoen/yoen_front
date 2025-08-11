@@ -158,8 +158,7 @@ abstract class ApiService {
   @MultiPart()
   @POST("/payment/create")
   Future<ApiResponse<PaymentCreateResponse>> createPayment(
-    @Part(name: 'dto', contentType: 'application/json')
-    PaymentCreateRequest request,
+    @Part(name: 'dto', contentType: 'application/json') PaymentRequest request,
     @Part(name: 'images') List<File> images,
   );
 

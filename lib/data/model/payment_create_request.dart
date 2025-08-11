@@ -3,7 +3,8 @@ import 'package:json_annotation/json_annotation.dart';
 part 'payment_create_request.g.dart';
 
 @JsonSerializable()
-class PaymentCreateRequest {
+class PaymentRequest {
+  final int? paymentId;
   final int travelId;
   final int? travelUserId;
   final int? categoryId;
@@ -16,7 +17,8 @@ class PaymentCreateRequest {
   final String currency;
   final List<Settlement> settlementList;
 
-  PaymentCreateRequest({
+  PaymentRequest({
+    this.paymentId,
     required this.travelId,
     this.travelUserId,
     required this.paymentName,
@@ -30,28 +32,38 @@ class PaymentCreateRequest {
     required this.settlementList,
   });
 
-  factory PaymentCreateRequest.fromJson(Map<String, dynamic> json) =>
-      _$PaymentCreateRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$PaymentCreateRequestToJson(this);
+  factory PaymentRequest.fromJson(Map<String, dynamic> json) =>
+      _$PaymentRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$PaymentRequestToJson(this);
 }
 
 @JsonSerializable()
 class Settlement {
-  final int? paymentId;
   final String settlementName;
   final int amount;
-  final bool isPaid;
-  final List<int> travelUsers;
+
+  /// 사람 기준 정산 상태
+  final List<SettlementParticipant> participants;
 
   Settlement({
-    this.paymentId,
     required this.settlementName,
     required this.amount,
-    required this.isPaid,
-    required this.travelUsers,
+    required this.participants,
   });
 
   factory Settlement.fromJson(Map<String, dynamic> json) =>
       _$SettlementFromJson(json);
   Map<String, dynamic> toJson() => _$SettlementToJson(this);
+}
+
+@JsonSerializable()
+class SettlementParticipant {
+  final int travelUserId;
+  final bool isPaid;
+
+  SettlementParticipant({required this.travelUserId, required this.isPaid});
+
+  factory SettlementParticipant.fromJson(Map<String, dynamic> json) =>
+      _$SettlementParticipantFromJson(json);
+  Map<String, dynamic> toJson() => _$SettlementParticipantToJson(this);
 }
