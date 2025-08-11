@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,37 +84,38 @@ class _TravelSharedfundCreateScreenState
         return;
       }
 
-      final travelUsers = users
-          .map((u) => SettlementParticipantRequestDto(
-              travelUserId: u.travelUserId, isPaid: false))
-          .toList();
+      final travelUserIds = users.map((u) => u.travelUserId).toList();
       final amount = int.parse(_amountController.text);
 
-      final request = PaymentCreateRequest(
+      // ✅ 사람 기준 정산 상태(공금 입금이므로 기본은 모두 미정산 false)
+      final participants = travelUserIds
+          .map((id) => SettlementParticipant(travelUserId: id, isPaid: false))
+          .toList();
+
+      final request = PaymentRequest(
+        paymentId: null, // 생성이므로 null, 수정 시에만 세팅
         travelId: widget.travelId,
         travelUserId: _selectedPayerTravelUserId,
-        categoryId: 1, // 공금 입금 전용 카테고리
+        categoryId: 1, // 공금 입금 전용 카테고리(도메인에 맞게 유지)
         payerType: 'INDIVIDUAL', // 입금자는 개인
         payTime: _selectedDateTime.toIso8601String(),
         paymentMethod: _paymentMethod,
         paymentName: '공금 입금',
-        paymentType: widget.paymentType, // "SHAREDFUND"
-        currency: _currencyCode, // ★ 국가 통화로 저장
+        paymentType: widget.paymentType, // 예: "SHAREDFUND"
+        currency: _currencyCode, // ★ 여행 국가 통화
         paymentAccount: amount,
         settlementList: [
           Settlement(
-            paymentId: null,
             settlementName: '공금 입금',
             amount: amount,
-            isPaid: false,
-            travelUsers: travelUsers,
+            participants: participants,
           ),
         ],
       );
 
       await ref
           .read(paymentNotifierProvider.notifier)
-          .createPayment(request, []);
+          .createPayment(request, const <File>[]);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -169,7 +172,6 @@ class _TravelSharedfundCreateScreenState
                           decoration: InputDecoration(
                             labelText: '금액',
                             hintText: '숫자만 입력',
-                            // ▼ suffix 로 표시: 입력 텍스트를 가리지 않음
                             suffix: Text(
                               _currencyLabel,
                               style: t.bodyMedium?.copyWith(
@@ -177,7 +179,6 @@ class _TravelSharedfundCreateScreenState
                               ),
                             ),
                           ),
-                          // ▼ 일부 단말 키보드 호환성 개선
                           keyboardType: const TextInputType.numberWithOptions(
                             signed: false,
                             decimal: false,

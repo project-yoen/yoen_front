@@ -20,7 +20,7 @@ class PaymentRepository {
   }
 
   Future<PaymentCreateResponse> createPayment(
-    PaymentCreateRequest request,
+    PaymentRequest request,
     List<File> images,
   ) async {
     final response = await _apiService.createPayment(request, images);
