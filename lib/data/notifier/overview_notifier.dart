@@ -14,21 +14,31 @@ class OverviewState {
   final List<TimelineItem> items;
   final String? errorMessage;
 
+  /// 마지막 조회 컨텍스트(업데이트 후 재조회나 refreshLast용)
+  final int? lastTravelId;
+  final DateTime? lastDate;
+
   OverviewState({
     this.status = OverviewStatus.initial,
     this.items = const [],
     this.errorMessage,
+    this.lastTravelId,
+    this.lastDate,
   });
 
   OverviewState copyWith({
     OverviewStatus? status,
     List<TimelineItem>? items,
     String? errorMessage,
+    int? lastTravelId,
+    DateTime? lastDate,
   }) {
     return OverviewState(
       status: status ?? this.status,
       items: items ?? this.items,
       errorMessage: errorMessage ?? this.errorMessage,
+      lastTravelId: lastTravelId ?? this.lastTravelId,
+      lastDate: lastDate ?? this.lastDate,
     );
   }
 }
@@ -41,7 +51,11 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
     : super(OverviewState());
 
   Future<void> fetchTimeline(int travelId, DateTime date) async {
-    state = state.copyWith(status: OverviewStatus.loading);
+    state = state.copyWith(
+      status: OverviewStatus.loading,
+      lastTravelId: travelId,
+      lastDate: date,
+    );
     try {
       final dateString = date.toIso8601String();
       final recordsFuture = _recordRepository.getRecords(travelId, dateString);
@@ -89,6 +103,16 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
     }
   }
 
+  /// 마지막 조회 조건으로 재조회
+  Future<void> refreshLast() async {
+    final t = state.lastTravelId;
+    final d = state.lastDate;
+    if (t != null && d != null) {
+      await fetchTimeline(t, d);
+    }
+  }
+
+  /// 삭제(기존)
   void removePayment(int paymentId) {
     final filtered = state.items
         .where(
