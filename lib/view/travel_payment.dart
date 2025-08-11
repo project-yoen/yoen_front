@@ -9,6 +9,7 @@ import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
+import 'package:yoen_front/view/payment_update.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -109,7 +110,24 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                             // _fetchPayments();
                           }
                         } else if (action == 'edit') {
-                          // TODO: 수정 로직 연결 시 이곳에서 처리 후 필요하면 _fetchData()
+                          await ref
+                              .read(paymentNotifierProvider.notifier)
+                              .getPaymentDetails(payment.paymentId);
+                          final detail = ref
+                              .read(paymentNotifierProvider)
+                              .selectedPayment!;
+                          final saved = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => PaymentUpdateScreen(
+                                paymentId: payment.paymentId,
+                                travelId:
+                                    detail.travelId!, // ✅ 상세에서 travelId 사용
+                                paymentType:
+                                    detail.paymentType ??
+                                    'PAYMENT', // ✅ 서버 규약에 맞춰 기본값
+                              ),
+                            ),
+                          );
                         }
                       },
                     );
