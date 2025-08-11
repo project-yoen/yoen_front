@@ -6,6 +6,9 @@ import 'package:yoen_front/data/model/settlement_response.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
 import '../../view/image_preview.dart';
+import '../../view/payment_update.dart';
+import '../../view/travel_sharedfund_update.dart';
+import '../notifier/overview_notifier.dart';
 import '../widget/progress_badge.dart';
 import '../widget/responsive_shimmer_image.dart';
 
@@ -75,6 +78,41 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
         child: _buildContent(state, context),
       ),
       actions: [
+        if (state.getDetailsStatus == Status.success &&
+            state.selectedPayment != null &&
+            state.selectedPayment!.travelId != null &&
+            state.selectedPayment!.paymentType != null)
+          FilledButton.icon(
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('수정'),
+            onPressed: () async {
+              final detail = ref.read(paymentNotifierProvider).selectedPayment!;
+              final type = (detail.paymentType ?? '').toUpperCase();
+
+              // paymentType에 따라 다른 수정 화면으로 분기
+              final route = (type == 'SHAREDFUND')
+                  ? MaterialPageRoute<bool>(
+                      builder: (_) => TravelSharedfundUpdateScreen(
+                        paymentId: widget.paymentId,
+                        travelId: detail.travelId!,
+                      ),
+                    )
+                  : MaterialPageRoute<bool>(
+                      builder: (_) => PaymentUpdateScreen(
+                        paymentId: widget.paymentId,
+                        travelId: detail.travelId!,
+                        paymentType: type, // 'PAYMENT' 등
+                      ),
+                    );
+
+              final saved = await Navigator.of(context).push<bool>(route);
+
+              if (saved == true && mounted) {
+                // 마지막 조회 컨텍스트로 새로고침
+                await ref.read(overviewNotifierProvider.notifier).refreshLast();
+              }
+            },
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('닫기'),
@@ -128,7 +166,7 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
             children: [
               // 결제 정보(핵심만 항상 표시)
               _sectionTitle('결제 정보', t),
-              _infoRow('결제자', detail.payerName?.travelNickName ?? '-'),
+              _infoRow('결제자', detail.payerName?.travelNickname ?? '-'),
               _infoRow(
                 '금액',
                 '${NumberFormat('#,###').format(detail.paymentAccount)}$currencyLabel',
