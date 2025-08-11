@@ -187,9 +187,9 @@ class _UserTravelListState extends ConsumerState<UserTravelList> {
                                             color: Colors.white,
                                             size: 16,
                                           ),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            '${travel.numOfPeople}',
+                                            '${travel.numOfJoinedPeople} / ${travel.numOfPeople} ',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,

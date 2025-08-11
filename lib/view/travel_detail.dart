@@ -7,6 +7,7 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/view/travel_overview.dart';
 import '../data/dialog/travel_date_picker_dialog.dart';
+import '../data/dialog/universal_date_picker_dialog.dart';
 
 class TravelDetailScreen extends ConsumerStatefulWidget {
   final String nation;
@@ -276,9 +277,11 @@ class _TravelDetailScreenState extends ConsumerState<TravelDetailScreen> {
   Future<void> _pickDates() async {
     final result = await showDialog<Map<String, DateTime?>>(
       context: context,
-      builder: (_) => TravelDatePickerDialog(
-        initialStartDate: _selectedStartDate,
-        initialEndDate: _selectedEndDate,
+      builder: (_) => UniversalDatePickerDialog.range(
+        minDate: DateTime(2024, 1, 1),
+        maxDate: DateTime(2025, 12, 31),
+        initialStart: _selectedStartDate, // 선택값 있으면
+        initialEnd: _selectedEndDate,
       ),
     );
     if (result == null) return;
