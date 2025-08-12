@@ -1107,11 +1107,13 @@ class _ApiService implements ApiService {
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
     int travelId,
     String date,
+    String type,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'travelId': travelId,
       r'date': date,
+      r'type': type,
     };
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;

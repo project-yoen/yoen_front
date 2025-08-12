@@ -125,7 +125,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
       } else if (_selectedIndex == 1) {
         ref
             .read(paymentNotifierProvider.notifier)
-            .getPayments(travel.travelId, date);
+            .getPayments(travel.travelId, date, '');
       } else if (_selectedIndex == 2) {
         ref
             .read(recordNotifierProvider.notifier)

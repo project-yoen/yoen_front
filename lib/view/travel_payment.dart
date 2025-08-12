@@ -32,7 +32,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     if (travel != null && date != null) {
       ref
           .read(paymentNotifierProvider.notifier)
-          .getPayments(travel.travelId, date);
+          .getPayments(travel.travelId, date, '');
     }
   }
 
@@ -75,7 +75,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
             if (travel != null && date != null) {
               await ref
                   .read(paymentNotifierProvider.notifier)
-                  .getPayments(travel.travelId, date);
+                  .getPayments(travel.travelId, date, '');
             }
           },
           child: state.payments.isEmpty

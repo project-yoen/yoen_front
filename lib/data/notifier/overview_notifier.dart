@@ -62,6 +62,7 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
       final paymentsFuture = _paymentRepository.getPayments(
         travelId,
         dateString,
+        '',
       );
 
       final List<RecordResponse> records = await recordsFuture;
