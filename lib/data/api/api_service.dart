@@ -9,6 +9,7 @@ import 'package:yoen_front/data/model/join_code_response.dart';
 import 'package:yoen_front/data/model/payment_create_response.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
+import 'package:yoen_front/data/model/record_update_request.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_nickname_update.dart';
@@ -148,6 +149,13 @@ abstract class ApiService {
   Future<ApiResponse<List<RecordResponse>>> getRecords(
     @Query("travelId") int travelId,
     @Query("date") String date,
+  );
+
+  @MultiPart()
+  @POST("/record/update")
+  Future<ApiResponse<RecordResponse>> updateRecord(
+    @Part(name: 'dto', contentType: 'application/json') RecordUpdateRequest dto,
+    @Part(name: 'images') List<File> images,
   );
 
   @DELETE('/record/delete')

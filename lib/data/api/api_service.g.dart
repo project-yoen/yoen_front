@@ -892,6 +892,64 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<ApiResponse<RecordResponse>> updateRecord(
+    RecordUpdateRequest dto,
+    List<File> images,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = FormData();
+    _data.files.add(
+      MapEntry(
+        'dto',
+        MultipartFile.fromString(
+          jsonEncode(dto),
+          contentType: DioMediaType.parse('application/json'),
+        ),
+      ),
+    );
+    _data.files.addAll(
+      images.map(
+        (i) => MapEntry(
+          'images',
+          MultipartFile.fromFileSync(
+            i.path,
+            filename: i.path.split(Platform.pathSeparator).last,
+          ),
+        ),
+      ),
+    );
+    final _options = _setStreamType<ApiResponse<RecordResponse>>(
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
+          .compose(
+            _dio.options,
+            '/record/update',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<RecordResponse> _value;
+    try {
+      _value = ApiResponse<RecordResponse>.fromJson(
+        _result.data!,
+        (json) => RecordResponse.fromJson(json as Map<String, dynamic>),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<ApiResponse<dynamic>> deleteRecord(int recordId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'id': recordId};

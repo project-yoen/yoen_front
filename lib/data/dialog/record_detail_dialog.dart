@@ -19,6 +19,7 @@ import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 
 import '../../main.dart';
 import '../../view/image_preview.dart';
+import '../../view/travel_record_update.dart';
 
 class RecordDetailDialog extends ConsumerStatefulWidget {
   final RecordResponse record;
@@ -101,7 +102,7 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                       children: [
                         Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 15),
+                            padding: const EdgeInsets.only(top: 15),
                             child: Text(
                               widget.record.title,
                               style: const TextStyle(
@@ -111,13 +112,48 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                             ),
                           ),
                         ),
+                        //  수정 버튼 추가
                         IconButton(
+                          tooltip: '수정',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () async {
+                            final travel = ref
+                                .read(travelListNotifierProvider)
+                                .selectedTravel;
+                            if (travel == null) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('여행 정보가 없습니다.')),
+                                );
+                              }
+                              return;
+                            }
+
+                            final saved = await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => TravelRecordUpdateScreen(
+                                  travelId: travel.travelId,
+                                  record: widget
+                                      .record, // 리스트에서 넘겨받은 RecordResponse 그대로
+                                ),
+                              ),
+                            );
+
+                            // 저장 성공 시 상세 다이얼로그 닫기(리스트/타임라인 화면에 반영된 값 보이도록)
+                            if (saved == true && mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                        IconButton(
+                          tooltip: '삭제',
                           icon: const Icon(Icons.delete_outline),
                           onPressed: () =>
                               _showDeleteConfirmDialog(widget.record),
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 8),
                     Text(
                       widget.record.travelNickName,

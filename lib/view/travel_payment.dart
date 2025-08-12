@@ -9,6 +9,8 @@ import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
+import 'package:yoen_front/view/payment_update.dart';
+import 'package:yoen_front/view/travel_overview.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -125,11 +127,10 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                             MaterialPageRoute(
                               builder: (_) => PaymentUpdateScreen(
                                 paymentId: payment.paymentId,
-                                travelId:
-                                    detail.travelId!, // ✅ 상세에서 travelId 사용
+                                travelId: detail.travelId!, // 상세에서 travelId 사용
                                 paymentType:
                                     detail.paymentType ??
-                                    'PAYMENT', // ✅ 서버 규약에 맞춰 기본값
+                                    'PAYMENT', // 서버 규약에 맞춰 기본값
                               ),
                             ),
                           );
@@ -150,7 +151,6 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     }
   }
 }
-
 
 // ───────────────────────── 스켈레톤 ─────────────────────────
 class _PaymentCardSkeleton extends StatelessWidget {

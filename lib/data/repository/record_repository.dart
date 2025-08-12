@@ -4,6 +4,7 @@ import 'package:yoen_front/data/api/api_service.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
+import 'package:yoen_front/data/model/record_update_request.dart';
 
 class RecordRepository {
   final ApiService _apiService;
@@ -20,6 +21,14 @@ class RecordRepository {
     List<File> images,
   ) async {
     final response = await _apiService.createRecord(request, images);
+    return response.data!;
+  }
+
+  Future<RecordResponse> updateRecord(
+    RecordUpdateRequest request,
+    List<File> images,
+  ) async {
+    final response = await _apiService.updateRecord(request, images);
     return response.data!;
   }
 

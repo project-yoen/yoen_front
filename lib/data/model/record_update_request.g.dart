@@ -11,7 +11,7 @@ RecordUpdateRequest _$RecordUpdateRequestFromJson(Map<String, dynamic> json) =>
       travelRecordId: (json['travelRecordId'] as num).toInt(),
       travelId: (json['travelId'] as num).toInt(),
       title: json['title'] as String,
-      content: json['content'] as String?,
+      content: json['content'] as String,
       recordTime: json['recordTime'] as String,
       removeImageIds: (json['removeImageIds'] as List<dynamic>)
           .map((e) => (e as num).toInt())
