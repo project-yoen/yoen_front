@@ -471,11 +471,8 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     );
     try {
       String? dateString;
-      if (type == 'PREPAYMENT') {
-        dateString = '0000-01-01T00:00:00.000';
-      } else {
-        dateString = date?.toIso8601String();
-      }
+
+      dateString = date?.toIso8601String();
 
       final payments = await _repository.getPayments(
         travelId,
