@@ -1106,7 +1106,7 @@ class _ApiService implements ApiService {
   @override
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
     int travelId,
-    String date,
+    String? date,
     String type,
   ) async {
     final _extra = <String, dynamic>{};
@@ -1115,6 +1115,7 @@ class _ApiService implements ApiService {
       r'date': date,
       r'type': type,
     };
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<ApiResponse<List<PaymentResponse>>>(
