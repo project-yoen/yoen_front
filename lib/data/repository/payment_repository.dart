@@ -15,8 +15,12 @@ class PaymentRepository {
 
   PaymentRepository(this._apiService);
 
-  Future<List<PaymentResponse>> getPayments(int travelId, String date) async {
-    final response = await _apiService.getPayments(travelId, date);
+  Future<List<PaymentResponse>> getPayments(
+    int travelId,
+    String? date,
+    String type,
+  ) async {
+    final response = await _apiService.getPayments(travelId, date, type);
     return response.data!;
   }
 

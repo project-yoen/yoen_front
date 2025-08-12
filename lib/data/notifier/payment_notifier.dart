@@ -106,6 +106,7 @@ class PaymentState {
   final PaymentEditDraft? editDraft;
   final int? lastTravelId;
   final DateTime? lastListDate;
+  final String? lastListType;
 
   PaymentState({
     this.getStatus = Status.initial,
@@ -119,11 +120,13 @@ class PaymentState {
     this.editDraft,
     this.lastTravelId,
     this.lastListDate,
+    this.lastListType,
   });
 
   PaymentState copyWith({
     int? lastTravelId,
     DateTime? lastListDate,
+    String? lastListType,
     Status? getStatus,
     Status? createStatus,
     Status? getDetailsStatus,
@@ -140,6 +143,7 @@ class PaymentState {
     return PaymentState(
       lastTravelId: lastTravelId ?? this.lastTravelId,
       lastListDate: lastListDate ?? this.lastListDate,
+      lastListType: lastListType ?? this.lastListType,
       getStatus: getStatus ?? this.getStatus,
       createStatus: resetCreateStatus == true
           ? Status.initial
@@ -163,31 +167,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   final PaymentRepository _repository;
 
   PaymentNotifier(this._repository) : super(PaymentState());
-
-  // 목록
-  Future<void> getPayments(int travelId, DateTime date) async {
-    state = state.copyWith(
-      getStatus: Status.loading,
-      resetCreateStatus: true,
-      resetDeleteStatus: true,
-      resetUpdateStatus: true,
-      lastTravelId: travelId,
-      lastListDate: date,
-    );
-    try {
-      final dateString = date.toIso8601String();
-      final payments = await _repository.getPayments(travelId, dateString);
-      payments.sort((a, b) => a.payTime.compareTo(b.payTime));
-      state = state.copyWith(getStatus: Status.success, payments: payments);
-    } catch (e) {
-      state = state.copyWith(
-        getStatus: Status.error,
-        errorMessage: e.toString(),
-      );
-    }
-  }
-
-  void resetAll() => state = PaymentState();
 
   // 생성
   Future<void> createPayment(PaymentRequest request, List<File> images) async {
@@ -480,6 +459,40 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft.copyWith(removedImageIds: next));
   }
 
+  Future<void> getPayments(int travelId, DateTime? date, String type) async {
+    state = state.copyWith(
+      getStatus: Status.loading,
+      resetCreateStatus: true,
+      resetDeleteStatus: true,
+      resetUpdateStatus: true,
+      lastTravelId: travelId,
+      lastListDate: date,
+      lastListType: type,
+    );
+    try {
+      String? dateString;
+
+      dateString = date?.toIso8601String();
+
+      final payments = await _repository.getPayments(
+        travelId,
+        dateString,
+        type,
+      );
+      payments.sort((a, b) => a.payTime.compareTo(b.payTime));
+      state = state.copyWith(getStatus: Status.success, payments: payments);
+    } catch (e) {
+      state = state.copyWith(
+        getStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  void resetAll() => state = PaymentState();
+
+  // 생략 ...
+
   // 업데이트 제출 (Settlement로 전송)
   Future<void> updatePayment(
     PaymentUpdateRequest request,
@@ -496,8 +509,9 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       // 목록도 재조회 (마지막 조회 조건이 있을 때만)
       final lt = state.lastTravelId;
       final ld = state.lastListDate;
-      if (lt != null && ld != null) {
-        await getPayments(lt, ld);
+      final lty = state.lastListType;
+      if (lt != null && ld != null && lty != null) {
+        await getPayments(lt, ld, lty);
       }
     } catch (e) {
       state = state.copyWith(
