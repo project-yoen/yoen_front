@@ -20,6 +20,8 @@ import 'package:yoen_front/view/travel_sharedfund_create.dart';
 import '../data/dialog/universal_date_picker_dialog.dart';
 import '../data/notifier/payment_notifier.dart';
 
+final paymentFilterProvider = StateProvider<String>((ref) => '');
+
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   const TravelOverviewScreen({super.key});
 
@@ -123,9 +125,10 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             .read(overviewNotifierProvider.notifier)
             .fetchTimeline(travel.travelId, date);
       } else if (_selectedIndex == 1) {
+        final filterType = ref.read(paymentFilterProvider);
         ref
             .read(paymentNotifierProvider.notifier)
-            .getPayments(travel.travelId, date, '');
+            .getPayments(travel.travelId, date, filterType);
       } else if (_selectedIndex == 2) {
         ref
             .read(recordNotifierProvider.notifier)
@@ -407,57 +410,106 @@ https://your-app-link.com
           if (currentDate != null && _selectedIndex != 3)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
                 children: [
-                  Visibility(
-                    maintainSize: true,
-                    maintainAnimation: true,
-                    maintainState: true,
-                    visible: currentDate.isAfter(
-                      DateTime.parse(travel.startDate),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios),
-                      onPressed: () => ref
-                          .read(dateNotifierProvider.notifier)
-                          .previousDay(DateTime.parse(travel.startDate)),
-                    ),
-                  ),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => _openDatePicker(context),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 6,
-                      ),
-                      child: Text(
-                        DateFormat('yyyy.MM.dd').format(currentDate),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          // 필요하면 밑줄 등 시각적 affordance 추가
-                          // decoration: TextDecoration.underline,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Visibility(
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        visible: currentDate.isAfter(
+                          DateTime.parse(travel.startDate),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios),
+                          onPressed: () {
+                            ref
+                                .read(dateNotifierProvider.notifier)
+                                .previousDay(DateTime.parse(travel.startDate));
+                            _fetchData();
+                          },
                         ),
                       ),
-                    ),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => _openDatePicker(context),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            DateFormat('yyyy.MM.dd').format(currentDate),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        visible: currentDate.isBefore(
+                          DateTime.parse(travel.endDate),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios),
+                          onPressed: () {
+                            ref
+                                .read(dateNotifierProvider.notifier)
+                                .nextDay(DateTime.parse(travel.endDate));
+                            _fetchData();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-
-                  Visibility(
-                    maintainSize: true,
-                    maintainAnimation: true,
-                    maintainState: true,
-                    visible: currentDate.isBefore(
-                      DateTime.parse(travel.endDate),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_forward_ios),
-                      onPressed: () => ref
-                          .read(dateNotifierProvider.notifier)
-                          .nextDay(DateTime.parse(travel.endDate)),
-                    ),
-                  ),
+                  if (_selectedIndex == 1)
+                    Consumer(builder: (context, ref, child) {
+                      final filterType = ref.watch(paymentFilterProvider);
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Wrap(
+                          spacing: 8.0,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('전체보기'),
+                              selected: filterType == '',
+                              onSelected: (selected) {
+                                if (selected) {
+                                  ref.read(paymentFilterProvider.notifier).state = '';
+                                  _fetchData();
+                                }
+                              },
+                            ),
+                            ChoiceChip(
+                              label: const Text('금액기록'),
+                              selected: filterType == 'PAYMENT',
+                              onSelected: (selected) {
+                                if (selected) {
+                                  ref.read(paymentFilterProvider.notifier).state = 'PAYMENT';
+                                  _fetchData();
+                                }
+                              },
+                            ),
+                            ChoiceChip(
+                              label: const Text('공금기록'),
+                              selected: filterType == 'SHAREDFUND',
+                              onSelected: (selected) {
+                                if (selected) {
+                                  ref.read(paymentFilterProvider.notifier).state = 'SHAREDFUND';
+                                  _fetchData();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                 ],
               ),
             ),

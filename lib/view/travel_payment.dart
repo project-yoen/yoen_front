@@ -10,6 +10,7 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
+import 'package:yoen_front/view/travel_overview.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -29,10 +30,11 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   void _fetchPayments() {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
+    final filterType = ref.read(paymentFilterProvider);
     if (travel != null && date != null) {
       ref
           .read(paymentNotifierProvider.notifier)
-          .getPayments(travel.travelId, date, '');
+          .getPayments(travel.travelId, date, filterType);
     }
   }
 
@@ -42,6 +44,10 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final paymentState = ref.watch(paymentNotifierProvider);
 
     ref.listen<DateTime?>(dateNotifierProvider, (prev, next) {
+      if (prev != next) _fetchPayments();
+    });
+
+    ref.listen<String>(paymentFilterProvider, (prev, next) {
       if (prev != next) _fetchPayments();
     });
 
@@ -68,6 +74,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
       case Status.success:
         final travel = ref.read(travelListNotifierProvider).selectedTravel;
         final date = ref.read(dateNotifierProvider);
+        final filterType = ref.read(paymentFilterProvider);
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -75,7 +82,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
             if (travel != null && date != null) {
               await ref
                   .read(paymentNotifierProvider.notifier)
-                  .getPayments(travel.travelId, date, '');
+                  .getPayments(travel.travelId, date, filterType);
             }
           },
           child: state.payments.isEmpty
@@ -145,6 +152,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     }
   }
 }
+
 
 // ───────────────────────── 스켈레톤 ─────────────────────────
 class _PaymentCardSkeleton extends StatelessWidget {
