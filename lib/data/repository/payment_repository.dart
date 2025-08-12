@@ -17,7 +17,7 @@ class PaymentRepository {
 
   Future<List<PaymentResponse>> getPayments(
     int travelId,
-    String date,
+    String? date,
     String type,
   ) async {
     final response = await _apiService.getPayments(travelId, date, type);

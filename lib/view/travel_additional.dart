@@ -6,6 +6,7 @@ import 'package:yoen_front/main.dart';
 import 'package:yoen_front/view/settlement.dart';
 import 'package:yoen_front/view/travel_detail_page.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
+import 'package:yoen_front/view/travel_prepayment_list.dart';
 
 import 'base.dart';
 
@@ -38,14 +39,14 @@ class TravelAdditionalScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             _ActionButton(
               icon: Icons.receipt_long_outlined,
-              label: '사전 사용금액 등록',
+              label: '사전 사용금액 목록',
               onPressed: () {
                 if (travel == null) return;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                        TravelPrepaymentCreateScreen(travelId: travel.travelId),
+                        TravelPrepaymentListScreen(travelId: travel.travelId),
                   ),
                 );
               },

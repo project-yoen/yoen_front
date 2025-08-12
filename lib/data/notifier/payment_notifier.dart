@@ -459,7 +459,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft.copyWith(removedImageIds: next));
   }
 
-  Future<void> getPayments(int travelId, DateTime date, String type) async {
+  Future<void> getPayments(int travelId, DateTime? date, String type) async {
     state = state.copyWith(
       getStatus: Status.loading,
       resetCreateStatus: true,
@@ -470,7 +470,13 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       lastListType: type,
     );
     try {
-      final dateString = date.toIso8601String();
+      String? dateString;
+      if (type == 'PREPAYMENT') {
+        dateString = '0000-01-01T00:00:00.000';
+      } else {
+        dateString = date?.toIso8601String();
+      }
+
       final payments = await _repository.getPayments(
         travelId,
         dateString,
