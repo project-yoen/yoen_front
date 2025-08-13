@@ -11,6 +11,7 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/payment_update.dart';
+import 'package:yoen_front/view/travel_record_update.dart';
 
 // 공용 타일 & 다이얼로그 오프너 & 컨펌
 import '../data/dialog/confirm.dart';
@@ -129,6 +130,34 @@ class _TravelOverviewContentScreenState
                             }
                           } else if (action == 'edit') {
                             // TODO: 편집 로직 필요 시 연결
+                            final travel = ref
+                                .read(travelListNotifierProvider)
+                                .selectedTravel;
+                            if (travel == null) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('여행 정보가 없습니다.')),
+                                );
+                              }
+                              return;
+                            }
+
+                            final saved = await Navigator.of(context)
+                                .push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (_) => TravelRecordUpdateScreen(
+                                      travelId: travel.travelId,
+                                      record: record,
+                                    ),
+                                  ),
+                                );
+
+                            // 저장 성공 시 상세 다이얼로그 닫기(리스트/타임라인 화면에 반영된 값 보이도록)
+                            if (saved == true && mounted) {
+                              await ref
+                                  .read(overviewNotifierProvider.notifier)
+                                  .refreshLast();
+                            }
                           }
                         },
                       );

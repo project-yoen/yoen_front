@@ -1,15 +1,16 @@
 // lib/view/record_update_screen.dart
 
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/model/record_update_request.dart';
 import 'package:yoen_front/data/model/travel_record_image_response.dart';
+import 'package:yoen_front/data/notifier/common_provider.dart';
+import 'package:yoen_front/data/notifier/overview_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 
@@ -17,7 +18,7 @@ import '../data/widget/responsive_shimmer_image.dart';
 
 class TravelRecordUpdateScreen extends ConsumerStatefulWidget {
   final int travelId;
-  final RecordResponse record; // ✅ 리스트에서 받은 데이터 그대로
+  final RecordResponse record; // 리스트에서 받은 데이터 그대로
 
   const TravelRecordUpdateScreen({
     super.key,
@@ -119,6 +120,11 @@ class _TravelRecordUpdateScreenState
     final files = _newImages.map((x) => File(x.path)).toList();
 
     await ref.read(recordNotifierProvider.notifier).updateRecord(req, files);
+
+    final selectedIndex = ref.read(overviewTabIndexProvider);
+    if (selectedIndex == 0) {
+      ref.read(overviewNotifierProvider.notifier).refreshLast();
+    }
   }
 
   @override

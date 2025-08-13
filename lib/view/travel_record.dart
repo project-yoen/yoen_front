@@ -9,6 +9,7 @@ import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/record_tile.dart';
+import 'package:yoen_front/view/travel_record_update.dart';
 
 class TravelRecordScreen extends ConsumerStatefulWidget {
   const TravelRecordScreen({super.key});
@@ -111,6 +112,26 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                           }
                         } else if (action == 'edit') {
                           // TODO: 수정 다이얼로그 연결 시 변경 발생하면 _fetchRecords();
+                          final travel = ref
+                              .read(travelListNotifierProvider)
+                              .selectedTravel;
+                          if (travel == null) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('여행 정보가 없습니다.')),
+                              );
+                            }
+                            return;
+                          }
+
+                          final saved = await Navigator.of(context).push<bool>(
+                            MaterialPageRoute(
+                              builder: (_) => TravelRecordUpdateScreen(
+                                travelId: travel.travelId,
+                                record: record, // 리스트에서 넘겨받은 RecordResponse 그대로
+                              ),
+                            ),
+                          );
                         }
                       },
                     );

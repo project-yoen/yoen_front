@@ -18,6 +18,7 @@ import 'package:yoen_front/view/travel_record_create.dart';
 import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
 import '../data/dialog/universal_date_picker_dialog.dart';
+import '../data/notifier/common_provider.dart';
 import '../data/notifier/payment_notifier.dart';
 
 final paymentFilterProvider = StateProvider<String>((ref) => '');
@@ -32,9 +33,6 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   late PageController _pageController;
-  int _selectedIndex = 0;
-
-  bool get _showFab => _selectedIndex != 3; // 부가기능 탭에서는 FAB 숨김
 
   @override
   void initState() {
@@ -97,39 +95,36 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
+    final selectedIndex = ref.read(overviewTabIndexProvider);
+    if (index == selectedIndex) return;
 
-    setState(() {
-      _selectedIndex = index;
-    });
+    ref.read(overviewTabIndexProvider.notifier).state = index;
 
     if (index < 3) {
-      // PageView에 포함된 탭으로 이동
       _pageController.jumpToPage(index);
     }
-    // index가 3일 경우, setState만으로 Offstage 제어
   }
 
   void _onPageChanged(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    ref.read(overviewTabIndexProvider.notifier).state = index;
   }
 
   void _fetchData() {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
+    final selectedIndex = ref.read(overviewTabIndexProvider);
+
     if (travel != null && date != null) {
-      if (_selectedIndex == 0) {
+      if (selectedIndex == 0) {
         ref
             .read(overviewNotifierProvider.notifier)
             .fetchTimeline(travel.travelId, date);
-      } else if (_selectedIndex == 1) {
+      } else if (selectedIndex == 1) {
         final filterType = ref.read(paymentFilterProvider);
         ref
             .read(paymentNotifierProvider.notifier)
             .getPayments(travel.travelId, date, filterType);
-      } else if (_selectedIndex == 2) {
+      } else if (selectedIndex == 2) {
         ref
             .read(recordNotifierProvider.notifier)
             .getRecords(travel.travelId, date);
@@ -240,6 +235,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   Widget build(BuildContext context) {
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
     final currentDate = ref.watch(dateNotifierProvider);
+    final selectedIndex = ref.watch(overviewTabIndexProvider);
+    final showFab = selectedIndex != 3;
 
     if (travel == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -407,7 +404,7 @@ https://your-app-link.com
 
       body: Column(
         children: [
-          if (currentDate != null && _selectedIndex != 3)
+          if (currentDate != null && selectedIndex != 3)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Column(
@@ -468,48 +465,65 @@ https://your-app-link.com
                       ),
                     ],
                   ),
-                  if (_selectedIndex == 1)
-                    Consumer(builder: (context, ref, child) {
-                      final filterType = ref.watch(paymentFilterProvider);
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Wrap(
-                          spacing: 8.0,
-                          children: [
-                            ChoiceChip(
-                              label: const Text('전체보기'),
-                              selected: filterType == '',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  ref.read(paymentFilterProvider.notifier).state = '';
-                                  _fetchData();
-                                }
-                              },
-                            ),
-                            ChoiceChip(
-                              label: const Text('금액기록'),
-                              selected: filterType == 'PAYMENT',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  ref.read(paymentFilterProvider.notifier).state = 'PAYMENT';
-                                  _fetchData();
-                                }
-                              },
-                            ),
-                            ChoiceChip(
-                              label: const Text('공금기록'),
-                              selected: filterType == 'SHAREDFUND',
-                              onSelected: (selected) {
-                                if (selected) {
-                                  ref.read(paymentFilterProvider.notifier).state = 'SHAREDFUND';
-                                  _fetchData();
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
+                  if (selectedIndex == 1)
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final filterType = ref.watch(paymentFilterProvider);
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Wrap(
+                            spacing: 8.0,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('전체보기'),
+                                selected: filterType == '',
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    ref
+                                            .read(
+                                              paymentFilterProvider.notifier,
+                                            )
+                                            .state =
+                                        '';
+                                    _fetchData();
+                                  }
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('금액기록'),
+                                selected: filterType == 'PAYMENT',
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    ref
+                                            .read(
+                                              paymentFilterProvider.notifier,
+                                            )
+                                            .state =
+                                        'PAYMENT';
+                                    _fetchData();
+                                  }
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('공금기록'),
+                                selected: filterType == 'SHAREDFUND',
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    ref
+                                            .read(
+                                              paymentFilterProvider.notifier,
+                                            )
+                                            .state =
+                                        'SHAREDFUND';
+                                    _fetchData();
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -520,7 +534,7 @@ https://your-app-link.com
               child: Stack(
                 children: [
                   Offstage(
-                    offstage: _selectedIndex == 3,
+                    offstage: selectedIndex == 3,
                     child: PageView(
                       controller: _pageController,
                       onPageChanged: _onPageChanged,
@@ -532,7 +546,7 @@ https://your-app-link.com
                     ),
                   ),
                   Offstage(
-                    offstage: _selectedIndex != 3,
+                    offstage: selectedIndex != 3,
                     child: const TravelAdditionalScreen(),
                   ),
                 ],
@@ -544,16 +558,16 @@ https://your-app-link.com
 
       // ✅ 중앙 도킹 확장형 FAB: 탭과 분리된 '추가' CTA
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _showFab
+      floatingActionButton: showFab
           ? FloatingActionButton.extended(
               heroTag: 'travelOverviewFab',
               onPressed: () {
                 HapticFeedback.lightImpact();
-                if (_selectedIndex == 0) {
+                if (selectedIndex == 0) {
                   _showAddOptions(context, travel.travelId); // 기록/금액 선택
-                } else if (_selectedIndex == 1) {
+                } else if (selectedIndex == 1) {
                   _showPaymentOptions(context, travel.travelId); // 공금/결제 선택
-                } else if (_selectedIndex == 2) {
+                } else if (selectedIndex == 2) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -599,7 +613,7 @@ https://your-app-link.com
                 child: _NavItem(
                   icon: Icons.home,
                   label: '전체보기',
-                  selected: _selectedIndex == 0,
+                  selected: selectedIndex == 0,
                   onTap: () => _onItemTapped(0),
                 ),
               ),
@@ -607,7 +621,7 @@ https://your-app-link.com
                 child: _NavItem(
                   icon: Icons.payment,
                   label: '금액기록',
-                  selected: _selectedIndex == 1,
+                  selected: selectedIndex == 1,
                   onTap: () => _onItemTapped(1),
                 ),
               ),
@@ -620,7 +634,7 @@ https://your-app-link.com
                 child: _NavItem(
                   icon: Icons.book,
                   label: '여행기록',
-                  selected: _selectedIndex == 2,
+                  selected: selectedIndex == 2,
                   onTap: () => _onItemTapped(2),
                 ),
               ),
@@ -628,7 +642,7 @@ https://your-app-link.com
                 child: _NavItem(
                   icon: Icons.more_horiz,
                   label: '부가기능',
-                  selected: _selectedIndex == 3,
+                  selected: selectedIndex == 3,
                   onTap: () => _onItemTapped(3),
                 ),
               ),
