@@ -330,6 +330,7 @@ class _UniversalDatePickerDialogState extends State<UniversalDatePickerDialog> {
                 availableCalendarFormats: const {CalendarFormat.month: 'Month'},
                 onFormatChanged: (f) => setState(() => _format = f),
                 onPageChanged: (fd) => _focusedDay = DateUtils.dateOnly(fd),
+                daysOfWeekHeight: 30, // 28~32 사이에서 취향에 맞게
 
                 enabledDayPredicate: (day) => _inRange(DateUtils.dateOnly(day)),
 
@@ -389,12 +390,18 @@ class _UniversalDatePickerDialogState extends State<UniversalDatePickerDialog> {
                     final color = isSat
                         ? Colors.blue
                         : (isSun ? Colors.red : null);
-                    return Center(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 2), // ← 하단 여백
+                      child: Align(
+                        alignment: Alignment.bottomCenter, // ← 아래 정렬(시각적으로 안정감)
+                        child: Text(
+                          label,
+                          // height를 살짝 키워도 좋습니다 (플랫폼별 글꼴 라인 박스 보정)
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            height: 1.1, // 선택 사항
+                          ),
                         ),
                       ),
                     );

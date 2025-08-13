@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/user_response.dart';
 import 'package:yoen_front/data/notifier/user_notifier.dart';
 
-import '../data/dialog/single_day_picker_dialog.dart';
 import '../data/dialog/universal_date_picker_dialog.dart';
 
 /// ===============================
@@ -72,12 +71,9 @@ class UserProfileScreen extends ConsumerWidget {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 12),
-                            _ViewRow(label: '이름', value: user?.name ?? '-'),
+                            _ViewRow(label: '이름', value: user.name ?? '-'),
                             const Divider(height: 24),
-                            _ViewRow(
-                              label: '닉네임',
-                              value: user?.nickname ?? '-',
-                            ),
+                            _ViewRow(label: '닉네임', value: user.nickname ?? '-'),
                           ],
                         ),
                       ),
@@ -103,12 +99,12 @@ class UserProfileScreen extends ConsumerWidget {
                             const SizedBox(height: 12),
                             _ViewRow(
                               label: '성별',
-                              value: _genderKo(user?.gender),
+                              value: _genderKo(user.gender),
                             ),
                             const Divider(height: 24),
                             _ViewRow(
                               label: '생일',
-                              value: _fmtDate(user?.birthday),
+                              value: _fmtDate(user.birthday),
                             ),
                           ],
                         ),
