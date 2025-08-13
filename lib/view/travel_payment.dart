@@ -10,10 +10,9 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart' as payment_noti;
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
-import 'package:yoen_front/view/travel_overview.dart';
 import 'package:yoen_front/view/travel_sharedfund_update.dart';
 
-import '../data/notifier/overview_notifier.dart';
+import '../data/model/payment_response.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -24,19 +23,34 @@ class TravelPaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
+  ProviderSubscription<DateTime?>? _dateSub;
+
   @override
   void initState() {
     super.initState();
-    // 화면이 처음 빌드될 때 데이터 로딩을 시작합니다.
-    // addPostFrameCallback을 사용하면 첫 프레임이 그려진 후 안전하게 호출됩니다.
+
+    // 초진입시 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
+
+    // ✅ build 바깥에서 1회만 구독
+    _dateSub = ref.listenManual<DateTime?>(dateNotifierProvider, (prev, next) {
+      if (prev != next) {
+        // ✅ 빌드 완료 후 호출
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dateSub?.close();
+    super.dispose();
   }
 
   void _fetchPayments() {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
     if (travel != null && date != null) {
-      // getPayments는 항상 전체 목록을 가져옵니다. 필터 타입은 전달할 필요가 없습니다.
       ref
           .read(payment_noti.paymentNotifierProvider.notifier)
           .getPayments(travel.travelId, date, null);
@@ -45,19 +59,12 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 날짜가 변경되면 데이터를 다시 가져옵니다.
-    ref.listen<DateTime?>(dateNotifierProvider, (prev, next) {
-      if (prev != next) _fetchPayments();
-    });
-
     final paymentStatus = ref.watch(
       payment_noti.paymentNotifierProvider.select((s) => s.getStatus),
     );
     final errorMessage = ref.watch(
       payment_noti.paymentNotifierProvider.select((s) => s.errorMessage),
     );
-
-    // UI는 최종적으로 필터링된 목록만 watch합니다.
     final payments = ref.watch(payment_noti.filteredPaymentsProvider);
 
     return Column(
@@ -69,30 +76,32 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   }
 
   Widget _buildFilterButtons() {
-    final selectedType = ref
-        .watch(payment_noti.paymentNotifierProvider)
-        .selectedType;
+    // ✅ 꼭 필요한 필드만 구독 (리빌드 최소화)
+    final selectedType = ref.watch(
+      payment_noti.paymentNotifierProvider.select((s) => s.selectedType),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildFilterButton(context, 'ALL', '전체'),
+          _buildFilterButton(context, 'ALL', '전체', selectedType),
           const SizedBox(width: 8),
-          _buildFilterButton(context, 'PAYMENT', '결제'),
+          _buildFilterButton(context, 'PAYMENT', '결제', selectedType),
           const SizedBox(width: 8),
-          _buildFilterButton(context, 'SHAREDFUND', '공금'),
+          _buildFilterButton(context, 'SHAREDFUND', '공금', selectedType),
         ],
       ),
     );
   }
 
-  Widget _buildFilterButton(BuildContext context, String type, String text) {
-    final selectedType = ref
-        .watch(payment_noti.paymentNotifierProvider)
-        .selectedType;
+  Widget _buildFilterButton(
+    BuildContext context,
+    String type,
+    String text,
+    String selectedType,
+  ) {
     final isSelected = selectedType == type;
-
     return ElevatedButton(
       onPressed: () {
         ref

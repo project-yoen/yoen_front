@@ -31,26 +31,35 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   late PageController _pageController;
+  ProviderSubscription<int>? _tabSub;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+
+    ref.read(overviewTabIndexProvider.notifier).state = 0;
+
+    _pageController = PageController(initialPage: 0);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tabSub = ref.listenManual<int>(overviewTabIndexProvider, (prev, next) {
+        if (next < 3 && _pageController.hasClients) {
+          // PageView가 보이는 세 탭(0~2)만 이동
+          _pageController.jumpToPage(next);
+        }
+      });
+
+      // 날짜 초기화 로직 유지
       final travel = ref.read(travelListNotifierProvider).selectedTravel;
       if (travel != null) {
         final start = DateTime.parse(travel.startDate);
         final end = DateTime.parse(travel.endDate);
         final today = DateTime.now();
-
-        // 오늘 날짜가 여행 기간 안에 있으면 오늘, 아니면 startDate
         final defaultDate =
             (today.isAfter(start.subtract(const Duration(days: 1))) &&
                 today.isBefore(end.add(const Duration(days: 1))))
             ? today
             : start;
-
         ref.read(dateNotifierProvider.notifier).setDate(defaultDate);
       }
     });
@@ -58,6 +67,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
   @override
   void dispose() {
+    _tabSub?.close();
     _pageController.dispose();
     super.dispose();
   }

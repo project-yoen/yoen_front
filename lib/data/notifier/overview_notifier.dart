@@ -66,7 +66,7 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
 
       final List<RecordResponse> records = recordState.records;
       final List<PaymentResponse> payments =
-          paymentState.payments; // ← PaymentState에 payments 리스트가 있어야 함
+          paymentState.allPayments; // ← PaymentState에 payments 리스트가 있어야 함
 
       final List<TimelineItem> timelineItems = [
         for (final r in records)

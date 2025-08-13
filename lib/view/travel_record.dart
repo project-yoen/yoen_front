@@ -19,10 +19,28 @@ class TravelRecordScreen extends ConsumerStatefulWidget {
 }
 
 class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
+  ProviderSubscription<DateTime?>? _dateSub;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(_fetchRecords);
+
+    // 초진입 1회 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecords());
+
+    // 날짜 변경 구독 (build 바깥)
+    _dateSub = ref.listenManual<DateTime?>(dateNotifierProvider, (prev, next) {
+      if (prev != next && next != null) {
+        // 프레임 이후 안전 호출
+        WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecords());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dateSub?.close();
+    super.dispose();
   }
 
   void _fetchRecords() {
@@ -38,16 +56,6 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   @override
   Widget build(BuildContext context) {
     final recordState = ref.watch(recordNotifierProvider);
-
-    ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
-      final travel = ref.read(travelListNotifierProvider).selectedTravel;
-      if (travel != null && next != null && previous != next) {
-        ref
-            .read(recordNotifierProvider.notifier)
-            .getRecords(travel.travelId, next);
-      }
-    });
-
     return Scaffold(body: _buildBody(recordState));
   }
 
