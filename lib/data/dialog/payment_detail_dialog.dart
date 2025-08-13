@@ -8,6 +8,7 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import '../../view/image_preview.dart';
 import '../../view/payment_update.dart';
 import '../../view/travel_sharedfund_update.dart';
+import '../enums/status.dart';
 import '../notifier/overview_notifier.dart';
 import '../widget/progress_badge.dart';
 import '../widget/responsive_shimmer_image.dart';

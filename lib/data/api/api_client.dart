@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_service.dart';
+import 'interceptor/api_call_logger.dart';
 import 'interceptor/auth_interceptor.dart';
 
 class ApiClient {
@@ -23,6 +24,7 @@ class ApiClient {
     );
 
     dio.interceptors.add(AuthInterceptor(ref, dio));
+    dio.interceptors.add(ApiCountInterceptor());
     dio.interceptors.add(
       LogInterceptor(
         request: true,

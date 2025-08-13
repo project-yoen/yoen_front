@@ -37,11 +37,11 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   void initState() {
     super.initState();
 
-    ref.read(overviewTabIndexProvider.notifier).state = 0;
-
     _pageController = PageController(initialPage: 0);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(overviewTabIndexProvider.notifier).state = 0;
+
       _tabSub = ref.listenManual<int>(overviewTabIndexProvider, (prev, next) {
         if (next < 3 && _pageController.hasClients) {
           // PageView가 보이는 세 탭(0~2)만 이동

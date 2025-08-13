@@ -13,7 +13,7 @@ import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/model/settlement_item.dart';
 import 'package:yoen_front/data/repository/payment_repository.dart';
 
-enum Status { initial, loading, success, error }
+import '../enums/status.dart';
 
 /// 화면 편집용 드래프트 (UI는 SettlementItem 사용)
 class PaymentEditDraft {

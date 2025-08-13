@@ -12,6 +12,8 @@ import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
+import '../data/enums/status.dart';
+
 class TravelPrepaymentCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
   const TravelPrepaymentCreateScreen({super.key, required this.travelId});

@@ -14,6 +14,7 @@ import 'package:yoen_front/data/notifier/overview_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 
+import '../data/enums/status.dart';
 import '../data/widget/responsive_shimmer_image.dart';
 
 class TravelRecordUpdateScreen extends ConsumerStatefulWidget {

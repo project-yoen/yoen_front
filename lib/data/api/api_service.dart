@@ -148,7 +148,7 @@ abstract class ApiService {
   @GET("/record")
   Future<ApiResponse<List<RecordResponse>>> getRecords(
     @Query("travelId") int travelId,
-    @Query("date") String date,
+    @Query("date") String? date,
   );
 
   @MultiPart()

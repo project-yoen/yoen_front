@@ -11,6 +11,8 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/record_tile.dart';
 import 'package:yoen_front/view/travel_record_update.dart';
 
+import '../data/enums/status.dart';
+
 class TravelRecordScreen extends ConsumerStatefulWidget {
   const TravelRecordScreen({super.key});
 
@@ -143,6 +145,15 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                               ),
                             ),
                           );
+
+                          if (saved == true) {
+                            await ref
+                                .read(recordNotifierProvider.notifier)
+                                .getRecords(
+                                  travel.travelId,
+                                  ref.read(dateNotifierProvider),
+                                );
+                          }
                         }
                       },
                     );

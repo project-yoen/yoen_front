@@ -9,6 +9,8 @@ import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
 
+import '../data/enums/status.dart';
+
 class TravelPrepaymentListScreen extends ConsumerStatefulWidget {
   final int travelId;
   const TravelPrepaymentListScreen({super.key, required this.travelId});

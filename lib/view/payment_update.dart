@@ -14,6 +14,8 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/view/travel_settlement_update.dart';
 
+import '../data/enums/status.dart';
+
 class PaymentUpdateScreen extends ConsumerStatefulWidget {
   final int paymentId;
   final int travelId;

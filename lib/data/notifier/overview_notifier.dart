@@ -1,9 +1,16 @@
+// lib/data/notifier/overview_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yoen_front/data/model/payment_response.dart';
-import 'package:yoen_front/data/model/record_response.dart';
+
+// 공용 Status
+
+// 타임라인 아이템 모델(Record/Payment를 둘 다 담을 수 있는 타입)
 import 'package:yoen_front/data/model/timeline_item.dart';
-import 'package:yoen_front/data/notifier/payment_notifier.dart';
+
+// 도메인 상태
 import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/payment_notifier.dart';
+
+import '../enums/status.dart';
 
 enum OverviewStatus { initial, loading, success, error }
 
@@ -14,7 +21,7 @@ class OverviewState {
   final int? lastTravelId;
   final DateTime? lastDate;
 
-  OverviewState({
+  const OverviewState({
     this.status = OverviewStatus.initial,
     this.items = const [],
     this.errorMessage,
@@ -40,89 +47,85 @@ class OverviewState {
 }
 
 class OverviewNotifier extends StateNotifier<OverviewState> {
-  OverviewNotifier(this.ref) : super(OverviewState());
+  OverviewNotifier(this.ref) : super(const OverviewState()) {
+    // 두 도메인 상태 변화를 모두 구독 → 변경 시마다 타임라인 재조립
+    ref.listen<RecordState>(recordNotifierProvider, (prev, next) {
+      _rebuildFromSources();
+    });
+    ref.listen<PaymentState>(paymentNotifierProvider, (prev, next) {
+      _rebuildFromSources();
+    });
+  }
+
   final Ref ref;
 
-  /// 항상 Notifier 경유로 가져와서 상태 동기화
+  /// 최초/재조회 트리거: 실제 fetch는 각 도메인 Notifier에게 위임
   Future<void> fetchTimeline(int travelId, DateTime date) async {
+    // 로딩 표시 & 컨텍스트 저장
     state = state.copyWith(
       status: OverviewStatus.loading,
       lastTravelId: travelId,
       lastDate: date,
     );
 
-    try {
-      // 1) 각 Notifier에게 fetch 지시 (여기서 각자 last 컨텍스트도 저장됨)
-      await ref
-          .read(recordNotifierProvider.notifier)
-          .getRecords(travelId, date);
-      await ref
+    // 병렬 fetch
+    await Future.wait([
+      ref.read(recordNotifierProvider.notifier).getRecords(travelId, date),
+      ref
           .read(paymentNotifierProvider.notifier)
-          .getPayments(travelId, date, ''); // 필터 없으면 빈 문자열
+          .getPayments(travelId, date, null),
+    ]);
 
-      // 2) 결과는 각 Notifier의 state에서 읽어서 조합
-      final recordState = ref.read(recordNotifierProvider);
-      final paymentState = ref.read(paymentNotifierProvider);
-
-      final List<RecordResponse> records = recordState.records;
-      final List<PaymentResponse> payments =
-          paymentState.allPayments; // ← PaymentState에 payments 리스트가 있어야 함
-
-      final List<TimelineItem> timelineItems = [
-        for (final r in records)
-          TimelineItem(
-            type: TimelineItemType.record,
-            timestamp: DateTime.parse(r.recordTime),
-            data: r,
-          ),
-        for (final p in payments)
-          TimelineItem(
-            type: TimelineItemType.payment,
-            timestamp: DateTime.parse(p.payTime),
-            data: p,
-          ),
-      ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
-      state = state.copyWith(
-        status: OverviewStatus.success,
-        items: timelineItems,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        status: OverviewStatus.error,
-        errorMessage: e.toString(),
-      );
-    }
+    // 결과는 각 notifier가 state 갱신 → 아래 listen에서 자동 호출되지만
+    // 초회 시점 보장 위해 한 번 더 수동 재조립
+    _rebuildFromSources();
   }
 
   Future<void> refreshLast() async {
-    final t = state.lastTravelId;
-    final d = state.lastDate;
-    if (t != null && d != null) {
-      await fetchTimeline(t, d);
+    final t = state.lastTravelId, d = state.lastDate;
+    if (t == null || d == null) return;
+    await fetchTimeline(t, d);
+  }
+
+  void _rebuildFromSources() {
+    final r = ref.read(recordNotifierProvider);
+    final p = ref.read(paymentNotifierProvider);
+
+    // 종합 로딩/에러 판단
+    final anyLoading =
+        r.getStatus == Status.loading || p.getStatus == Status.loading;
+    final anyError = r.getStatus == Status.error || p.getStatus == Status.error;
+
+    if (anyLoading) {
+      state = state.copyWith(status: OverviewStatus.loading);
+      return; // 직전 items 유지
     }
-  }
 
-  void removePayment(int paymentId) {
-    final filtered = state.items
-        .where(
-          (it) =>
-              it.type != TimelineItemType.payment ||
-              it.payment.paymentId != paymentId,
-        )
-        .toList();
-    state = state.copyWith(items: filtered);
-  }
+    if (anyError) {
+      state = state.copyWith(
+        status: OverviewStatus.error,
+        errorMessage: r.errorMessage ?? p.errorMessage ?? '알 수 없는 오류',
+      );
+      return;
+    }
 
-  void removeRecord(int recordId) {
-    final filtered = state.items
-        .where(
-          (it) =>
-              it.type != TimelineItemType.record ||
-              it.record.travelRecordId != recordId,
-        )
-        .toList();
-    state = state.copyWith(items: filtered);
+    // 성공: 두 목록을 합쳐 타임라인 구성
+    final items = <TimelineItem>[
+      for (final rec in r.records)
+        TimelineItem(
+          type: TimelineItemType.record,
+          timestamp: DateTime.parse(rec.recordTime),
+          data: rec,
+        ),
+      for (final pay in p.allPayments)
+        TimelineItem(
+          type: TimelineItemType.payment,
+          timestamp: DateTime.parse(pay.payTime),
+          data: pay,
+        ),
+    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    state = state.copyWith(status: OverviewStatus.success, items: items);
   }
 }
 

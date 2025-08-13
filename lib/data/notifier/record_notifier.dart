@@ -5,9 +5,8 @@ import 'package:yoen_front/data/api/api_provider.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/repository/record_repository.dart';
+import '../enums/status.dart';
 import '../model/record_update_request.dart';
-
-enum Status { initial, loading, success, error }
 
 class RecordState {
   final Status getStatus;
@@ -74,7 +73,7 @@ class RecordNotifier extends StateNotifier<RecordState> {
 
   RecordNotifier(this._repository) : super(RecordState());
   // 목록 조회 후 selectedRecord 동기화 유지 (이미 있던 로직 유지/강화)
-  Future<void> getRecords(int travelId, DateTime date) async {
+  Future<void> getRecords(int travelId, DateTime? date) async {
     state = state.copyWith(
       getStatus: Status.loading,
       resetCreateStatus: true,
@@ -84,7 +83,7 @@ class RecordNotifier extends StateNotifier<RecordState> {
       lastListDate: date,
     );
     try {
-      final dateString = date.toIso8601String();
+      final dateString = date?.toIso8601String();
       final records = await _repository.getRecords(travelId, dateString);
       records.sort((a, b) => a.recordTime.compareTo(b.recordTime));
 

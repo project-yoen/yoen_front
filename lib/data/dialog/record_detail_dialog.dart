@@ -20,6 +20,7 @@ import 'package:yoen_front/data/widget/responsive_shimmer_image.dart';
 import '../../main.dart';
 import '../../view/image_preview.dart';
 import '../../view/travel_record_update.dart';
+import '../enums/status.dart';
 
 class RecordDetailDialog extends ConsumerStatefulWidget {
   const RecordDetailDialog({super.key});

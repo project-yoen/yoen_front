@@ -5,14 +5,15 @@ import 'package:shimmer/shimmer.dart';
 // 공용 다이얼로그 & 타일
 import 'package:yoen_front/data/dialog/confirm.dart';
 import 'package:yoen_front/data/dialog/openers.dart';
+import 'package:yoen_front/data/enums/status.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
-import 'package:yoen_front/data/notifier/payment_notifier.dart' as payment_noti;
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_sharedfund_update.dart';
 
 import '../data/model/payment_response.dart';
+import '../data/notifier/payment_notifier.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -52,7 +53,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final date = ref.read(dateNotifierProvider);
     if (travel != null && date != null) {
       ref
-          .read(payment_noti.paymentNotifierProvider.notifier)
+          .read(paymentNotifierProvider.notifier)
           .getPayments(travel.travelId, date, null);
     }
   }
@@ -60,12 +61,12 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final paymentStatus = ref.watch(
-      payment_noti.paymentNotifierProvider.select((s) => s.getStatus),
+      paymentNotifierProvider.select((s) => s.getStatus),
     );
     final errorMessage = ref.watch(
-      payment_noti.paymentNotifierProvider.select((s) => s.errorMessage),
+      paymentNotifierProvider.select((s) => s.errorMessage),
     );
-    final payments = ref.watch(payment_noti.filteredPaymentsProvider);
+    final payments = ref.watch(filteredPaymentsProvider);
 
     return Column(
       children: [
@@ -78,7 +79,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   Widget _buildFilterButtons() {
     // ✅ 꼭 필요한 필드만 구독 (리빌드 최소화)
     final selectedType = ref.watch(
-      payment_noti.paymentNotifierProvider.select((s) => s.selectedType),
+      paymentNotifierProvider.select((s) => s.selectedType),
     );
 
     return Padding(
@@ -104,9 +105,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
     final isSelected = selectedType == type;
     return ElevatedButton(
       onPressed: () {
-        ref
-            .read(payment_noti.paymentNotifierProvider.notifier)
-            .setSelectedType(type);
+        ref.read(paymentNotifierProvider.notifier).setSelectedType(type);
       },
       style: ElevatedButton.styleFrom(
         foregroundColor: isSelected
@@ -129,22 +128,22 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   }
 
   Widget _buildBody(
-    payment_noti.Status status,
+    Status status,
     List<PaymentResponse> payments,
     String? error,
   ) {
     switch (status) {
-      case payment_noti.Status.loading:
+      case Status.loading:
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
           itemBuilder: (_, __) => const _PaymentCardSkeleton(),
         );
 
-      case payment_noti.Status.error:
+      case Status.error:
         return Center(child: Text('오류가 발생했습니다: $error'));
 
-      case payment_noti.Status.success:
+      case Status.success:
         final travel = ref.read(travelListNotifierProvider).selectedTravel;
         final date = ref.read(dateNotifierProvider);
 
@@ -154,7 +153,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
             if (travel != null && date != null) {
               // 새로고침 시에도 전체 목록을 다시 가져옵니다.
               await ref
-                  .read(payment_noti.paymentNotifierProvider.notifier)
+                  .read(paymentNotifierProvider.notifier)
                   .getPayments(travel.travelId, date, null);
             }
           },
@@ -185,19 +184,15 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                           );
                           if (ok) {
                             await ref
-                                .read(
-                                  payment_noti.paymentNotifierProvider.notifier,
-                                )
+                                .read(paymentNotifierProvider.notifier)
                                 .deletePayment(payment.paymentId);
                           }
                         } else if (action == 'edit') {
                           await ref
-                              .read(
-                                payment_noti.paymentNotifierProvider.notifier,
-                              )
+                              .read(paymentNotifierProvider.notifier)
                               .getPaymentDetails(payment.paymentId);
                           final detail = ref
-                              .read(payment_noti.paymentNotifierProvider)
+                              .read(paymentNotifierProvider)
                               .selectedPayment!;
                           final type = (detail.paymentType ?? '').toUpperCase();
 
@@ -220,15 +215,16 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                           final saved = await Navigator.of(
                             context,
                           ).push<bool>(route);
-                          await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => PaymentUpdateScreen(
-                                paymentId: payment.paymentId,
-                                travelId: detail.travelId!,
-                                paymentType: detail.paymentType ?? 'PAYMENT',
-                              ),
-                            ),
-                          );
+
+                          if (saved == true) {
+                            await ref
+                                .read(paymentNotifierProvider.notifier)
+                                .getPayments(
+                                  detail.travelId!,
+                                  ref.read(dateNotifierProvider),
+                                  null,
+                                );
+                          }
                         }
                       },
                     );

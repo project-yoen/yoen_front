@@ -11,7 +11,7 @@ class RecordRepository {
 
   RecordRepository(this._apiService);
 
-  Future<List<RecordResponse>> getRecords(int travelId, String date) async {
+  Future<List<RecordResponse>> getRecords(int travelId, String? date) async {
     final response = await _apiService.getRecords(travelId, date);
     return response.data!;
   }

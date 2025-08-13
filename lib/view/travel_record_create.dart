@@ -9,6 +9,8 @@ import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 
+import '../data/enums/status.dart';
+
 class TravelRecordCreateScreen extends ConsumerStatefulWidget {
   final int travelId;
   const TravelRecordCreateScreen({super.key, required this.travelId});

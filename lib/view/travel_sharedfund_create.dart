@@ -11,6 +11,7 @@ import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
+import '../data/enums/status.dart';
 import '../data/notifier/travel_list_notifier.dart';
 
 class TravelSharedfundCreateScreen extends ConsumerStatefulWidget {

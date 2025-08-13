@@ -33,7 +33,7 @@ class _TravelOverviewContentScreenState
   @override
   void initState() {
     super.initState();
-    Future.microtask(_fetchData);
+    // Future.microtask(_fetchData);
   }
 
   void _fetchData() {
@@ -52,11 +52,7 @@ class _TravelOverviewContentScreenState
     final travel = ref.watch(travelListNotifierProvider).selectedTravel;
 
     ref.listen<DateTime?>(dateNotifierProvider, (previous, next) {
-      if (travel != null && previous != next && next != null) {
-        ref
-            .read(overviewNotifierProvider.notifier)
-            .fetchTimeline(travel.travelId, next);
-      }
+      _fetchData();
     });
 
     if (travel == null) {
@@ -128,9 +124,6 @@ class _TravelOverviewContentScreenState
                               await ref
                                   .read(recordNotifierProvider.notifier)
                                   .deleteRecord(record.travelRecordId);
-                              ref
-                                  .read(overviewNotifierProvider.notifier)
-                                  .removeRecord(record.travelRecordId);
                             }
                           } else if (action == 'edit') {
                             // TODO: 편집 로직 필요 시 연결
@@ -186,12 +179,13 @@ class _TravelOverviewContentScreenState
                               await ref
                                   .read(paymentNotifierProvider.notifier)
                                   .deletePayment(payment.paymentId);
-                              ref
-                                  .read(overviewNotifierProvider.notifier)
-                                  .removePayment(payment.paymentId);
+
                               // _fetchData();
                             }
                           } else if (action == 'edit') {
+                            await ref
+                                .read(paymentNotifierProvider.notifier)
+                                .getPaymentDetails(payment.paymentId);
                             final detail = ref
                                 .read(paymentNotifierProvider)
                                 .selectedPayment!;

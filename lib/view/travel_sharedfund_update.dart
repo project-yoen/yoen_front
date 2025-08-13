@@ -17,6 +17,8 @@ import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 
+import '../data/enums/status.dart';
+
 class TravelSharedfundUpdateScreen extends ConsumerStatefulWidget {
   final int travelId;
   final int paymentId; // 수정 대상 결제
