@@ -1165,7 +1165,7 @@ class _ApiService implements ApiService {
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
     int travelId,
     String? date,
-    String type,
+    String? type,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
