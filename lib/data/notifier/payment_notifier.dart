@@ -98,7 +98,8 @@ class PaymentState {
   /// 업데이트 상태
   final Status updateStatus;
 
-  final List<PaymentResponse> payments;
+  final List<PaymentResponse> allPayments; // 전체 목록
+  final List<PaymentResponse> payments; // 필터링된 목록
   final PaymentDetailResponse? selectedPayment;
   final String? errorMessage;
 
@@ -114,6 +115,7 @@ class PaymentState {
     this.deleteStatus = Status.initial,
     this.getDetailsStatus = Status.initial,
     this.updateStatus = Status.initial,
+    this.allPayments = const [],
     this.payments = const [],
     this.selectedPayment,
     this.errorMessage,
@@ -132,6 +134,7 @@ class PaymentState {
     Status? getDetailsStatus,
     Status? deleteStatus,
     Status? updateStatus,
+    List<PaymentResponse>? allPayments,
     List<PaymentResponse>? payments,
     PaymentDetailResponse? selectedPayment,
     String? errorMessage,
@@ -155,6 +158,7 @@ class PaymentState {
       updateStatus: resetUpdateStatus == true
           ? Status.initial
           : (updateStatus ?? this.updateStatus),
+      allPayments: allPayments ?? this.allPayments,
       payments: payments ?? this.payments,
       selectedPayment: selectedPayment ?? this.selectedPayment,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -208,10 +212,18 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(deleteStatus: Status.loading);
     try {
       await _repository.deletePayment(paymentId);
-      final updated = state.payments
+      // allPayments와 payments 양쪽에서 모두 삭제
+      final updatedAll = state.allPayments
           .where((p) => p.paymentId != paymentId)
           .toList();
-      state = state.copyWith(deleteStatus: Status.success, payments: updated);
+      final updatedPayments = state.payments
+          .where((p) => p.paymentId != paymentId)
+          .toList();
+      state = state.copyWith(
+        deleteStatus: Status.success,
+        allPayments: updatedAll,
+        payments: updatedPayments,
+      );
     } catch (e) {
       state = state.copyWith(
         deleteStatus: Status.error,
@@ -459,7 +471,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft.copyWith(removedImageIds: next));
   }
 
-  Future<void> getPayments(int travelId, DateTime? date, String type) async {
+  Future<void> getPayments(int travelId, DateTime? date, String? type) async {
     state = state.copyWith(
       getStatus: Status.loading,
       resetCreateStatus: true,
@@ -470,23 +482,47 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       lastListType: type,
     );
     try {
-      String? dateString;
+      String? dateString = date?.toIso8601String();
 
-      dateString = date?.toIso8601String();
+      // API는 항상 전체 데이터를 가져오기 위해 type을 null로 전달
+      final allPayments =
+          await _repository.getPayments(travelId, dateString, null) ?? [];
+      allPayments.sort((a, b) => a.payTime.compareTo(b.payTime));
 
-      final payments = await _repository.getPayments(
-        travelId,
-        dateString,
-        type,
+      // 현재 필터 타입에 맞춰서 초기 목록 설정
+      final filteredPayments = _filter(allPayments, type);
+
+      state = state.copyWith(
+        getStatus: Status.success,
+        allPayments: allPayments,
+        payments: filteredPayments,
       );
-      payments.sort((a, b) => a.payTime.compareTo(b.payTime));
-      state = state.copyWith(getStatus: Status.success, payments: payments);
     } catch (e) {
       state = state.copyWith(
         getStatus: Status.error,
         errorMessage: e.toString(),
       );
     }
+  }
+
+  // 클라이언트 사이드 필터링
+  void filterPayments(String? type) {
+    state = state.copyWith(
+      // 로딩 상태를 보여주지 않고 바로 필터링 결과를 반영
+      lastListType: type,
+    );
+    final filtered = _filter(state.allPayments, type);
+    state = state.copyWith(
+      getStatus: Status.success, // getStatus는 success 유지
+      payments: filtered,
+    );
+  }
+
+  List<PaymentResponse> _filter(List<PaymentResponse> payments, String? type) {
+    if (type == 'ALL' || type == null) {
+      return payments;
+    }
+    return payments.where((p) => p.paymentType == type).toList();
   }
 
   void resetAll() => state = PaymentState();

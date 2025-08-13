@@ -186,7 +186,7 @@ abstract class ApiService {
   Future<ApiResponse<List<PaymentResponse>>> getPayments(
     @Query("travelId") int travelId,
     @Query("date") String? date,
-    @Query("type") String type,
+    @Query("type") String? type,
   );
 
   @GET("/payment/detail")
