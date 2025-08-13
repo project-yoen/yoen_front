@@ -461,7 +461,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     try {
       String? dateString = date?.toIso8601String();
       final allPayments =
-          await _repository.getPayments(travelId, dateString, null) ?? [];
+          await _repository.getPayments(travelId, dateString, type) ?? [];
       allPayments.sort((a, b) => a.payTime.compareTo(b.payTime));
       state = state.copyWith(
         getStatus: Status.success,
