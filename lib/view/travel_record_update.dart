@@ -250,8 +250,9 @@ class _TravelRecordUpdateScreenState
                               ),
                           itemCount: _newImages.length + 1,
                           itemBuilder: (context, idx) {
-                            if (idx == 0)
+                            if (idx == 0) {
                               return _AddPhotoCard(onTap: _pickImages);
+                            }
                             final img = _newImages[idx - 1];
                             return _NewPhotoThumb(
                               file: File(img.path),

@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/model/record_response.dart';
 import 'package:yoen_front/data/model/timeline_item.dart';
-import 'package:yoen_front/data/repository/payment_repository.dart';
-import 'package:yoen_front/data/repository/record_repository.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/notifier/record_notifier.dart';
 
@@ -13,8 +11,6 @@ class OverviewState {
   final OverviewStatus status;
   final List<TimelineItem> items;
   final String? errorMessage;
-
-  /// 마지막 조회 컨텍스트(업데이트 후 재조회나 refreshLast용)
   final int? lastTravelId;
   final DateTime? lastDate;
 
@@ -44,53 +40,48 @@ class OverviewState {
 }
 
 class OverviewNotifier extends StateNotifier<OverviewState> {
-  final RecordRepository _recordRepository;
-  final PaymentRepository _paymentRepository;
+  OverviewNotifier(this.ref) : super(OverviewState());
+  final Ref ref;
 
-  OverviewNotifier(this._recordRepository, this._paymentRepository)
-    : super(OverviewState());
-
+  /// 항상 Notifier 경유로 가져와서 상태 동기화
   Future<void> fetchTimeline(int travelId, DateTime date) async {
     state = state.copyWith(
       status: OverviewStatus.loading,
       lastTravelId: travelId,
       lastDate: date,
     );
+
     try {
-      final dateString = date.toIso8601String();
-      final recordsFuture = _recordRepository.getRecords(travelId, dateString);
-      final paymentsFuture = _paymentRepository.getPayments(
-        travelId,
-        dateString,
-        '',
-      );
+      // 1) 각 Notifier에게 fetch 지시 (여기서 각자 last 컨텍스트도 저장됨)
+      await ref
+          .read(recordNotifierProvider.notifier)
+          .getRecords(travelId, date);
+      await ref
+          .read(paymentNotifierProvider.notifier)
+          .getPayments(travelId, date, ''); // 필터 없으면 빈 문자열
 
-      final List<RecordResponse> records = await recordsFuture;
-      final List<PaymentResponse> payments = await paymentsFuture;
+      // 2) 결과는 각 Notifier의 state에서 읽어서 조합
+      final recordState = ref.read(recordNotifierProvider);
+      final paymentState = ref.read(paymentNotifierProvider);
 
-      final List<TimelineItem> timelineItems = [];
+      final List<RecordResponse> records = recordState.records;
+      final List<PaymentResponse> payments =
+          paymentState.payments; // ← PaymentState에 payments 리스트가 있어야 함
 
-      for (var record in records) {
-        timelineItems.add(
+      final List<TimelineItem> timelineItems = [
+        for (final r in records)
           TimelineItem(
             type: TimelineItemType.record,
-            timestamp: DateTime.parse(record.recordTime),
-            data: record,
+            timestamp: DateTime.parse(r.recordTime),
+            data: r,
           ),
-        );
-      }
-
-      for (var payment in payments) {
-        timelineItems.add(
+        for (final p in payments)
           TimelineItem(
             type: TimelineItemType.payment,
-            timestamp: DateTime.parse(payment.payTime),
-            data: payment,
+            timestamp: DateTime.parse(p.payTime),
+            data: p,
           ),
-        );
-      }
-
-      timelineItems.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
       state = state.copyWith(
         status: OverviewStatus.success,
@@ -104,7 +95,6 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
     }
   }
 
-  /// 마지막 조회 조건으로 재조회
   Future<void> refreshLast() async {
     final t = state.lastTravelId;
     final d = state.lastDate;
@@ -113,7 +103,6 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
     }
   }
 
-  /// 삭제(기존)
   void removePayment(int paymentId) {
     final filtered = state.items
         .where(
@@ -139,7 +128,5 @@ class OverviewNotifier extends StateNotifier<OverviewState> {
 
 final overviewNotifierProvider =
     StateNotifierProvider<OverviewNotifier, OverviewState>((ref) {
-      final recordRepository = ref.watch(recordRepositoryProvider);
-      final paymentRepository = ref.watch(paymentRepositoryProvider);
-      return OverviewNotifier(recordRepository, paymentRepository);
+      return OverviewNotifier(ref);
     });

@@ -11,7 +11,9 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_overview.dart';
-import 'package:yoen_front/data/model/payment_response.dart';
+import 'package:yoen_front/view/travel_sharedfund_update.dart';
+
+import '../data/notifier/overview_notifier.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -188,6 +190,27 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                           final detail = ref
                               .read(payment_noti.paymentNotifierProvider)
                               .selectedPayment!;
+                          final type = (detail.paymentType ?? '').toUpperCase();
+
+                          // paymentType에 따라 다른 수정 화면으로 분기
+                          final route = (type == 'SHAREDFUND')
+                              ? MaterialPageRoute<bool>(
+                                  builder: (_) => TravelSharedfundUpdateScreen(
+                                    paymentId: payment.paymentId,
+                                    travelId: detail.travelId!,
+                                  ),
+                                )
+                              : MaterialPageRoute<bool>(
+                                  builder: (_) => PaymentUpdateScreen(
+                                    paymentId: payment.paymentId,
+                                    travelId: detail.travelId!,
+                                    paymentType: type, // 'PAYMENT' 등
+                                  ),
+                                );
+
+                          final saved = await Navigator.of(
+                            context,
+                          ).push<bool>(route);
                           await Navigator.of(context).push<bool>(
                             MaterialPageRoute(
                               builder: (_) => PaymentUpdateScreen(
