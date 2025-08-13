@@ -6,8 +6,8 @@ import 'package:yoen_front/data/dialog/confirm.dart';
 import 'package:yoen_front/data/dialog/openers.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
-import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
+import 'package:yoen_front/view/travel_prepayment_update.dart';
 
 import '../data/enums/status.dart';
 
@@ -90,6 +90,7 @@ class _TravelPrepaymentListScreenState
                   itemBuilder: (context, index) {
                     final payment = state.allPayments[index];
                     return PaymentTile(
+                      isTimeView: false,
                       payment: payment,
                       onTap: () async {
                         await openPaymentDetailDialog(context, payment);
@@ -110,16 +111,10 @@ class _TravelPrepaymentListScreenState
                           await ref
                               .read(paymentNotifierProvider.notifier)
                               .getPaymentDetails(payment.paymentId);
-                          final detail = ref
-                              .read(paymentNotifierProvider)
-                              .selectedPayment!;
-                          await Navigator.of(context).push<bool>(
+
+                          final saved = await Navigator.of(context).push<bool>(
                             MaterialPageRoute(
-                              builder: (_) => PaymentUpdateScreen(
-                                paymentId: payment.paymentId,
-                                travelId: detail.travelId!,
-                                paymentType: detail.paymentType ?? 'PREPAYMENT',
-                              ),
+                              builder: (_) => TravelPrepaymentUpdateScreen(),
                             ),
                           );
                         }

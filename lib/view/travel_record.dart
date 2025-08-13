@@ -145,15 +145,6 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                               ),
                             ),
                           );
-
-                          if (saved == true) {
-                            await ref
-                                .read(recordNotifierProvider.notifier)
-                                .getRecords(
-                                  travel.travelId,
-                                  ref.read(dateNotifierProvider),
-                                );
-                          }
                         }
                       },
                     );

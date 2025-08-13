@@ -215,16 +215,6 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                           final saved = await Navigator.of(
                             context,
                           ).push<bool>(route);
-
-                          if (saved == true) {
-                            await ref
-                                .read(paymentNotifierProvider.notifier)
-                                .getPayments(
-                                  detail.travelId!,
-                                  ref.read(dateNotifierProvider),
-                                  null,
-                                );
-                          }
                         }
                       },
                     );

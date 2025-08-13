@@ -22,10 +22,13 @@ import '../data/enums/status.dart';
 class TravelSharedfundUpdateScreen extends ConsumerStatefulWidget {
   final int travelId;
   final int paymentId; // 수정 대상 결제
+  final bool isDialog;
+
   const TravelSharedfundUpdateScreen({
     super.key,
     required this.travelId,
     required this.paymentId,
+    this.isDialog = false,
   });
 
   @override
@@ -196,7 +199,7 @@ class _TravelSharedfundUpdateScreenState
 
     await ref
         .read(paymentNotifierProvider.notifier)
-        .updatePayment(req, newFiles);
+        .updatePayment(req, newFiles, widget.isDialog);
   }
 
   String _fmt(DateTime dt) =>

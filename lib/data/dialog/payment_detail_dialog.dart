@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/model/settlement_response.dart';
+import 'package:yoen_front/data/notifier/common_provider.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
 
 import '../../view/image_preview.dart';
 import '../../view/payment_update.dart';
+import '../../view/travel_prepayment_update.dart';
 import '../../view/travel_sharedfund_update.dart';
 import '../enums/status.dart';
 import '../notifier/overview_notifier.dart';
@@ -96,21 +98,33 @@ class _PaymentDetailDialogState extends ConsumerState<PaymentDetailDialog> {
                       builder: (_) => TravelSharedfundUpdateScreen(
                         paymentId: widget.paymentId,
                         travelId: detail.travelId!,
+                        isDialog: true,
                       ),
                     )
-                  : MaterialPageRoute<bool>(
+                  : (type == 'PAYMENT')
+                  ? MaterialPageRoute<bool>(
                       builder: (_) => PaymentUpdateScreen(
                         paymentId: widget.paymentId,
                         travelId: detail.travelId!,
                         paymentType: type, // 'PAYMENT' 등
+                        isDialog: true,
                       ),
+                    )
+                  : MaterialPageRoute<bool>(
+                      builder: (_) =>
+                          TravelPrepaymentUpdateScreen(isDialog: true),
                     );
 
               final saved = await Navigator.of(context).push<bool>(route);
 
               if (saved == true && mounted) {
+                final index = ref.read(overviewTabIndexProvider);
                 // 마지막 조회 컨텍스트로 새로고침
-                await ref.read(overviewNotifierProvider.notifier).refreshLast();
+                if (index == 0) {
+                  await ref
+                      .read(overviewNotifierProvider.notifier)
+                      .refreshLast();
+                }
               }
             },
           ),

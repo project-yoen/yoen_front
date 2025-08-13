@@ -9,11 +9,13 @@ class PaymentTile extends StatelessWidget {
   final PaymentResponse payment;
   final VoidCallback onTap;
   final PaymentMenuAction? onMenuAction;
+  final bool isTimeView;
 
   const PaymentTile({
     super.key,
     required this.payment,
     required this.onTap,
+    this.isTimeView = true,
     this.onMenuAction,
   });
 
@@ -91,7 +93,7 @@ class PaymentTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    _timePill(formattedTime, c, t),
+                    if (isTimeView) _timePill(formattedTime, c, t),
                   ],
                 ),
 

@@ -135,7 +135,7 @@ class PaymentState {
   }) {
     return PaymentState(
       lastTravelId: lastTravelId ?? this.lastTravelId,
-      lastListDate: lastListDate ?? this.lastListDate,
+      lastListDate: lastListDate,
       lastListType: lastListType ?? this.lastListType,
       selectedType: selectedType ?? this.selectedType,
       getStatus: getStatus ?? this.getStatus,
@@ -459,9 +459,13 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       lastListType: type,
     );
     try {
+      print("PREPAYMENT ${state.lastListDate}");
       String? dateString = date?.toIso8601String();
-      final allPayments =
-          await _repository.getPayments(travelId, dateString, type) ?? [];
+      final allPayments = await _repository.getPayments(
+        travelId,
+        dateString,
+        type,
+      );
       allPayments.sort((a, b) => a.payTime.compareTo(b.payTime));
       state = state.copyWith(
         getStatus: Status.success,
@@ -480,16 +484,18 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   Future<void> updatePayment(
     PaymentUpdateRequest request,
     List<File> newImages,
+    bool isDialog,
   ) async {
     state = state.copyWith(updateStatus: Status.loading);
     try {
       await _repository.updatePayment(request, newImages);
       state = state.copyWith(updateStatus: Status.success);
-      await getPaymentDetails(request.paymentId);
+      if (isDialog) await getPaymentDetails(request.paymentId);
       final lt = state.lastTravelId;
       final ld = state.lastListDate;
       final lty = state.lastListType;
-      if (lt != null && ld != null && lty != null) {
+
+      if (lt != null && lty != null) {
         await getPayments(lt, ld, lty);
       }
     } catch (e) {

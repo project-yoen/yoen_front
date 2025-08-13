@@ -20,12 +20,14 @@ class PaymentUpdateScreen extends ConsumerStatefulWidget {
   final int paymentId;
   final int travelId;
   final String paymentType;
+  final bool isDialog;
 
   const PaymentUpdateScreen({
     super.key,
     required this.paymentId,
     required this.travelId,
     required this.paymentType,
+    this.isDialog = false,
   });
 
   @override
@@ -177,6 +179,7 @@ class _PaymentUpdateScreenState extends ConsumerState<PaymentUpdateScreen> {
               travelId: widget.travelId,
               paymentType: widget.paymentType,
               newImages: _newImages, // 여기서 전달
+              isDialog: widget.isDialog,
             ),
           ),
         )

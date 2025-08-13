@@ -18,6 +18,7 @@ import '../data/enums/status.dart';
 class TravelSettlementUpdateScreen extends ConsumerStatefulWidget {
   final int travelId;
   final String paymentType;
+  final bool isDialog;
 
   /// PaymentUpdateScreen에서 모은 새 이미지들
   final List<XFile> newImages;
@@ -27,6 +28,7 @@ class TravelSettlementUpdateScreen extends ConsumerStatefulWidget {
     required this.travelId,
     required this.paymentType,
     required this.newImages,
+    this.isDialog = false,
   });
 
   @override
@@ -95,7 +97,9 @@ class _TravelSettlementUpdateScreenState
 
     final files = widget.newImages.map((x) => File(x.path)).toList();
 
-    await ref.read(paymentNotifierProvider.notifier).updatePayment(req, files);
+    await ref
+        .read(paymentNotifierProvider.notifier)
+        .updatePayment(req, files, widget.isDialog);
   }
 
   @override
