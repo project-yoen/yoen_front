@@ -6,11 +6,12 @@ import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/dialog/confirm.dart';
 import 'package:yoen_front/data/dialog/openers.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
-import 'package:yoen_front/data/notifier/payment_notifier.dart';
+import 'package:yoen_front/data/notifier/payment_notifier.dart' as payment_noti;
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_overview.dart';
+import 'package:yoen_front/data/model/payment_response.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -24,68 +25,129 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(_fetchPayments);
+    // 화면이 처음 빌드될 때 데이터 로딩을 시작합니다.
+    // addPostFrameCallback을 사용하면 첫 프레임이 그려진 후 안전하게 호출됩니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
   }
 
   void _fetchPayments() {
     final travel = ref.read(travelListNotifierProvider).selectedTravel;
     final date = ref.read(dateNotifierProvider);
-    final filterType = ref.read(paymentFilterProvider);
     if (travel != null && date != null) {
+      // getPayments는 항상 전체 목록을 가져옵니다. 필터 타입은 전달할 필요가 없습니다.
       ref
-          .read(paymentNotifierProvider.notifier)
-          .getPayments(travel.travelId, date, filterType);
+          .read(payment_noti.paymentNotifierProvider.notifier)
+          .getPayments(travel.travelId, date, null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final travel = ref.watch(travelListNotifierProvider).selectedTravel;
-    final paymentState = ref.watch(paymentNotifierProvider);
-
+    // 날짜가 변경되면 데이터를 다시 가져옵니다.
     ref.listen<DateTime?>(dateNotifierProvider, (prev, next) {
       if (prev != next) _fetchPayments();
     });
 
-    ref.listen<String>(paymentFilterProvider, (prev, next) {
-      if (prev != next) _fetchPayments();
-    });
+    final paymentStatus = ref.watch(
+      payment_noti.paymentNotifierProvider.select((s) => s.getStatus),
+    );
+    final errorMessage = ref.watch(
+      payment_noti.paymentNotifierProvider.select((s) => s.errorMessage),
+    );
 
-    if (travel == null) {
-      return const Scaffold(body: Center(child: Text("여행 정보가 없습니다.")));
-    }
+    // UI는 최종적으로 필터링된 목록만 watch합니다.
+    final payments = ref.watch(payment_noti.filteredPaymentsProvider);
 
-    return Scaffold(body: _buildBody(paymentState));
+    return Column(
+      children: [
+        _buildFilterButtons(),
+        Expanded(child: _buildBody(paymentStatus, payments, errorMessage)),
+      ],
+    );
   }
 
-  Widget _buildBody(PaymentState state) {
-    switch (state.getStatus) {
-      case Status.loading:
-        // 스켈레톤 리스트
+  Widget _buildFilterButtons() {
+    final selectedType = ref
+        .watch(payment_noti.paymentNotifierProvider)
+        .selectedType;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          _buildFilterButton(context, 'ALL', '전체'),
+          const SizedBox(width: 8),
+          _buildFilterButton(context, 'PAYMENT', '결제'),
+          const SizedBox(width: 8),
+          _buildFilterButton(context, 'SHAREDFUND', '공금'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(BuildContext context, String type, String text) {
+    final selectedType = ref
+        .watch(payment_noti.paymentNotifierProvider)
+        .selectedType;
+    final isSelected = selectedType == type;
+
+    return ElevatedButton(
+      onPressed: () {
+        ref
+            .read(payment_noti.paymentNotifierProvider.notifier)
+            .setSelectedType(type);
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: isSelected
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.primary,
+        backgroundColor: isSelected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1,
+          ),
+        ),
+        elevation: 0,
+      ),
+      child: Text(text),
+    );
+  }
+
+  Widget _buildBody(
+    payment_noti.Status status,
+    List<PaymentResponse> payments,
+    String? error,
+  ) {
+    switch (status) {
+      case payment_noti.Status.loading:
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,
           itemBuilder: (_, __) => const _PaymentCardSkeleton(),
         );
 
-      case Status.error:
-        return Center(child: Text('오류가 발생했습니다: ${state.errorMessage}'));
+      case payment_noti.Status.error:
+        return Center(child: Text('오류가 발생했습니다: $error'));
 
-      case Status.success:
+      case payment_noti.Status.success:
         final travel = ref.read(travelListNotifierProvider).selectedTravel;
         final date = ref.read(dateNotifierProvider);
-        final filterType = ref.read(paymentFilterProvider);
 
         return RefreshIndicator(
           onRefresh: () async {
             HapticFeedback.mediumImpact();
             if (travel != null && date != null) {
+              // 새로고침 시에도 전체 목록을 다시 가져옵니다.
               await ref
-                  .read(paymentNotifierProvider.notifier)
-                  .getPayments(travel.travelId, date, filterType);
+                  .read(payment_noti.paymentNotifierProvider.notifier)
+                  .getPayments(travel.travelId, date, null);
             }
           },
-          child: state.payments.isEmpty
+          child: payments.isEmpty
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
@@ -95,9 +157,9 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: state.payments.length,
+                  itemCount: payments.length,
                   itemBuilder: (context, index) {
-                    final payment = state.payments[index];
+                    final payment = payments[index];
                     return PaymentTile(
                       payment: payment,
                       onTap: () async {
@@ -108,29 +170,30 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                           final ok = await showConfirmDialog(
                             context,
                             title: '기록 삭제',
-                            content: '\'${payment.paymentName}\'을(를) 삭제하시겠습니까?',
+                            content: '${payment.paymentName}을(를) 삭제하시겠습니까?',
                           );
                           if (ok) {
                             await ref
-                                .read(paymentNotifierProvider.notifier)
+                                .read(
+                                  payment_noti.paymentNotifierProvider.notifier,
+                                )
                                 .deletePayment(payment.paymentId);
-                            // _fetchPayments();
                           }
                         } else if (action == 'edit') {
                           await ref
-                              .read(paymentNotifierProvider.notifier)
+                              .read(
+                                payment_noti.paymentNotifierProvider.notifier,
+                              )
                               .getPaymentDetails(payment.paymentId);
                           final detail = ref
-                              .read(paymentNotifierProvider)
+                              .read(payment_noti.paymentNotifierProvider)
                               .selectedPayment!;
-                          final saved = await Navigator.of(context).push<bool>(
+                          await Navigator.of(context).push<bool>(
                             MaterialPageRoute(
                               builder: (_) => PaymentUpdateScreen(
                                 paymentId: payment.paymentId,
-                                travelId: detail.travelId!, // 상세에서 travelId 사용
-                                paymentType:
-                                    detail.paymentType ??
-                                    'PAYMENT', // 서버 규약에 맞춰 기본값
+                                travelId: detail.travelId!,
+                                paymentType: detail.paymentType ?? 'PAYMENT',
                               ),
                             ),
                           );
@@ -142,7 +205,6 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
         );
 
       default:
-        // 초기 등 기타 상태도 스켈레톤
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
           itemCount: 6,

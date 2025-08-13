@@ -4,10 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:yoen_front/data/api/api_provider.dart';
-import 'package:yoen_front/data/model/payment_create_request.dart'; // PaymentRequest/Settlement/SettlementParticipant
-import 'package:yoen_front/data/model/payment_update_request.dart'; // DTO
+import 'package:yoen_front/data/model/payment_create_request.dart';
+import 'package:yoen_front/data/model/payment_update_request.dart';
 import 'package:yoen_front/data/model/payment_detail_response.dart';
 import 'package:yoen_front/data/model/payment_image_response.dart';
 import 'package:yoen_front/data/model/payment_response.dart';
@@ -19,7 +18,6 @@ enum Status { initial, loading, success, error }
 /// 화면 편집용 드래프트 (UI는 SettlementItem 사용)
 class PaymentEditDraft {
   final int paymentId;
-
   final String? paymentName;
   final String? paymentMethod; // CARD/CASH/TRAVELCARD
   final String? payerType; // INDIVIDUAL/SHAREDFUND
@@ -29,10 +27,7 @@ class PaymentEditDraft {
   final String? payerName;
   final DateTime? payTime;
   final String? currency; // YEN/WON
-
   final List<SettlementItem> settlementItems;
-
-  /// 서버 저장 이미지와 삭제 표시 id
   final List<PaymentImageResponse> images;
   final Set<int> removedImageIds;
 
@@ -40,7 +35,7 @@ class PaymentEditDraft {
     required this.paymentId,
     this.paymentName,
     this.paymentMethod = 'CARD',
-    this.payerType = 'SHAREDFUND', // ✅ 기본값을 공금으로 변경
+    this.payerType = 'SHAREDFUND',
     this.categoryId,
     this.categoryName,
     this.travelUserId,
@@ -94,20 +89,15 @@ class PaymentState {
   final Status createStatus;
   final Status deleteStatus;
   final Status getDetailsStatus;
-
-  /// 업데이트 상태
   final Status updateStatus;
-
-  final List<PaymentResponse> allPayments; // 전체 목록
-  final List<PaymentResponse> payments; // 필터링된 목록
+  final List<PaymentResponse> allPayments; // 전체 목록만 관리
   final PaymentDetailResponse? selectedPayment;
   final String? errorMessage;
-
-  /// 편집 드래프트
   final PaymentEditDraft? editDraft;
   final int? lastTravelId;
   final DateTime? lastListDate;
   final String? lastListType;
+  final String selectedType;
 
   PaymentState({
     this.getStatus = Status.initial,
@@ -116,26 +106,26 @@ class PaymentState {
     this.getDetailsStatus = Status.initial,
     this.updateStatus = Status.initial,
     this.allPayments = const [],
-    this.payments = const [],
     this.selectedPayment,
     this.errorMessage,
     this.editDraft,
     this.lastTravelId,
     this.lastListDate,
     this.lastListType,
+    this.selectedType = 'ALL',
   });
 
   PaymentState copyWith({
     int? lastTravelId,
     DateTime? lastListDate,
     String? lastListType,
+    String? selectedType,
     Status? getStatus,
     Status? createStatus,
     Status? getDetailsStatus,
     Status? deleteStatus,
     Status? updateStatus,
     List<PaymentResponse>? allPayments,
-    List<PaymentResponse>? payments,
     PaymentDetailResponse? selectedPayment,
     String? errorMessage,
     bool? resetCreateStatus,
@@ -147,6 +137,7 @@ class PaymentState {
       lastTravelId: lastTravelId ?? this.lastTravelId,
       lastListDate: lastListDate ?? this.lastListDate,
       lastListType: lastListType ?? this.lastListType,
+      selectedType: selectedType ?? this.selectedType,
       getStatus: getStatus ?? this.getStatus,
       createStatus: resetCreateStatus == true
           ? Status.initial
@@ -159,7 +150,6 @@ class PaymentState {
           ? Status.initial
           : (updateStatus ?? this.updateStatus),
       allPayments: allPayments ?? this.allPayments,
-      payments: payments ?? this.payments,
       selectedPayment: selectedPayment ?? this.selectedPayment,
       errorMessage: errorMessage ?? this.errorMessage,
       editDraft: editDraft ?? this.editDraft,
@@ -172,7 +162,10 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
 
   PaymentNotifier(this._repository) : super(PaymentState());
 
-  // 생성
+  void setSelectedType(String type) {
+    state = state.copyWith(selectedType: type);
+  }
+
   Future<void> createPayment(PaymentRequest request, List<File> images) async {
     state = state.copyWith(createStatus: Status.loading);
     try {
@@ -186,7 +179,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
-  // 상세
   Future<void> getPaymentDetails(int paymentId) async {
     state = state.copyWith(
       getDetailsStatus: Status.loading,
@@ -207,22 +199,16 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
-  // 삭제
   Future<void> deletePayment(int paymentId) async {
     state = state.copyWith(deleteStatus: Status.loading);
     try {
       await _repository.deletePayment(paymentId);
-      // allPayments와 payments 양쪽에서 모두 삭제
       final updatedAll = state.allPayments
-          .where((p) => p.paymentId != paymentId)
-          .toList();
-      final updatedPayments = state.payments
           .where((p) => p.paymentId != paymentId)
           .toList();
       state = state.copyWith(
         deleteStatus: Status.success,
         allPayments: updatedAll,
-        payments: updatedPayments,
       );
     } catch (e) {
       state = state.copyWith(
@@ -232,11 +218,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
-  // =======================
-  // 편집 (Edit) 지원
-  // =======================
-
-  /// 상세 → 드래프트 변환
   void beginEditFromSelected() {
     final d = state.selectedPayment;
     if (d == null || d.paymentId == null) return;
@@ -275,7 +256,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       paymentId: d.paymentId!,
       paymentName: d.paymentName,
       paymentMethod: d.paymentMethod,
-      payerType: d.payerType ?? 'SHAREDFUND', // ✅ 상세에 값이 없으면 공금으로
+      payerType: d.payerType ?? 'SHAREDFUND',
       categoryId: d.categoryId,
       categoryName: d.categoryName,
       travelUserId: d.payerName?.travelUserId,
@@ -300,7 +281,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft);
   }
 
-  // 상단 필드 업데이트
   void updateEditField({
     String? paymentName,
     String? paymentMethod,
@@ -331,7 +311,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     );
   }
 
-  // 항목 추가/제거
   void addEditSettlementItem(GlobalKey<AnimatedListState> listKey) {
     final draft = state.editDraft;
     if (draft == null) return;
@@ -377,7 +356,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     );
   }
 
-  // 참여자/완료
   void setEditParticipants({
     required int index,
     required List<int> userIds,
@@ -456,7 +434,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft.copyWith(settlementItems: items));
   }
 
-  // 서버 이미지 삭제표시/복구
   void markEditImageRemoved(int paymentImageId) {
     final draft = state.editDraft;
     if (draft == null) return;
@@ -483,19 +460,12 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     );
     try {
       String? dateString = date?.toIso8601String();
-
-      // API는 항상 전체 데이터를 가져오기 위해 type을 null로 전달
       final allPayments =
           await _repository.getPayments(travelId, dateString, null) ?? [];
       allPayments.sort((a, b) => a.payTime.compareTo(b.payTime));
-
-      // 현재 필터 타입에 맞춰서 초기 목록 설정
-      final filteredPayments = _filter(allPayments, type);
-
       state = state.copyWith(
         getStatus: Status.success,
         allPayments: allPayments,
-        payments: filteredPayments,
       );
     } catch (e) {
       state = state.copyWith(
@@ -505,31 +475,8 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
-  // 클라이언트 사이드 필터링
-  void filterPayments(String? type) {
-    state = state.copyWith(
-      // 로딩 상태를 보여주지 않고 바로 필터링 결과를 반영
-      lastListType: type,
-    );
-    final filtered = _filter(state.allPayments, type);
-    state = state.copyWith(
-      getStatus: Status.success, // getStatus는 success 유지
-      payments: filtered,
-    );
-  }
-
-  List<PaymentResponse> _filter(List<PaymentResponse> payments, String? type) {
-    if (type == 'ALL' || type == null) {
-      return payments;
-    }
-    return payments.where((p) => p.paymentType == type).toList();
-  }
-
   void resetAll() => state = PaymentState();
 
-  // 생략 ...
-
-  // 업데이트 제출 (Settlement로 전송)
   Future<void> updatePayment(
     PaymentUpdateRequest request,
     List<File> newImages,
@@ -538,11 +485,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     try {
       await _repository.updatePayment(request, newImages);
       state = state.copyWith(updateStatus: Status.success);
-
-      // 업데이트 후 상세 재조회
       await getPaymentDetails(request.paymentId);
-
-      // 목록도 재조회 (마지막 조회 조건이 있을 때만)
       final lt = state.lastTravelId;
       final ld = state.lastListDate;
       final lty = state.lastListType;
@@ -558,7 +501,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   }
 }
 
-// providers
 final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return PaymentRepository(apiService);
@@ -569,3 +511,15 @@ final paymentNotifierProvider =
       final repository = ref.watch(paymentRepositoryProvider);
       return PaymentNotifier(repository);
     });
+
+/// 계산된 상태(Computed State) Provider
+final filteredPaymentsProvider = Provider<List<PaymentResponse>>((ref) {
+  final state = ref.watch(paymentNotifierProvider);
+  final allPayments = state.allPayments;
+  final filterType = state.selectedType;
+
+  if (filterType == 'ALL') {
+    return allPayments;
+  }
+  return allPayments.where((p) => p.paymentType == filterType).toList();
+});

@@ -37,9 +37,7 @@ class _TravelPrepaymentListScreenState
     final paymentState = ref.watch(paymentNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('사전 사용금액 목록'),
-      ),
+      appBar: AppBar(title: const Text('사전 사용금액 목록')),
       body: _buildBody(paymentState),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -76,7 +74,7 @@ class _TravelPrepaymentListScreenState
             HapticFeedback.mediumImpact();
             await _fetchPrePayments();
           },
-          child: state.payments.isEmpty
+          child: state.allPayments.isEmpty
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
@@ -86,9 +84,9 @@ class _TravelPrepaymentListScreenState
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: state.payments.length,
+                  itemCount: state.allPayments.length,
                   itemBuilder: (context, index) {
-                    final payment = state.payments[index];
+                    final payment = state.allPayments[index];
                     return PaymentTile(
                       payment: payment,
                       onTap: () async {
@@ -145,8 +143,9 @@ class _PaymentCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = Theme.of(context).colorScheme.surfaceVariant.withOpacity(.6);
-    final highlight =
-        Theme.of(context).colorScheme.surfaceVariant.withOpacity(.85);
+    final highlight = Theme.of(
+      context,
+    ).colorScheme.surfaceVariant.withOpacity(.85);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -191,11 +190,19 @@ class _PaymentCardSkeleton extends StatelessWidget {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [bar(labelW * .6, 10), const SizedBox(width: 8), bar(valueW, 16)],
+                        children: [
+                          bar(labelW * .6, 10),
+                          const SizedBox(width: 8),
+                          bar(valueW, 16),
+                        ],
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [bar(labelW * .6, 10), const SizedBox(width: 8), bar(valueW, 16)],
+                        children: [
+                          bar(labelW * .6, 10),
+                          const SizedBox(width: 8),
+                          bar(valueW, 16),
+                        ],
                       ),
                       bar(timeW, 12),
                     ],

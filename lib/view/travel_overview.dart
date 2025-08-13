@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:yoen_front/data/dialog/travel_detail_dialog.dart';
 import 'package:yoen_front/data/notifier/date_notifier.dart';
 import 'package:yoen_front/data/notifier/overview_notifier.dart';
-import 'package:yoen_front/data/notifier/record_notifier.dart';
+import 'package:yoen_front/data/notifier/record_notifier.dart' as record;
 import 'package:yoen_front/data/notifier/travel_join_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/view/travel_additional.dart';
@@ -19,9 +19,7 @@ import 'package:yoen_front/view/travel_sharedfund_create.dart';
 
 import '../data/dialog/universal_date_picker_dialog.dart';
 import '../data/notifier/common_provider.dart';
-import '../data/notifier/payment_notifier.dart';
-
-final paymentFilterProvider = StateProvider<String>((ref) => '');
+import '../data/notifier/payment_notifier.dart' as payment;
 
 class TravelOverviewScreen extends ConsumerStatefulWidget {
   const TravelOverviewScreen({super.key});
@@ -38,6 +36,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final travel = ref.read(travelListNotifierProvider).selectedTravel;
       if (travel != null) {
@@ -120,13 +119,12 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             .read(overviewNotifierProvider.notifier)
             .fetchTimeline(travel.travelId, date);
       } else if (selectedIndex == 1) {
-        final filterType = ref.read(paymentFilterProvider);
         ref
-            .read(paymentNotifierProvider.notifier)
-            .getPayments(travel.travelId, date, filterType);
+            .read(payment.paymentNotifierProvider.notifier)
+            .getPayments(travel.travelId, date, null);
       } else if (selectedIndex == 2) {
         ref
-            .read(recordNotifierProvider.notifier)
+            .read(record.recordNotifierProvider.notifier)
             .getRecords(travel.travelId, date);
       }
     }
@@ -465,65 +463,6 @@ https://your-app-link.com
                       ),
                     ],
                   ),
-                  if (selectedIndex == 1)
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final filterType = ref.watch(paymentFilterProvider);
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Wrap(
-                            spacing: 8.0,
-                            children: [
-                              ChoiceChip(
-                                label: const Text('전체보기'),
-                                selected: filterType == '',
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    ref
-                                            .read(
-                                              paymentFilterProvider.notifier,
-                                            )
-                                            .state =
-                                        '';
-                                    _fetchData();
-                                  }
-                                },
-                              ),
-                              ChoiceChip(
-                                label: const Text('금액기록'),
-                                selected: filterType == 'PAYMENT',
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    ref
-                                            .read(
-                                              paymentFilterProvider.notifier,
-                                            )
-                                            .state =
-                                        'PAYMENT';
-                                    _fetchData();
-                                  }
-                                },
-                              ),
-                              ChoiceChip(
-                                label: const Text('공금기록'),
-                                selected: filterType == 'SHAREDFUND',
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    ref
-                                            .read(
-                                              paymentFilterProvider.notifier,
-                                            )
-                                            .state =
-                                        'SHAREDFUND';
-                                    _fetchData();
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
                 ],
               ),
             ),
