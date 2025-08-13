@@ -110,7 +110,10 @@ class _TravelOverviewContentScreenState
                         record: record,
                         // 탭 → 기록 상세 다이얼로그 (record 화면과 동일)
                         onTap: () async {
-                          await openRecordDetailDialog(context, record);
+                          ref
+                              .read(recordNotifierProvider.notifier)
+                              .setSelectedRecord(record);
+                          await openRecordDetailDialog(context);
                         },
                         // 롱프레스 메뉴 → 공용 Confirm 사용 & 실제 삭제는 recordNotifier
                         onMenuAction: (action) async {

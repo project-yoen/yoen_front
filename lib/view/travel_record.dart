@@ -94,7 +94,10 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                       record: record,
                       // 상세 보기 후에는 리패치 안 함
                       onTap: () async {
-                        await openRecordDetailDialog(context, record);
+                        ref
+                            .read(recordNotifierProvider.notifier)
+                            .setSelectedRecord(record);
+                        await openRecordDetailDialog(context);
                       },
                       // 삭제 등 상태 변경시에만 리패치
                       onMenuAction: (action) async {

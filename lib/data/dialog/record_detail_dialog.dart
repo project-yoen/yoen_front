@@ -22,9 +22,7 @@ import '../../view/image_preview.dart';
 import '../../view/travel_record_update.dart';
 
 class RecordDetailDialog extends ConsumerStatefulWidget {
-  final RecordResponse record;
-
-  const RecordDetailDialog({super.key, required this.record});
+  const RecordDetailDialog({super.key});
 
   @override
   ConsumerState<RecordDetailDialog> createState() => _RecordDetailDialogState();
@@ -69,7 +67,13 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final recordTime = DateTime.parse(widget.record.recordTime);
+    final record = ref.watch(
+      recordNotifierProvider.select((s) => s.selectedRecord),
+    );
+    if (record == null) {
+      return const SizedBox.shrink();
+    }
+    final recordTime = DateTime.parse(record.recordTime);
     final formattedTime = DateFormat('a h:mm', 'ko_KR').format(recordTime);
 
     ref.listen<RecordState>(recordNotifierProvider, (previous, next) {
@@ -104,7 +108,7 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                           child: Padding(
                             padding: const EdgeInsets.only(top: 15),
                             child: Text(
-                              widget.record.title,
+                              record.title,
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -133,55 +137,53 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                               MaterialPageRoute(
                                 builder: (_) => TravelRecordUpdateScreen(
                                   travelId: travel.travelId,
-                                  record: widget
-                                      .record, // 리스트에서 넘겨받은 RecordResponse 그대로
+                                  record:
+                                      record, // 리스트에서 넘겨받은 RecordResponse 그대로
                                 ),
                               ),
                             );
 
                             // 저장 성공 시 상세 다이얼로그 닫기(리스트/타임라인 화면에 반영된 값 보이도록)
                             if (saved == true && mounted) {
-                              Navigator.of(context).pop();
+                              // Navigator.of(context).pop();
                             }
                           },
                         ),
                         IconButton(
                           tooltip: '삭제',
                           icon: const Icon(Icons.delete_outline),
-                          onPressed: () =>
-                              _showDeleteConfirmDialog(widget.record),
+                          onPressed: () => _showDeleteConfirmDialog(record),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 8),
                     Text(
-                      widget.record.travelNickName,
+                      record.travelNickName,
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
-                    if (widget.record.images.isNotEmpty)
+                    if (record.images.isNotEmpty)
                       Column(
                         children: [
                           SizedBox(
                             height: 270,
                             child: PageView.builder(
                               controller: _pageController,
-                              itemCount: widget.record.images.length,
+                              itemCount: record.images.length,
                               onPageChanged: (index) {
                                 setState(() {
                                   _currentIndex = index;
                                 });
                               },
                               itemBuilder: (context, index) {
-                                final imageUrl =
-                                    widget.record.images[index].imageUrl;
+                                final imageUrl = record.images[index].imageUrl;
 
                                 return GestureDetector(
                                   onTap: () {
                                     context.pushTransparentRoute(
                                       ImagePreviewPage(
-                                        imageUrls: widget.record.images
+                                        imageUrls: record.images
                                             .map((image) => image.imageUrl)
                                             .toList(),
                                         initialIndex: index,
@@ -362,8 +364,7 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                                                       )
                                                       .updateImageExists(
                                                         travelId,
-                                                        widget
-                                                            .record
+                                                        record
                                                             .images[index]
                                                             .travelRecordImageId,
                                                       );
@@ -403,33 +404,29 @@ class _RecordDetailDialogState extends ConsumerState<RecordDetailDialog> {
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              widget.record.images.length,
-                              (index) {
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 4.0,
-                                  ),
-                                  height: 8.0,
-                                  width: _currentIndex == index ? 12.0 : 8.0,
-                                  decoration: BoxDecoration(
-                                    color: _currentIndex == index
-                                        ? Theme.of(context).primaryColor
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                );
-                              },
-                            ),
+                            children: List.generate(record.images.length, (
+                              index,
+                            ) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                height: 8.0,
+                                width: _currentIndex == index ? 12.0 : 8.0,
+                                decoration: BoxDecoration(
+                                  color: _currentIndex == index
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              );
+                            }),
                           ),
                         ],
                       ),
                     const SizedBox(height: 16),
-                    Text(
-                      widget.record.content,
-                      style: const TextStyle(fontSize: 16),
-                    ),
+                    Text(record.content, style: const TextStyle(fontSize: 16)),
                   ],
                 ),
               ),

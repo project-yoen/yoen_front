@@ -136,6 +136,7 @@ class RecordNotifier extends StateNotifier<RecordState> {
         break;
       }
     }
+    print(found?.title);
     state = state.copyWith(selectedRecord: found);
   }
 
@@ -182,8 +183,10 @@ class RecordNotifier extends StateNotifier<RecordState> {
 
       final t = state.lastTravelId, d = state.lastListDate;
       if (t != null && d != null) {
+        print("HERE");
         await getRecords(t, d); // 여기서 records 최신화 + selected sync 일부 수행
       }
+      print(request.travelRecordId);
 
       // 혹시 몰라 확실하게 한 번 더 선택 고정
       selectRecordById(request.travelRecordId);
