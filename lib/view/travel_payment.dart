@@ -11,6 +11,9 @@ import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/payment_update.dart';
 import 'package:yoen_front/view/travel_overview.dart';
+import 'package:yoen_front/view/travel_sharedfund_update.dart';
+
+import '../data/notifier/overview_notifier.dart';
 
 class TravelPaymentScreen extends ConsumerStatefulWidget {
   const TravelPaymentScreen({super.key});
@@ -117,23 +120,30 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
                             // _fetchPayments();
                           }
                         } else if (action == 'edit') {
-                          await ref
-                              .read(paymentNotifierProvider.notifier)
-                              .getPaymentDetails(payment.paymentId);
                           final detail = ref
                               .read(paymentNotifierProvider)
                               .selectedPayment!;
-                          final saved = await Navigator.of(context).push<bool>(
-                            MaterialPageRoute(
-                              builder: (_) => PaymentUpdateScreen(
-                                paymentId: payment.paymentId,
-                                travelId: detail.travelId!, // 상세에서 travelId 사용
-                                paymentType:
-                                    detail.paymentType ??
-                                    'PAYMENT', // 서버 규약에 맞춰 기본값
-                              ),
-                            ),
-                          );
+                          final type = (detail.paymentType ?? '').toUpperCase();
+
+                          // paymentType에 따라 다른 수정 화면으로 분기
+                          final route = (type == 'SHAREDFUND')
+                              ? MaterialPageRoute<bool>(
+                                  builder: (_) => TravelSharedfundUpdateScreen(
+                                    paymentId: payment.paymentId,
+                                    travelId: detail.travelId!,
+                                  ),
+                                )
+                              : MaterialPageRoute<bool>(
+                                  builder: (_) => PaymentUpdateScreen(
+                                    paymentId: payment.paymentId,
+                                    travelId: detail.travelId!,
+                                    paymentType: type, // 'PAYMENT' 등
+                                  ),
+                                );
+
+                          final saved = await Navigator.of(
+                            context,
+                          ).push<bool>(route);
                         }
                       },
                     );
