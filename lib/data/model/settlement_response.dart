@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
-import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 
 part 'settlement_response.g.dart';
 

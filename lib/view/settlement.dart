@@ -240,8 +240,9 @@ class _SelectionSummary extends StatelessWidget {
     final chips = <Widget>[];
     if (preUseAmount) chips.add(_FilterChip(label: "사전사용", color: c.primary));
     if (sharedFund) chips.add(_FilterChip(label: "공금", color: c.secondary));
-    if (recordedAmount)
+    if (recordedAmount) {
       chips.add(_FilterChip(label: "기록금액", color: c.tertiary));
+    }
 
     return AnimatedCrossFade(
       duration: const Duration(milliseconds: 200),
