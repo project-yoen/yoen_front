@@ -11,6 +11,7 @@ import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/notifier/category_notifier.dart';
 import 'package:yoen_front/data/model/travel_user_detail_response.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
+import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart'; // ★ 추가
 
 import '../data/enums/status.dart';
@@ -130,12 +131,14 @@ class _TravelPrepaymentCreateScreenState
       );
     }
 
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+
     final request = PaymentRequest(
       travelId: widget.travelId,
       categoryId: _selectedCategoryId,
       payerType: 'INDIVIDUAL',
       travelUserId: _selectedPayerTravelUserId,
-      payTime: DateTime.now().toIso8601String(),
+      payTime: DateTime.parse(travel!.startDate).toIso8601String(),
       paymentName: _paymentNameController.text.trim(),
       paymentMethod: _paymentMethod,
       paymentType: 'PREPAYMENT',

@@ -36,7 +36,6 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   @override
   void initState() {
     super.initState();
-
     _pageController = PageController(initialPage: 0);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,8 +43,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
 
       _tabSub = ref.listenManual<int>(overviewTabIndexProvider, (prev, next) {
         if (next < 3 && _pageController.hasClients) {
-          // PageView가 보이는 세 탭(0~2)만 이동
-          _pageController.jumpToPage(next);
+          _goPage(next);
         }
       });
 
@@ -70,6 +68,16 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     _tabSub?.close();
     _pageController.dispose();
     super.dispose();
+  }
+
+  // 부드러운 전환을 위한 공통 함수
+  void _goPage(int index) {
+    if (!_pageController.hasClients) return;
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _openDatePicker(BuildContext context) async {
@@ -110,7 +118,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     ref.read(overviewTabIndexProvider.notifier).state = index;
 
     if (index < 3) {
-      _pageController.jumpToPage(index);
+      _goPage(index);
     }
   }
 
@@ -123,7 +131,11 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     final date = ref.read(dateNotifierProvider);
     final selectedIndex = ref.read(overviewTabIndexProvider);
 
-    if (travel != null && date != null) {
+    if (travel == null || date == null) return;
+
+    // 전환 직후 프레임 뒤로 미뤄서 jank 완화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (selectedIndex == 0) {
         ref
             .read(overviewNotifierProvider.notifier)
@@ -137,7 +149,7 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             .read(record.recordNotifierProvider.notifier)
             .getRecords(travel.travelId, date);
       }
-    }
+    });
   }
 
   void _showAddOptions(BuildContext context, int travelId) {
@@ -487,10 +499,16 @@ https://your-app-link.com
                     child: PageView(
                       controller: _pageController,
                       onPageChanged: _onPageChanged,
+                      allowImplicitScrolling: true, // 이웃 페이지 프리렌더
+                      physics: const ClampingScrollPhysics(),
                       children: const [
-                        TravelOverviewContentScreen(),
-                        TravelPaymentScreen(),
-                        TravelRecordScreen(),
+                        TravelOverviewContentScreen(
+                          key: PageStorageKey('overview_page'),
+                        ),
+                        TravelPaymentScreen(
+                          key: PageStorageKey('payment_page'),
+                        ),
+                        TravelRecordScreen(key: PageStorageKey('record_page')),
                       ],
                     ),
                   ),
