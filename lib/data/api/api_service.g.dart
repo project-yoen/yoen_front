@@ -1239,6 +1239,95 @@ class _ApiService implements ApiService {
     return _value;
   }
 
+  @override
+  Future<ApiResponse<SettlementResultResponse>> getSettlement(
+    int travelId,
+    bool includePreUseAmount,
+    bool includeSharedFund,
+    bool includeRecordedAmount,
+    String startAt,
+    String endAt,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'travelId': travelId,
+      r'includePreUseAmount': includePreUseAmount,
+      r'includeSharedFund': includeSharedFund,
+      r'includeRecordedAmount': includeRecordedAmount,
+      r'startAt': startAt,
+      r'endAt': endAt,
+    };
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ApiResponse<SettlementResultResponse>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/payment/settlement',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<SettlementResultResponse> _value;
+    try {
+      _value = ApiResponse<SettlementResultResponse>.fromJson(
+        _result.data!,
+        (json) =>
+            SettlementResultResponse.fromJson(json as Map<String, dynamic>),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ApiResponse<String>> doSettlement(
+    int travelId,
+    bool includePreUseAmount,
+    bool includeSharedFund,
+    bool includeRecordedAmount,
+    String startAt,
+    String endAt,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'travelId': travelId,
+      r'includePreUseAmount': includePreUseAmount,
+      r'includeSharedFund': includeSharedFund,
+      r'includeRecordedAmount': includeRecordedAmount,
+      r'startAt': startAt,
+      r'endAt': endAt,
+    };
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ApiResponse<String>>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/payment/settlement/confirm',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiResponse<String> _value;
+    try {
+      _value = ApiResponse<String>.fromJson(
+        _result.data!,
+        (json) => json as String,
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||

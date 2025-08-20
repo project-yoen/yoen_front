@@ -10,6 +10,7 @@ import 'package:yoen_front/data/model/payment_create_response.dart';
 import 'package:yoen_front/data/model/record_create_request.dart';
 import 'package:yoen_front/data/model/record_create_response.dart';
 import 'package:yoen_front/data/model/record_update_request.dart';
+import 'package:yoen_front/data/model/settlement_result_response.dart';
 import 'package:yoen_front/data/model/travel_create_request.dart';
 import 'package:yoen_front/data/model/travel_create_response.dart';
 import 'package:yoen_front/data/model/travel_nickname_update.dart';
@@ -192,5 +193,25 @@ abstract class ApiService {
   @GET("/payment/detail")
   Future<ApiResponse<PaymentDetailResponse>> getPaymentDetails(
     @Query("paymentId") int paymentId,
+  );
+
+  @GET("/payment/settlement")
+  Future<ApiResponse<SettlementResultResponse>> getSettlement(
+    @Query("travelId") int travelId,
+    @Query("includePreUseAmount") bool includePreUseAmount,
+    @Query("includeSharedFund") bool includeSharedFund,
+    @Query("includeRecordedAmount") bool includeRecordedAmount,
+    @Query("startAt") String startAt,
+    @Query("endAt") String endAt,
+  );
+
+  @POST("/payment/settlement/confirm")
+  Future<ApiResponse<String>> doSettlement(
+    @Query("travelId") int travelId,
+    @Query("includePreUseAmount") bool includePreUseAmount,
+    @Query("includeSharedFund") bool includeSharedFund,
+    @Query("includeRecordedAmount") bool includeRecordedAmount,
+    @Query("startAt") String startAt,
+    @Query("endAt") String endAt,
   );
 }

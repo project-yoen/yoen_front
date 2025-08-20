@@ -7,17 +7,19 @@ class SettlementUserDetails {
   final String senderNickname;
   final int? paymentId;
   final String? paymentName;
+  final String? settlementName;
   final int amount;
   final bool? isPaid;
   final String? payTime;
 
   SettlementUserDetails({
     required this.senderNickname,
+    this.paymentId,
+    this.paymentName,
+    this.settlementName,
     required this.amount,
     this.isPaid,
     this.payTime,
-    this.paymentId,
-    this.paymentName,
   });
 
   factory SettlementUserDetails.fromJson(Map<String, dynamic> json) =>

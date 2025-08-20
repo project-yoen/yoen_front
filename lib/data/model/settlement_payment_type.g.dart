@@ -9,7 +9,7 @@ part of 'settlement_payment_type.dart';
 SettlementPaymentType _$SettlementPaymentTypeFromJson(
   Map<String, dynamic> json,
 ) => SettlementPaymentType(
-  paymentType: json['paymentType'] as String,
+  paymentType: $enumDecode(_$PaymentTypeEnumMap, json['paymentType']),
   settlementList: (json['settlementList'] as List<dynamic>)
       .map(
         (e) => SettlementResponseUserDetail.fromJson(e as Map<String, dynamic>),
@@ -20,6 +20,12 @@ SettlementPaymentType _$SettlementPaymentTypeFromJson(
 Map<String, dynamic> _$SettlementPaymentTypeToJson(
   SettlementPaymentType instance,
 ) => <String, dynamic>{
-  'paymentType': instance.paymentType,
+  'paymentType': _$PaymentTypeEnumMap[instance.paymentType]!,
   'settlementList': instance.settlementList,
+};
+
+const _$PaymentTypeEnumMap = {
+  PaymentType.PAYMENT: 'PAYMENT',
+  PaymentType.SHAREDFUND: 'SHAREDFUND',
+  PaymentType.PREPAYMENT: 'PREPAYMENT',
 };

@@ -1,0 +1,1 @@
+enum PaymentType { PAYMENT, SHAREDFUND, PREPAYMENT }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/view/settlemet_preview.dart';
+
+import '../data/model/settlement_preview_params.dart';
 
 class SettlementScreen extends ConsumerStatefulWidget {
   const SettlementScreen({super.key});
@@ -202,11 +205,21 @@ class _SettlementScreenState extends ConsumerState<SettlementScreen> {
                 onPressed: allOff
                     ? null
                     : () {
-                        // 선택 값으로 다음 단계 처리
-                        debugPrint(
-                          "정산 시작: $preUseAmount / $sharedFund / $recordedAmount",
+                        final params = SettlementPreviewParams(
+                          travelId: travel.travelId, // int
+                          includePreUseAmount: preUseAmount, // bool
+                          includeSharedAmount: sharedFund, // bool
+                          includeRecordedAmount: recordedAmount, // bool
+                          startAt: startDate, // DateTime
+                          endAt: periodEnd, // DateTime (지금~또는 여행종료)
                         );
-                        // TODO: 다음 단계 내비게이션 연결
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                SettlementPreviewScreen(params: params),
+                          ),
+                        );
                       },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
