@@ -30,13 +30,13 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   void initState() {
     super.initState();
 
-    // 초진입시 데이터 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
+    // // 초진입시 데이터 로드
+    // WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
 
-    // ✅ build 바깥에서 1회만 구독
+    // build 바깥에서 1회만 구독
     _dateSub = ref.listenManual<DateTime?>(dateNotifierProvider, (prev, next) {
       if (prev != next) {
-        // ✅ 빌드 완료 후 호출
+        // 빌드 완료 후 호출
         WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPayments());
       }
     });
@@ -77,7 +77,7 @@ class _TravelPaymentScreenState extends ConsumerState<TravelPaymentScreen> {
   }
 
   Widget _buildFilterButtons() {
-    // ✅ 꼭 필요한 필드만 구독 (리빌드 최소화)
+    // 꼭 필요한 필드만 구독 (리빌드 최소화)
     final selectedType = ref.watch(
       paymentNotifierProvider.select((s) => s.selectedType),
     );

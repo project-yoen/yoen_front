@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:yoen_front/data/widget/image_cache_manager.dart';
 
 class EditableAvatar extends StatelessWidget {
   final double size;
@@ -32,6 +33,7 @@ class EditableAvatar extends StatelessWidget {
       );
     } else if ((imageUrl ?? '').isNotEmpty) {
       child = CachedNetworkImage(
+        cacheManager: imageCacheManager,
         imageUrl: imageUrl!,
         width: size,
         height: size,

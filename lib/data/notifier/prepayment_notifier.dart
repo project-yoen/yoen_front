@@ -1,10 +1,10 @@
-// lib/data/notifier/payment_notifier.dart
-
+// lib/data/notifier/prepayment_notifier.dart
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:yoen_front/data/api/api_provider.dart';
+import 'package:yoen_front/data/enums/status.dart';
 import 'package:yoen_front/data/model/payment_create_request.dart';
 import 'package:yoen_front/data/model/payment_update_request.dart';
 import 'package:yoen_front/data/model/payment_detail_response.dart';
@@ -13,10 +13,8 @@ import 'package:yoen_front/data/model/payment_response.dart';
 import 'package:yoen_front/data/model/settlement_item.dart';
 import 'package:yoen_front/data/repository/payment_repository.dart';
 
-import '../enums/status.dart';
-
-/// 화면 편집용 드래프트 (UI는 SettlementItem 사용)
-class PaymentEditDraft {
+/// Payment와 동일 구조를 재사용 (드래프트 구조는 동일)
+class PrepaymentEditDraft {
   final int paymentId;
   final String? paymentName;
   final String? paymentMethod; // CARD/CASH/TRAVELCARD
@@ -31,11 +29,11 @@ class PaymentEditDraft {
   final List<PaymentImageResponse> images;
   final Set<int> removedImageIds;
 
-  const PaymentEditDraft({
+  const PrepaymentEditDraft({
     required this.paymentId,
     this.paymentName,
     this.paymentMethod = 'CARD',
-    this.payerType = 'SHAREDFUND',
+    this.payerType = 'INDIVIDUAL',
     this.categoryId,
     this.categoryName,
     this.travelUserId,
@@ -47,7 +45,7 @@ class PaymentEditDraft {
     this.removedImageIds = const {},
   });
 
-  PaymentEditDraft copyWith({
+  PrepaymentEditDraft copyWith({
     String? paymentName,
     String? paymentMethod,
     String? payerType,
@@ -62,7 +60,7 @@ class PaymentEditDraft {
     Set<int>? removedImageIds,
     bool clearPayer = false,
   }) {
-    return PaymentEditDraft(
+    return PrepaymentEditDraft(
       paymentId: paymentId,
       paymentName: paymentName ?? this.paymentName,
       paymentMethod: paymentMethod ?? this.paymentMethod,
@@ -84,93 +82,108 @@ class PaymentEditDraft {
       .toList();
 }
 
-class PaymentState {
-  final Status getStatus;
+class PrepaymentState {
+  final Status listStatus;
   final Status createStatus;
   final Status deleteStatus;
-  final Status getDetailsStatus;
+  final Status detailsStatus;
   final Status updateStatus;
-  final List<PaymentResponse> allPayments; // 전체 목록만 관리
-  final PaymentDetailResponse? selectedPayment;
-  final String? errorMessage;
-  final PaymentEditDraft? editDraft;
-  final int? lastTravelId;
-  final DateTime? lastListDate;
-  final String? lastListType;
-  final String selectedType;
 
-  PaymentState({
-    this.getStatus = Status.initial,
+  final List<PaymentResponse> prepayments; // PREPAYMENT 전용 목록
+  final PaymentDetailResponse? selected; // 상세
+  final String? errorMessage;
+
+  final PrepaymentEditDraft? editDraft;
+
+  final int? lastTravelId; // 새로고침용
+  const PrepaymentState({
+    this.listStatus = Status.initial,
     this.createStatus = Status.initial,
     this.deleteStatus = Status.initial,
-    this.getDetailsStatus = Status.initial,
+    this.detailsStatus = Status.initial,
     this.updateStatus = Status.initial,
-    this.allPayments = const [],
-    this.selectedPayment,
+    this.prepayments = const [],
+    this.selected,
     this.errorMessage,
     this.editDraft,
     this.lastTravelId,
-    this.lastListDate,
-    this.lastListType,
-    this.selectedType = 'ALL',
   });
 
-  PaymentState copyWith({
-    int? lastTravelId,
-    DateTime? lastListDate,
-    String? lastListType,
-    String? selectedType,
-    Status? getStatus,
+  PrepaymentState copyWith({
+    Status? listStatus,
     Status? createStatus,
-    Status? getDetailsStatus,
     Status? deleteStatus,
+    Status? detailsStatus,
     Status? updateStatus,
-    List<PaymentResponse>? allPayments,
-    PaymentDetailResponse? selectedPayment,
+    List<PaymentResponse>? prepayments,
+    PaymentDetailResponse? selected,
     String? errorMessage,
-    bool? resetCreateStatus,
-    bool? resetDeleteStatus,
-    bool? resetUpdateStatus,
-    PaymentEditDraft? editDraft,
+    PrepaymentEditDraft? editDraft,
+    int? lastTravelId,
+    bool resetCreateStatus = false,
+    bool resetDeleteStatus = false,
+    bool resetUpdateStatus = false,
   }) {
-    return PaymentState(
-      lastTravelId: lastTravelId ?? this.lastTravelId,
-      lastListDate: lastListDate,
-      lastListType: lastListType ?? this.lastListType,
-      selectedType: selectedType ?? this.selectedType,
-      getStatus: getStatus ?? this.getStatus,
-      createStatus: resetCreateStatus == true
+    return PrepaymentState(
+      listStatus: listStatus ?? this.listStatus,
+      createStatus: resetCreateStatus
           ? Status.initial
           : (createStatus ?? this.createStatus),
-      deleteStatus: resetDeleteStatus == true
+      deleteStatus: resetDeleteStatus
           ? Status.initial
           : (deleteStatus ?? this.deleteStatus),
-      getDetailsStatus: getDetailsStatus ?? this.getDetailsStatus,
-      updateStatus: resetUpdateStatus == true
+      detailsStatus: detailsStatus ?? this.detailsStatus,
+      updateStatus: resetUpdateStatus
           ? Status.initial
           : (updateStatus ?? this.updateStatus),
-      allPayments: allPayments ?? this.allPayments,
-      selectedPayment: selectedPayment ?? this.selectedPayment,
+      prepayments: prepayments ?? this.prepayments,
+      selected: selected ?? this.selected,
       errorMessage: errorMessage ?? this.errorMessage,
       editDraft: editDraft ?? this.editDraft,
+      lastTravelId: lastTravelId ?? this.lastTravelId,
     );
   }
 }
 
-class PaymentNotifier extends StateNotifier<PaymentState> {
-  final PaymentRepository _repository;
+class PrepaymentNotifier extends StateNotifier<PrepaymentState> {
+  final PaymentRepository _repo;
+  PrepaymentNotifier(this._repo) : super(const PrepaymentState());
 
-  PaymentNotifier(this._repository) : super(PaymentState());
-
-  void setSelectedType(String type) {
-    state = state.copyWith(selectedType: type);
+  // 목록
+  Future<void> getPrepayments(int travelId) async {
+    state = state.copyWith(
+      listStatus: Status.loading,
+      lastTravelId: travelId,
+      resetCreateStatus: true,
+      resetDeleteStatus: true,
+      resetUpdateStatus: true,
+    );
+    try {
+      final list = await _repo.getPayments(travelId, null, 'PREPAYMENT');
+      list.sort((a, b) => a.payTime.compareTo(b.payTime));
+      state = state.copyWith(listStatus: Status.success, prepayments: list);
+    } catch (e) {
+      state = state.copyWith(
+        listStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
-  Future<void> createPayment(PaymentRequest request, List<File> images) async {
+  // 생성
+  Future<void> createPrepayment(
+    PaymentRequest request,
+    List<File> images,
+  ) async {
     state = state.copyWith(createStatus: Status.loading);
     try {
-      await _repository.createPayment(request, images);
+      await _repo.createPayment(
+        request,
+        images,
+      ); // request.paymentType은 PREPAYMENT 여야 함
       state = state.copyWith(createStatus: Status.success);
+      final tid = state.lastTravelId;
+      if (tid != null) await getPrepayments(tid);
     } catch (e) {
       state = state.copyWith(
         createStatus: Status.error,
@@ -179,36 +192,34 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
-  Future<void> getPaymentDetails(int paymentId) async {
+  // 상세
+  Future<void> getPrepaymentDetails(int paymentId) async {
     state = state.copyWith(
-      getDetailsStatus: Status.loading,
+      detailsStatus: Status.loading,
       resetCreateStatus: true,
       resetUpdateStatus: true,
     );
     try {
-      final paymentDetails = await _repository.getPaymentDetails(paymentId);
-      state = state.copyWith(
-        getDetailsStatus: Status.success,
-        selectedPayment: paymentDetails,
-      );
+      final detail = await _repo.getPaymentDetails(paymentId);
+      state = state.copyWith(detailsStatus: Status.success, selected: detail);
     } catch (e) {
       state = state.copyWith(
-        getDetailsStatus: Status.error,
+        detailsStatus: Status.error,
         errorMessage: e.toString(),
       );
     }
   }
 
-  Future<void> deletePayment(int paymentId) async {
+  // 삭제
+  Future<void> deletePrepayment(int paymentId) async {
     state = state.copyWith(deleteStatus: Status.loading);
     try {
-      await _repository.deletePayment(paymentId);
-      final updatedAll = state.allPayments
-          .where((p) => p.paymentId != paymentId)
-          .toList();
+      await _repo.deletePayment(paymentId);
       state = state.copyWith(
         deleteStatus: Status.success,
-        allPayments: updatedAll,
+        prepayments: state.prepayments
+            .where((p) => p.paymentId != paymentId)
+            .toList(),
       );
     } catch (e) {
       state = state.copyWith(
@@ -218,15 +229,39 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
+  // 수정 (이미지 추가/삭제 포함)
+  Future<void> updatePrepayment(
+    PaymentUpdateRequest request,
+    List<File> newImages, {
+    bool refreshDetails = true,
+  }) async {
+    state = state.copyWith(updateStatus: Status.loading);
+    try {
+      await _repo.updatePayment(request, newImages);
+      state = state.copyWith(updateStatus: Status.success);
+
+      // 상세 다시 불러오기(옵션)
+      if (refreshDetails) await getPrepaymentDetails(request.paymentId);
+
+      // 목록 갱신
+      final tid = state.lastTravelId;
+      if (tid != null) await getPrepayments(tid);
+    } catch (e) {
+      state = state.copyWith(
+        updateStatus: Status.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  // 편집 드래프트 구성 (상세 → 편집)
   void beginEditFromSelected() {
-    final d = state.selectedPayment;
+    final d = state.selected;
     if (d == null || d.paymentId == null) return;
 
     DateTime? pay;
     try {
-      if (d.payTime != null && d.payTime!.isNotEmpty) {
-        pay = DateTime.parse(d.payTime!);
-      }
+      if ((d.payTime ?? '').isNotEmpty) pay = DateTime.parse(d.payTime!);
     } catch (_) {}
 
     final items = <SettlementItem>[];
@@ -252,11 +287,11 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       );
     }
 
-    final draft = PaymentEditDraft(
+    final draft = PrepaymentEditDraft(
       paymentId: d.paymentId!,
       paymentName: d.paymentName,
       paymentMethod: d.paymentMethod,
-      payerType: d.payerType ?? 'SHAREDFUND',
+      payerType: d.payerType ?? 'INDIVIDUAL',
       categoryId: d.categoryId,
       categoryName: d.categoryName,
       travelUserId: d.payerName?.travelUserId,
@@ -295,6 +330,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   }) {
     final draft = state.editDraft;
     if (draft == null) return;
+
     state = state.copyWith(
       editDraft: draft.copyWith(
         paymentName: paymentName,
@@ -343,15 +379,17 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
   ) {
     final draft = state.editDraft;
     if (draft == null) return;
+
     final removedItem = draft.settlementItems[index];
     final newItems = List<SettlementItem>.from(draft.settlementItems)
       ..removeAt(index);
+
     state = state.copyWith(
       editDraft: draft.copyWith(settlementItems: newItems),
     );
     listKey.currentState?.removeItem(
       index,
-      (context, animation) => buildItem(removedItem, animation, index),
+      (ctx, anim) => buildItem(removedItem, anim, index),
       duration: const Duration(milliseconds: 300),
     );
   }
@@ -448,83 +486,16 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(editDraft: draft.copyWith(removedImageIds: next));
   }
 
-  Future<void> getPayments(int travelId, DateTime? date, String? type) async {
-    state = state.copyWith(
-      getStatus: Status.loading,
-      resetCreateStatus: true,
-      resetDeleteStatus: true,
-      resetUpdateStatus: true,
-      lastTravelId: travelId,
-      lastListDate: date,
-      lastListType: type,
-    );
-    try {
-      String? dateString = date?.toIso8601String();
-      final allPayments = await _repository.getPayments(
-        travelId,
-        dateString,
-        type,
-      );
-      allPayments.sort((a, b) => a.payTime.compareTo(b.payTime));
-      state = state.copyWith(
-        getStatus: Status.success,
-        allPayments: allPayments,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        getStatus: Status.error,
-        errorMessage: e.toString(),
-      );
-    }
-  }
-
-  void resetAll() => state = PaymentState();
-
-  Future<void> updatePayment(
-    PaymentUpdateRequest request,
-    List<File> newImages,
-    bool isDialog,
-  ) async {
-    state = state.copyWith(updateStatus: Status.loading);
-    try {
-      await _repository.updatePayment(request, newImages);
-      state = state.copyWith(updateStatus: Status.success);
-      if (isDialog) await getPaymentDetails(request.paymentId);
-      final lt = state.lastTravelId;
-      final ld = state.lastListDate;
-      final lty = state.lastListType;
-
-      if (lt != null && lty != null) {
-        await getPayments(lt, ld, lty);
-      }
-    } catch (e) {
-      state = state.copyWith(
-        updateStatus: Status.error,
-        errorMessage: e.toString(),
-      );
-    }
-  }
+  void resetAll() => state = const PrepaymentState();
 }
 
-final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
+final _prepaymentRepositoryProvider = Provider<PaymentRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return PaymentRepository(apiService);
 });
 
-final paymentNotifierProvider =
-    StateNotifierProvider<PaymentNotifier, PaymentState>((ref) {
-      final repository = ref.watch(paymentRepositoryProvider);
-      return PaymentNotifier(repository);
+final prepaymentNotifierProvider =
+    StateNotifierProvider<PrepaymentNotifier, PrepaymentState>((ref) {
+      final repo = ref.watch(_prepaymentRepositoryProvider);
+      return PrepaymentNotifier(repo);
     });
-
-/// 계산된 상태(Computed State) Provider
-final filteredPaymentsProvider = Provider<List<PaymentResponse>>((ref) {
-  final state = ref.watch(paymentNotifierProvider);
-  final allPayments = state.allPayments;
-  final filterType = state.selectedType;
-
-  if (filterType == 'ALL') {
-    return allPayments;
-  }
-  return allPayments.where((p) => p.paymentType == filterType).toList();
-});

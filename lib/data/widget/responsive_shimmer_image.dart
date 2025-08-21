@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:yoen_front/data/widget/image_cache_manager.dart';
 
 class ResponsiveShimmerImage extends StatelessWidget {
   final String imageUrl;
@@ -28,6 +29,7 @@ class ResponsiveShimmerImage extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: CachedNetworkImage(
+          cacheManager: imageCacheManager,
           imageUrl: imageUrl,
           fit: BoxFit.cover,
           fadeInDuration: const Duration(milliseconds: 250),

@@ -31,7 +31,7 @@ class TravelOverviewScreen extends ConsumerStatefulWidget {
 
 class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
   late PageController _pageController;
-  ProviderSubscription<int>? _tabSub;
+  ProviderSubscription<int>? _tabFetchSub;
 
   @override
   void initState() {
@@ -39,13 +39,8 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     _pageController = PageController(initialPage: 0);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 초기 탭 인덱스 설정
       ref.read(overviewTabIndexProvider.notifier).state = 0;
-
-      _tabSub = ref.listenManual<int>(overviewTabIndexProvider, (prev, next) {
-        if (next < 3 && _pageController.hasClients) {
-          _goPage(next);
-        }
-      });
 
       // 날짜 초기화 로직 유지
       final travel = ref.read(travelListNotifierProvider).selectedTravel;
@@ -60,24 +55,58 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
             : start;
         ref.read(dateNotifierProvider.notifier).setDate(defaultDate);
       }
+
+      _tabFetchSub = ref.listenManual<int>(overviewTabIndexProvider, (
+        prev,
+        next,
+      ) {
+        if (next == 1 || next == 2) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _fetchDataFor(next),
+          );
+        }
+      });
+
+      // 초기 진입 시 0번 탭 데이터 1회 로드
+      // _fetchDataFor(0);
     });
   }
 
   @override
   void dispose() {
-    _tabSub?.close();
+    _tabFetchSub?.close();
     _pageController.dispose();
     super.dispose();
   }
 
-  // 부드러운 전환을 위한 공통 함수
+  void _fetchDataFor(int index) {
+    final travel = ref.read(travelListNotifierProvider).selectedTravel;
+    final date = ref.read(dateNotifierProvider);
+    if (travel == null || date == null) return;
+
+    // 프레임 뒤로 미뤄 jank 완화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (index == 0) {
+        ref
+            .read(overviewNotifierProvider.notifier)
+            .fetchTimeline(travel.travelId, date);
+      } else if (index == 1) {
+        ref
+            .read(payment.paymentNotifierProvider.notifier)
+            .getPayments(travel.travelId, date, null);
+      } else if (index == 2) {
+        ref
+            .read(record.recordNotifierProvider.notifier)
+            .getRecords(travel.travelId, date);
+      }
+    });
+  }
+
+  // 즉시 전환
   void _goPage(int index) {
     if (!_pageController.hasClients) return;
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-    );
+    _pageController.jumpToPage(index);
   }
 
   Future<void> _openDatePicker(BuildContext context) async {
@@ -115,13 +144,13 @@ class _TravelOverviewScreenState extends ConsumerState<TravelOverviewScreen> {
     final selectedIndex = ref.read(overviewTabIndexProvider);
     if (index == selectedIndex) return;
 
+    // 단일 경로: 하단바 -> Provider 갱신 -> PageView jump
     ref.read(overviewTabIndexProvider.notifier).state = index;
-
-    if (index < 3) {
-      _goPage(index);
-    }
+    if (index < 3) _goPage(index);
   }
 
+  // (스와이프를 비활성화했으므로 onPageChanged는 불필요)
+  // 유지하려면 아래 콜백을 PageView에 연결
   void _onPageChanged(int index) {
     ref.read(overviewTabIndexProvider.notifier).state = index;
   }
@@ -498,8 +527,7 @@ https://your-app-link.com
                     offstage: selectedIndex == 3,
                     child: PageView(
                       controller: _pageController,
-                      onPageChanged: _onPageChanged,
-                      allowImplicitScrolling: true, // 이웃 페이지 프리렌더
+                      onPageChanged: _onPageChanged, // 스와이프를 막았으므로 불필요
                       physics: const ClampingScrollPhysics(),
                       children: const [
                         TravelOverviewContentScreen(
@@ -593,7 +621,7 @@ https://your-app-link.com
                 ),
               ),
 
-              // 중앙 FAB 공간 (확장형 FAB 고려해 80px 전후 권장)
+              // 중앙 FAB 공간
               const SizedBox(width: 84),
 
               // 오른쪽 2개 탭
@@ -646,7 +674,7 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        height: double.infinity, // ← 높이만 채우고, 너비는 Expanded가 관리
+        height: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

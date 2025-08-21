@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
 import 'package:yoen_front/data/notifier/travel_user_notifier.dart';
+import 'package:yoen_front/data/widget/image_cache_manager.dart';
 import 'package:yoen_front/data/widget/progress_badge.dart';
 import 'package:yoen_front/main.dart';
 
@@ -234,6 +235,7 @@ class _ProfileAvatar extends StatelessWidget {
         height: 56,
         child: hasUrl
             ? CachedNetworkImage(
+                cacheManager: imageCacheManager,
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(color: bg),

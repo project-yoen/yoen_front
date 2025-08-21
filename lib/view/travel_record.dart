@@ -26,9 +26,8 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
   @override
   void initState() {
     super.initState();
-
-    // 초진입 1회 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecords());
+    // // 초진입 1회 로드
+    // WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecords());
 
     // 날짜 변경 구독 (build 바깥)
     _dateSub = ref.listenManual<DateTime?>(dateNotifierProvider, (prev, next) {
@@ -121,7 +120,6 @@ class _TravelRecordScreenState extends ConsumerState<TravelRecordScreen> {
                             await ref
                                 .read(recordNotifierProvider.notifier)
                                 .deleteRecord(record.travelRecordId);
-                            _fetchRecords();
                           }
                         } else if (action == 'edit') {
                           // TODO: 수정 다이얼로그 연결 시 변경 발생하면 _fetchRecords();

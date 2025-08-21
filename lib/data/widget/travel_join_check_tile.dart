@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yoen_front/data/notifier/travel_list_notifier.dart';
+import 'package:yoen_front/data/widget/image_cache_manager.dart';
 
 import '../notifier/travel_join_notifier.dart';
 
@@ -37,7 +38,10 @@ class TravelUserJoinTile extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   backgroundImage: imageUrl != ""
-                      ? CachedNetworkImageProvider(imageUrl)
+                      ? CachedNetworkImageProvider(
+                          cacheManager: imageCacheManager,
+                          imageUrl,
+                        )
                       : null,
                   child: imageUrl == ""
                       ? const Icon(Icons.person, size: 16)

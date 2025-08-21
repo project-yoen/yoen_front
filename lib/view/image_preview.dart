@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
+import '../data/widget/image_cache_manager.dart';
+
 class ImagePreviewPage extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
@@ -54,6 +56,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
               builder: (context, index) {
                 return PhotoViewGalleryPageOptions.customChild(
                   child: CachedNetworkImage(
+                    cacheManager: imageCacheManager,
                     imageUrl: widget.imageUrls[index],
                     fit: BoxFit.contain,
                   ),

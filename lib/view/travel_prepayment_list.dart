@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:yoen_front/data/dialog/confirm.dart';
 import 'package:yoen_front/data/dialog/openers.dart';
 import 'package:yoen_front/data/notifier/payment_notifier.dart';
+import 'package:yoen_front/data/notifier/prepayment_notifier.dart';
 import 'package:yoen_front/data/widget/payment_tile.dart';
 import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_prepayment_update.dart';
@@ -30,17 +31,17 @@ class _TravelPrepaymentListScreenState
 
   Future<void> _fetchPrePayments() async {
     await ref
-        .read(paymentNotifierProvider.notifier)
-        .getPayments(widget.travelId, null, 'PREPAYMENT');
+        .read(prepaymentNotifierProvider.notifier)
+        .getPrepayments(widget.travelId);
   }
 
   @override
   Widget build(BuildContext context) {
-    final paymentState = ref.watch(paymentNotifierProvider);
+    final state = ref.watch(prepaymentNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('사전 사용금액 목록')),
-      body: _buildBody(paymentState),
+      body: _buildBody(state),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final success = await Navigator.of(context).push<bool>(
@@ -58,8 +59,8 @@ class _TravelPrepaymentListScreenState
     );
   }
 
-  Widget _buildBody(PaymentState state) {
-    switch (state.getStatus) {
+  Widget _buildBody(PrepaymentState state) {
+    switch (state.listStatus) {
       case Status.loading:
         return ListView.builder(
           padding: const EdgeInsets.all(16.0),
@@ -76,7 +77,7 @@ class _TravelPrepaymentListScreenState
             HapticFeedback.mediumImpact();
             await _fetchPrePayments();
           },
-          child: state.allPayments.isEmpty
+          child: state.prepayments.isEmpty
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: const [
@@ -86,9 +87,9 @@ class _TravelPrepaymentListScreenState
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: state.allPayments.length,
+                  itemCount: state.prepayments.length,
                   itemBuilder: (context, index) {
-                    final payment = state.allPayments[index];
+                    final payment = state.prepayments[index];
                     return PaymentTile(
                       isTimeView: false,
                       payment: payment,
@@ -104,13 +105,13 @@ class _TravelPrepaymentListScreenState
                           );
                           if (ok == true) {
                             await ref
-                                .read(paymentNotifierProvider.notifier)
-                                .deletePayment(payment.paymentId);
+                                .read(prepaymentNotifierProvider.notifier)
+                                .deletePrepayment(payment.paymentId);
                           }
                         } else if (action == 'edit') {
                           await ref
-                              .read(paymentNotifierProvider.notifier)
-                              .getPaymentDetails(payment.paymentId);
+                              .read(prepaymentNotifierProvider.notifier)
+                              .deletePrepayment(payment.paymentId);
 
                           final saved = await Navigator.of(context).push<bool>(
                             MaterialPageRoute(

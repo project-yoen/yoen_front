@@ -28,7 +28,18 @@ class SettlementPreviewScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('정산 미리보기')),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 10),
+              const ProgressBadge(label: '불러오는 중'),
+            ],
+          ),
+        ),
         error: (e, st) => _ErrorView(
           message: '정산 내역을 불러오지 못했습니다.',
           onRetry: () => ref.refresh(settlementPreviewProvider(params)),
@@ -37,7 +48,7 @@ class SettlementPreviewScreen extends ConsumerWidget {
         data: (preview) => RefreshIndicator(
           onRefresh: () async =>
               ref.invalidate(settlementPreviewProvider(params)),
-          child: _PreviewBody(preview: preview),
+          child: _PreviewBody(preview: preview, params: params),
         ),
       ),
       bottomNavigationBar: async.maybeWhen(
@@ -89,47 +100,26 @@ class SettlementPreviewScreen extends ConsumerWidget {
 
 class _PreviewBody extends ConsumerWidget {
   final SettlementResultResponse preview;
-  const _PreviewBody({required this.preview});
+  final SettlementPreviewParams params;
+  const _PreviewBody({required this.preview, required this.params});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final summary = preview.userSettlementList;
     final sections = preview.paymentTypeList;
-    final hidePaid = ref.watch(hidePaidProvider);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // --- 정산 요약 (receiver별 송금 내역) ---
+        // --- 정산 요약 ---
         Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('정산 요약', style: theme.textTheme.titleMedium),
-                    ),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        return Row(
-                          children: [
-                            Text('완료 숨기기', style: theme.textTheme.bodySmall),
-                            const SizedBox(width: 8),
-                            Switch.adaptive(
-                              value: hidePaid,
-                              onChanged: (v) =>
-                                  ref.read(hidePaidProvider.notifier).state = v,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                Text('정산 요약', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (summary.isEmpty)
                   Text(
@@ -146,7 +136,7 @@ class _PreviewBody extends ConsumerWidget {
 
         const SizedBox(height: 12),
 
-        // --- 타입별 상세 (사전사용/공금/기록금액) ---
+        // --- 타입별 상세 ---
         Card(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
@@ -163,7 +153,19 @@ class _PreviewBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                ...sections.map((g) => _TypeSection(group: g)),
+                ...sections
+                    // 여기서 params 값에 따라 필터링
+                    .where((g) {
+                      switch (g.paymentType) {
+                        case PaymentType.PREPAYMENT:
+                          return params.includePreUseAmount;
+                        case PaymentType.SHAREDFUND:
+                          return params.includeSharedAmount;
+                        case PaymentType.PAYMENT:
+                          return params.includeRecordedAmount;
+                      }
+                    })
+                    .map((g) => _TypeSection(group: g)),
               ],
             ),
           ),

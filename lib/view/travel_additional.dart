@@ -5,7 +5,6 @@ import 'package:yoen_front/data/notifier/travel_notifier.dart';
 import 'package:yoen_front/main.dart';
 import 'package:yoen_front/view/settlement.dart';
 import 'package:yoen_front/view/travel_detail_page.dart';
-import 'package:yoen_front/view/travel_prepayment_create.dart';
 import 'package:yoen_front/view/travel_prepayment_list.dart';
 
 import 'base.dart';
