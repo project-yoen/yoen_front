@@ -108,6 +108,7 @@ class _PreviewBody extends ConsumerWidget {
     final theme = Theme.of(context);
     final summary = preview.userSettlementList;
     final sections = preview.paymentTypeList;
+    final hidePaid = ref.watch(hidePaidProvider);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -119,7 +120,24 @@ class _PreviewBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('정산 요약', style: theme.textTheme.titleMedium),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('정산 요약', style: theme.textTheme.titleMedium),
+                    ),
+                    Row(
+                      children: [
+                        Text('완료 숨기기', style: theme.textTheme.bodySmall),
+                        const SizedBox(width: 8),
+                        Switch.adaptive(
+                          value: hidePaid,
+                          onChanged: (v) =>
+                              ref.read(hidePaidProvider.notifier).state = v,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 if (summary.isEmpty)
                   Text(
@@ -421,7 +439,7 @@ class _ReceiverBlockMerged extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 소제목: settlementName (작고, 보조색, 위계 낮춤 + 간격 확보)
+                            // 소제목: settlementName (작고, 보조색, 위계 낮춤  간격 확보)
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
